@@ -185,9 +185,55 @@
       "nameSugar": "Sugar 1 kg"
     }
   },
+  "debts": {
+    "pageTitle": "Debts",
+    "intro": "Mock customer balances for layout. Search and balance filters work on this sample list; recording payments stays disabled until the ledger API exists.",
+    "toolbar": {
+      "searchPlaceholder": "Search by customer name or phone…",
+      "searchAria": "Search debtors",
+      "balanceFilterLabel": "Balance",
+      "filterAll": "All",
+      "filterPositive": "Outstanding only",
+      "filterZero": "Settled (zero balance)"
+    },
+    "table": {
+      "sectionTitle": "Ledger",
+      "customer": "Customer",
+      "phone": "Phone",
+      "balanceLbp": "Balance (LBP)",
+      "balanceUsd": "Approx. (USD)",
+      "actions": "Details",
+      "noPhone": "—"
+    },
+    "actions": {
+      "expandDetails": "Show last activity",
+      "collapseDetails": "Hide details",
+      "recordPay": "Record payment",
+      "recordPayDisabledTitle": "Payment entry will post to the ledger in a later release."
+    },
+    "detail": {
+      "activityLabel": "Last activity (demo)"
+    },
+    "empty": {
+      "noSearchTitle": "No matching customers",
+      "noSearchBody": "Try another name or phone, or clear the search.",
+      "clearSearch": "Clear search",
+      "noFilterTitle": "No rows for this filter",
+      "noFilterBody": "Change the balance filter or reset to see everyone again.",
+      "resetFilters": "Reset filters",
+      "noDebtorsTitle": "No debtors yet",
+      "noDebtorsBody": "When sales on account are saved, customer rows will appear here."
+    },
+    "mock": {
+      "d1name": "Ahmad Hasan",
+      "d1detail": "Last ticket: POS debt note «corner restock» — demo only, not stored.",
+      "d2name": "Sara Turkmani",
+      "d2detail": "Balance cleared after partial cash — placeholder timeline.",
+      "d3name": "Omar K. — corner shop",
+      "d3detail": "Two open tickets merged in UI preview — not persisted."
+    }
+  },
   "pages": {
-    "debtsTitle": "Debts",
-    "debtsHint": "Customer debt ledger will be connected here.",
     "reportsTitle": "Reports",
     "reportsHint": "Charts and exports will be added later.",
     "settingsTitle": "Settings",

@@ -29,7 +29,7 @@ alwaysApply: true
 | `src/preload/` | **preload** (جسر آمن، `contextBridge`) |
 | `src/renderer/` | **React** + `index.html` (مدخل Vite) |
 | `src/renderer/src/i18n/` | تهيئة **i18next** وملفات `locales/*.json` (`ar` / `en`) |
-| `src/renderer/src/pages/<route>/` | صفحات المسارات (`dashboard/`, `pos/`, `products/`, …) |
+| `src/renderer/src/pages/<route>/` | صفحات المسارات (`dashboard/`, `pos/`, `products/`, `debts/`, …) |
 | `db/migrations/` أو `resources/migrations/` | (لاحقاً) ترحيلات SQL فقط |
 | `out/` | مخرجات البناء — **لا تُحرَّر يدوياً** |
 | `electron.vite.config.ts` | إعداد electron-vite |

@@ -185,9 +185,55 @@
       "nameSugar": "سكر 1 كغ"
     }
   },
+  "debts": {
+    "pageTitle": "الديون",
+    "intro": "أرصدة زبائن وهمية للتخطيط. البحث وتصفية الرصيد تعملان على العينة؛ تسجيل الدفعات يبقى معطّلاً حتى ربط واجهة الدفتر.",
+    "toolbar": {
+      "searchPlaceholder": "بحث باسم الزبون أو الهاتف…",
+      "searchAria": "بحث في الديون",
+      "balanceFilterLabel": "الرصيد",
+      "filterAll": "الكل",
+      "filterPositive": "برصيد مفتوح فقط",
+      "filterZero": "مسدد (صفر)"
+    },
+    "table": {
+      "sectionTitle": "الدفتر",
+      "customer": "الزبون",
+      "phone": "الهاتف",
+      "balanceLbp": "الرصيد (ل.ل)",
+      "balanceUsd": "تقريباً (USD)",
+      "actions": "التفاصيل",
+      "noPhone": "—"
+    },
+    "actions": {
+      "expandDetails": "عرض آخر حركة",
+      "collapseDetails": "إخفاء التفاصيل",
+      "recordPay": "تسجيل دفعة",
+      "recordPayDisabledTitle": "تسجيل الدفعة سيُرسل للدفتر في إصدار لاحق."
+    },
+    "detail": {
+      "activityLabel": "آخر حركة (تجريبي)"
+    },
+    "empty": {
+      "noSearchTitle": "لا يوجد تطابق",
+      "noSearchBody": "جرّب اسماً أو هاتفاً آخر، أو امسح البحث.",
+      "clearSearch": "مسح البحث",
+      "noFilterTitle": "لا صفوف لهذا التصفية",
+      "noFilterBody": "غيّر تصفية الرصيد أو أعد التعيين لعرض الجميع.",
+      "resetFilters": "إعادة التصفية",
+      "noDebtorsTitle": "لا ديون بعد",
+      "noDebtorsBody": "عند حفظ مبيعات على الحساب ستظهر صفوف الزبائن هنا."
+    },
+    "mock": {
+      "d1name": "أحمد حسن",
+      "d1detail": "آخر فاتورة: دين من نقطة البيع «توريد زاوية» — تجريبي غير مخزّن.",
+      "d2name": "سارة تركماني",
+      "d2detail": "أُغلق الرصيد بعد دفعة نقدية جزئية — خط زمني placeholder.",
+      "d3name": "عمر خ. — بقالة الزاوية",
+      "d3detail": "دمج معاينتان مفتوحتان في الواجهة — غير محفوظ."
+    }
+  },
   "pages": {
-    "debtsTitle": "الديون",
-    "debtsHint": "سيتم ربط دفتر الديون هنا.",
     "reportsTitle": "التقارير",
     "reportsHint": "الرسوم والتصدير يُضافان لاحقاً.",
     "settingsTitle": "الإعدادات",
