@@ -98,3 +98,4 @@
 - [خارطة التنفيذ 02](./02-implementation-roadmap.md)
 - [قوائم التحقق 02](./02-implementation-checklists.md)
 - [فهرس الخطط](./README.md)
+- **الخطوة التالية (بعد إغلاق تصميم هذه الوثيقة):** [04-phase-5-data-and-ipc.md](./04-phase-5-data-and-ipc.md)

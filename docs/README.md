@@ -18,6 +18,7 @@
 | [plans/02-implementation-checklists.md](./plans/02-implementation-checklists.md) | تتبع المهام لخارطة 02 (checkboxes)                   |
 | [plans/future-reminders.md](./plans/future-reminders.md)                         | تذكيرات لاحقة (مثلاً قائمة التطبيق من الإعدادات)     |
 | [plans/03-page-content-design.md](./plans/03-page-content-design.md)             | تصميم محتوى الصفحات الست + تتبع إنجاز كل صفحة        |
+| [plans/04-phase-5-data-and-ipc.md](./plans/04-phase-5-data-and-ipc.md)         | **الخطة التالية** بعد التصميم: بيانات، IPC، ربط الميزات |
 | `architecture/`                                                                  | قرارات معمارية و ADR (جاهز للمحتوى)                  |
 | [guides/dev-setup.md](./guides/dev-setup.md)                                     | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
 

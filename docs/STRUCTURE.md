@@ -19,6 +19,7 @@ docs/
     01-master-plan.md       # مثال: الخطة الرئيسية
     future-reminders.md     # تذكيرات لاحقة (مخالف لترقيم 01/02 إن رغبت)
     03-page-content-design.md  # تصميم محتوى كل صفحة + checklists
+    04-phase-5-data-and-ipc.md # بعد 03: DB + IPC + تسلسل ميزات
   architecture/             # ADR، مخططات، قرارات تقنية “لماذا”
   guides/                   # أدلة مطور / مستخدم نهائي، إجراءات تشغيل
 ```

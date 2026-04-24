@@ -6,7 +6,7 @@
 
 1. **هذا الملف** (`AGENTS.md` في جذر المستودع).
 2. **كل قواعد المشروع للوكيل** داخل **`.cursor/rules/*.mdc` فقط** — لا تُعتمد قواعد مبعثرة في مجلدات أخرى كمصدر رئيسي.
-3. **الرؤية والخطة**: `docs/plans/01-master-plan.md`؛ **تسلسل التنفيذ**: `docs/plans/02-implementation-roadmap.md`؛ **تصميم محتوى الصفحات**: `docs/plans/03-page-content-design.md`.
+3. **الرؤية والخطة**: `docs/plans/01-master-plan.md`؛ **تسلسل التنفيذ**: `docs/plans/02-implementation-roadmap.md`؛ **تصميم محتوى الصفحات (مكتمل)**: `docs/plans/03-page-content-design.md`؛ **المرحلة التالية (بيانات + IPC)**: `docs/plans/04-phase-5-data-and-ipc.md`.
 4. **أين يوضع كل نوع ملف**: `docs/STRUCTURE.md` + قاعدة `deken-repository-layout.mdc` ضمن `.cursor/rules/`.
 
 ## ثوابت (غير قابلة للمساومة)
