@@ -7,6 +7,8 @@
 | الملف | الوصف |
 |--------|--------|
 | [01-master-plan.md](./01-master-plan.md) | الخطة الاستراتيجية الرئيسية (Stack، أهداف، مراحل) |
+| [02-implementation-roadmap.md](./02-implementation-roadmap.md) | تسلسل التنفيذ: تسطيب → layout → تصميم وi18n → منطق وDB |
+| [02-implementation-checklists.md](./02-implementation-checklists.md) | قوائم مهام Markdown لكل مراحل 02 (ضع `[x]` عند الإنجاز) |
 
 ## إضافة خطة جديدة
 

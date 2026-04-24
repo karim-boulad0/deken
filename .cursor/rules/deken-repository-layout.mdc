@@ -21,14 +21,17 @@ alwaysApply: true
 
 - **فقط** تحت `.cursor/rules/` وبصيغة `.mdc` مع frontmatter صحيح. لا تكرار “قواعد” مكررة كملفات عشوائية في `docs/` — يكفي الإشارة من `docs/STRUCTURE.md` أو `AGENTS.md` إلى هذا المجلد.
 
-## كود التطبيق (عند الإنشاء — التزم أو حدّث هذه القاعدة مع التغيير)
+## كود التطبيق (الحالي — حدّث الجدول عند تغيير الهيكل)
 
 | المجلد | المحتوى |
 |--------|---------|
-| `src/main/` أو `electron/` | Main process، preload، IPC آمن |
-| `src/renderer/` أو `src/` | React، شاشات، مكوّنات |
-| `src/i18n/` أو `src/locales/` | ملفات `ar` / `en`، مفاتيح الترجمة |
-| `db/migrations/` أو `resources/migrations/` | **فقط** ملفات ترحيل SQL مرتبة وتسمية وصفية |
+| `src/main/` | Electron **main** process |
+| `src/preload/` | **preload** (جسر آمن، `contextBridge`) |
+| `src/renderer/` | **React** + `index.html` (مدخل Vite) |
+| `src/i18n/` أو `src/locales/` | (لاحقاً) ملفات `ar` / `en` |
+| `db/migrations/` أو `resources/migrations/` | (لاحقاً) ترحيلات SQL فقط |
+| `out/` | مخرجات البناء — **لا تُحرَّر يدوياً** |
+| `electron.vite.config.ts` | إعداد electron-vite |
 
 إذا غيّر الهيكل فعلياً، عدّل **هذا الملف** في نفس التغيير حتى تبقى الجلسات الجديدة متسقة.
 

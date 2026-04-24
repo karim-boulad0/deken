@@ -1,0 +1,54 @@
+# تشغيل المشروع محلياً (Deken)
+
+## المتطلبات
+
+- **Node.js** إصدار **20.10** أو أحدث (انظر `engines` في `package.json`).
+- **npm** (مدير الحزم المعتمد حالياً لهذا المستودع).
+
+## التثبيت
+
+من جذر المستودع:
+
+```bash
+npm install
+```
+
+## التطوير
+
+```bash
+npm run dev
+```
+
+يشغّل **electron-vite**: بناء الـ main والـ preload، خادم Vite للواجهة على `http://localhost:5173/`، ثم فتح نافذة Electron.
+
+## البناء (إنتاج)
+
+```bash
+npm run build
+```
+
+المخرجات في مجلد **`out/`** (main، preload، renderer).
+
+## جودة الكود
+
+```bash
+npm run lint
+npm run format
+```
+
+## ويندوز — خطأ `EBUSY` أو تعذّر حذف `node_modules`
+
+إذا فشل `npm install` أو حذف المجلد بسبب قفل مجلد `electron`:
+
+1. أغلق أي نافذة Electron للمشروع.
+2. أوقف عمليات **Node** التي تشغّل `npm run dev` من الطرفية.
+3. من مدير المهام، أنهِ `Electron.exe` إن وُجد.
+4. احذف `node_modules` يدوياً ثم نفّذ `npm install` من جديد.
+
+## معاينة البناء (اختياري)
+
+```bash
+npm run preview
+```
+
+(يعتمد على إعداد **electron-vite**؛ إن ظهرت أخطاء، استخدم `npm run dev` للتطوير اليومي.)

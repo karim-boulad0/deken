@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+*.local
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.env
+.env.*.local
