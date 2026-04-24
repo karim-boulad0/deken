@@ -335,7 +335,7 @@ export function ProductsPage() {
                   </colgroup>
                   <thead>
                     <tr>
-                      <th scope="col">{t('products.table.sku')}</th>
+                      <th scope="col">{t('products.table.codeColumn')}</th>
                       <th scope="col">{t('products.table.name')}</th>
                       <th scope="col">{t('products.table.category')}</th>
                       <th scope="col" className="prod-table__num">
@@ -360,7 +360,24 @@ export function ProductsPage() {
                       filtered.map((row) => (
                         <tr key={row.id}>
                           <td>
-                            <code className="prod-code">{row.sku}</code>
+                            <div className="prod-codes">
+                              <code className="prod-code" title={t('products.table.sku')}>
+                                {row.sku}
+                              </code>
+                              {row.barcode != null && row.barcode.trim() !== '' ? (
+                                <div className="prod-codes__sub">
+                                  <span className="prod-codes__label">
+                                    {t('products.table.rowBarcode')}
+                                  </span>
+                                  <code
+                                    className="prod-code prod-code--bar"
+                                    title={t('products.form.barcode')}
+                                  >
+                                    {row.barcode}
+                                  </code>
+                                </div>
+                              ) : null}
+                            </div>
                           </td>
                           <td className="prod-table__cell-truncate">
                             <span className="prod-table__ellipsis" title={row.name}>

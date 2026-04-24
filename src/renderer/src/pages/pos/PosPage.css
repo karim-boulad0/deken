@@ -164,6 +164,13 @@
   color: var(--color-muted);
 }
 
+.pos-search__desc--exact {
+  margin-top: 0.35rem;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
 .pos-table-wrap {
   overflow-x: hidden;
   overflow-y: auto;
@@ -303,6 +310,11 @@
 
 .pos-qty__btn:hover:not(:disabled) {
   background: var(--color-surface-muted);
+}
+
+.pos-qty__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .pos-qty__val {

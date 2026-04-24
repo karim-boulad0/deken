@@ -2,9 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
   CategoryDto,
+  CompleteCashSaleResult,
   CreateCategoryInput,
   CreateProductInput,
   IpcResult,
+  PosSaleLineInput,
   ProductDto,
   UpdateCategoryInput,
   UpdateProductInput,
@@ -47,6 +49,11 @@ contextBridge.exposeInMainWorld('deken', {
     },
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteCategory, id)
+    },
+  },
+  sales: {
+    completeCash: (lines: PosSaleLineInput[]): Promise<IpcResult<CompleteCashSaleResult>> => {
+      return invoke(IpcInvokes.completeCashSale, lines)
     },
   },
 })

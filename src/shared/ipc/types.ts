@@ -59,6 +59,18 @@ export type UpdateCategoryInput = {
   name: string
 }
 
+/** One line for completing a sale; same product can appear once (merge on client) or multiple times (server merges by productId). */
+export type PosSaleLineInput = {
+  productId: string
+  quantity: number
+}
+
+export type CompleteCashSaleResult = {
+  saleId: string
+  totalLbp: number
+  createdAt: string
+}
+
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
   listProducts: 'deken:products:list',
@@ -70,6 +82,7 @@ export const IpcInvokes = {
   createCategory: 'deken:categories:create',
   updateCategory: 'deken:categories:update',
   deleteCategory: 'deken:categories:delete',
+  completeCashSale: 'deken:sales:completeCash',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

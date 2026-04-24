@@ -5,6 +5,7 @@ import {
   listCategories,
   updateCategory,
 } from '../data/categoryService'
+import { completeCashSale } from '../data/saleService'
 import {
   createProduct,
   deleteProduct,
@@ -18,6 +19,7 @@ import type {
   CreateCategoryInput,
   CreateProductInput,
   IpcResult,
+  PosSaleLineInput,
   UpdateCategoryInput,
   UpdateProductInput,
 } from '../../shared/ipc/types'
@@ -69,5 +71,9 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.deleteCategory, (_evt, id: string) => {
     return deleteCategory(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.completeCashSale, (_evt, lines: PosSaleLineInput[]) => {
+    return completeCashSale(db(), Array.isArray(lines) ? lines : [])
   })
 }

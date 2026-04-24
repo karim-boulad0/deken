@@ -64,15 +64,16 @@
       "title": "Scan or search",
       "hint": "Focus stays here for fast entry. Press Enter or tap Add to put a line on the ticket.",
       "fieldLabel": "Barcode or SKU",
-      "placeholder": "Type code and press Enter…",
+      "placeholder": "Type or scan the full code, then Enter…",
       "add": "Add",
-      "demoCodes": "Type a product SKU or barcode from your catalog, or an unknown code for a custom line (zero price until you set a price in Products)."
+      "demoCodes": "Only products from Products & stock. Enter the full SKU or full barcode (exact, not partial). Unknown values show an error. Quantity cannot exceed on-hand stock.",
+      "exactCodeOnly": "Match must be the full SKU or the full stored barcode, character-for-character (after spaces are trimmed). The Code column on the ticket shows the value you used. No partial match."
     },
     "cart": {
       "title": "Current ticket",
       "clear": "Clear ticket",
       "emptyTitle": "Cart is empty",
-      "emptyBody": "Scan a barcode or type a SKU to add the first line. This area will list items, quantities, and line totals.",
+      "emptyBody": "Scan or type the product’s full SKU or barcode to add the first line. This area will list items, quantities, and line totals.",
       "colProduct": "Item",
       "colSku": "Code",
       "colQty": "Qty",
@@ -82,7 +83,11 @@
       "removeLine": "Remove line",
       "decQty": "Decrease quantity",
       "incQty": "Increase quantity",
-      "unknownName": "Custom item ({{code}})"
+      "unknownName": "Custom item ({{code}})",
+      "maxQtyTitle": "Only {{max}} in stock (catalog)",
+      "codeTooltipSkuOnly": "Catalog SKU: {{sku}}",
+      "codeTooltipDetails": "You entered: {{match}}. Catalog SKU: {{sku}}{{barcodePart}}",
+      "codeTooltipBarcodePart": " — catalog barcode: {{bar}}"
     },
     "summary": {
       "title": "Payment",
@@ -90,7 +95,15 @@
       "totalLbp": "Total (LBP)",
       "totalUsd": "Approx. (USD)",
       "payCash": "Pay cash",
-      "payDebt": "Record as customer debt"
+      "payDebt": "Record as customer debt",
+      "payCashBlockedUnknown": "Remove or replace custom lines (unknown codes) — only catalog products can be checked out."
+    },
+    "errors": {
+      "cashEmpty": "Nothing to sell.",
+      "cashInsufficientStock": "Not enough stock for this ticket. Lower quantities or update stock in Products.",
+      "cashNotFound": "A product is no longer in the catalog. Re-add lines from the catalog and try again.",
+      "cashInvalid": "Invalid ticket lines. Check quantities and try again.",
+      "cashGeneric": "Could not complete sale: {{message}}"
     },
     "debt": {
       "title": "Record as debt",
@@ -138,7 +151,12 @@
       }
     },
     "toast": {
+      "lookupFailed": "Could not look up the code: {{message}}",
+      "unknownCode": "No product in the catalog matches «{{code}}». Add it in Products & stock, or check spelling.",
+      "addOutOfStock": "«{{name}}» is out of stock. Update stock in Products or choose another item.",
+      "cannotExceedStock": "Only {{max}} in stock. You can’t go above that for «{{name}}».",
       "paidCash": "Ticket closed as cash (demo).",
+      "paidCashRecorded": "Sale saved — {{total}}. Stock updated in the catalog.",
       "recordedDebtDetail": "Debt saved for {{name}} (demo — not persisted).",
       "recordedDebtDetailNote": "Debt saved for {{name}} — note: «{{note}}» (demo — not persisted)."
     },
@@ -181,6 +199,8 @@
       "sectionTitle": "Catalog",
       "loadingRow": "Loading…",
       "sku": "SKU",
+      "codeColumn": "Code (SKU & optional barcode)",
+      "rowBarcode": "Barcode",
       "name": "Name",
       "category": "Category",
       "stock": "Stock",

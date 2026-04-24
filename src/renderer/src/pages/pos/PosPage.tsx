@@ -2,16 +2,26 @@ import { Minus, Plus, ScanBarcode, Trash2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
-import { findProductByCode } from '../../lib/api/dekenClient'
+import { completeCashSale, findProductByCode } from '../../lib/api/dekenClient'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
+import { productMatchesLookupCode } from './posLookup'
 import './PosPage.css'
 
 const MOCK_LBP_PER_USD = 89_500
 
 type CartLine = {
   id: string
+  /** Set when the line is resolved from the local catalog; required for cash checkout. */
+  productId?: string
+  /** Catalog on-hand when the line was last updated (scan / merge); used to cap quantity. */
+  maxStock?: number
+  /** Catalog SKU (stable id for the row). */
   sku: string
+  /** Full exact value used at lookup (SKU or barcode). Shown in the Code column. */
+  matchCode: string
+  /** Snapshot of catalog barcode when the line was added/merged; used for tooltips. */
+  productBarcode?: string | null
   nameKey: string
   nameParams?: Record<string, string>
   /** When set, shows catalog name (not an i18n key). */
@@ -33,6 +43,7 @@ export function PosPage() {
   const [query, setQuery] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [loading, setLoading] = useState(true)
+  const [payCashBusy, setPayCashBusy] = useState(false)
   const [debtOpen, setDebtOpen] = useState(false)
 
   useEffect(() => {
@@ -60,50 +71,103 @@ export function PosPage() {
     [lng, totals.subLbp, totals.usd],
   )
 
+  const codeLineTooltip = useCallback(
+    (line: CartLine) => {
+      const sku = line.sku
+      const m = (line.matchCode || sku).trim()
+      const bar = line.productBarcode?.trim() || ''
+      if (m.toLowerCase() === sku.toLowerCase() && !bar) {
+        return t('pos.cart.codeTooltipSkuOnly', { sku })
+      }
+      const showBar = bar && m.toLowerCase() !== bar.toLowerCase()
+      return t('pos.cart.codeTooltipDetails', {
+        match: m,
+        sku,
+        barcodePart: showBar ? t('pos.cart.codeTooltipBarcodePart', { bar }) : '',
+      })
+    },
+    [t],
+  )
+
   const addFromQuery = useCallback(() => {
-    const code = query.trim()
-    if (!code) return
-    setQuery('')
+    /* Prefer the live DOM value so we never add using a stale React `query` (fast paste/scan + Add). */
+    const code = (searchRef.current?.value ?? query).trim()
+    if (!code) {
+      return
+    }
 
     void (async () => {
       const res = await findProductByCode(code)
-      if (res.ok && res.data) {
-        const p = res.data
-        setCart((prev) => {
-          const idx = prev.findIndex((l) => l.sku === p.sku)
-          if (idx >= 0) {
-            const next = [...prev]
-            next[idx] = { ...next[idx], qty: next[idx].qty + 1 }
-            return next
+      if (!res.ok) {
+        toast.error(t('pos.toast.lookupFailed', { message: res.error.message }), 5000)
+        requestAnimationFrame(() => searchRef.current?.focus())
+        return
+      }
+      if (!res.data) {
+        toast.error(t('pos.toast.unknownCode', { code }), 5000)
+        requestAnimationFrame(() => searchRef.current?.focus())
+        return
+      }
+      const p = res.data
+      if (!productMatchesLookupCode(code, p)) {
+        toast.error(t('pos.toast.unknownCode', { code }), 5000)
+        requestAnimationFrame(() => searchRef.current?.focus())
+        return
+      }
+      if (p.stock <= 0) {
+        toast.error(t('pos.toast.addOutOfStock', { name: p.name }), 5000)
+        requestAnimationFrame(() => searchRef.current?.focus())
+        return
+      }
+
+      setQuery('')
+
+      setCart((prev) => {
+        const idx = prev.findIndex((l) => l.productId === p.id)
+        if (idx >= 0) {
+          const line = prev[idx]
+          if (line.qty >= p.stock) {
+            window.queueMicrotask(() => {
+              toast.error(
+                t('pos.toast.cannotExceedStock', {
+                  max: p.stock,
+                  name: p.name,
+                }),
+                5000,
+              )
+            })
+            return prev
           }
-          return [
-            ...prev,
-            {
-              id: newId(),
-              sku: p.sku,
-              nameKey: 'app.name',
-              displayName: p.name,
-              qty: 1,
-              unitPriceLbp: p.priceLbp,
-            },
-          ]
-        })
-      } else {
-        setCart((prev) => [
+          const next = [...prev]
+          next[idx] = {
+            ...line,
+            qty: line.qty + 1,
+            maxStock: p.stock,
+            productId: p.id,
+            productBarcode: p.barcode ?? null,
+            unitPriceLbp: p.priceLbp,
+          }
+          return next
+        }
+        return [
           ...prev,
           {
             id: newId(),
-            sku: code,
-            nameKey: 'pos.cart.unknownName',
-            nameParams: { code },
+            productId: p.id,
+            maxStock: p.stock,
+            sku: p.sku,
+            matchCode: code,
+            productBarcode: p.barcode ?? null,
+            nameKey: 'app.name',
+            displayName: p.name,
             qty: 1,
-            unitPriceLbp: 0,
+            unitPriceLbp: p.priceLbp,
           },
-        ])
-      }
+        ]
+      })
       requestAnimationFrame(() => searchRef.current?.focus())
     })()
-  }, [query])
+  }, [query, t, toast])
 
   function onSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
@@ -112,13 +176,43 @@ export function PosPage() {
     }
   }
 
-  function updateQty(id: string, delta: number) {
-    setCart((prev) =>
-      prev
-        .map((l) => (l.id === id ? { ...l, qty: Math.max(0, l.qty + delta) } : l))
-        .filter((l) => l.qty > 0),
-    )
-  }
+  const updateQty = useCallback(
+    (id: string, delta: number) => {
+      if (delta === 0) {
+        return
+      }
+      setCart((prev) =>
+        prev
+          .map((l) => {
+            if (l.id !== id) {
+              return l
+            }
+            const nextQty = l.qty + delta
+            if (delta < 0) {
+              return { ...l, qty: Math.max(0, nextQty) }
+            }
+            if (l.productId && l.maxStock != null) {
+              if (nextQty > l.maxStock) {
+                const label = l.displayName ?? l.sku
+                window.queueMicrotask(() => {
+                  toast.error(
+                    t('pos.toast.cannotExceedStock', {
+                      max: l.maxStock!,
+                      name: label,
+                    }),
+                    5000,
+                  )
+                })
+                return { ...l, qty: l.maxStock }
+              }
+            }
+            return { ...l, qty: nextQty }
+          })
+          .filter((l) => l.qty > 0),
+      )
+    },
+    [t, toast],
+  )
 
   function removeLine(id: string) {
     setCart((prev) => prev.filter((l) => l.id !== id))
@@ -128,10 +222,63 @@ export function PosPage() {
     setCart([])
   }
 
+  const cartHasUnlinkedLines = useMemo(
+    () => cart.length > 0 && cart.some((l) => l.productId == null),
+    [cart],
+  )
+
+  function mapCashError(message: string) {
+    const m = message.trim()
+    if (m === 'empty_lines') {
+      return t('pos.errors.cashEmpty')
+    }
+    if (m === 'insufficient_stock') {
+      return t('pos.errors.cashInsufficientStock')
+    }
+    if (m === 'product_not_found') {
+      return t('pos.errors.cashNotFound')
+    }
+    if (m === 'invalid_line') {
+      return t('pos.errors.cashInvalid')
+    }
+    return t('pos.errors.cashGeneric', { message: m })
+  }
+
   function handlePayCash() {
-    if (cart.length === 0) return
-    clearCart()
-    toast.success(t('pos.toast.paidCash'), 5000)
+    if (cart.length === 0 || cartHasUnlinkedLines || payCashBusy) {
+      return
+    }
+    const lines: { productId: string; quantity: number }[] = []
+    const byProduct = new Map<string, number>()
+    for (const l of cart) {
+      if (!l.productId) {
+        return
+      }
+      byProduct.set(l.productId, (byProduct.get(l.productId) ?? 0) + l.qty)
+    }
+    for (const [productId, quantity] of byProduct) {
+      lines.push({ productId, quantity })
+    }
+    if (lines.length === 0) {
+      return
+    }
+
+    void (async () => {
+      setPayCashBusy(true)
+      const r = await completeCashSale(lines)
+      setPayCashBusy(false)
+      if (r.ok) {
+        clearCart()
+        toast.success(
+          t('pos.toast.paidCashRecorded', {
+            total: formatLbp(r.data.totalLbp, lng),
+          }),
+          5000,
+        )
+      } else {
+        toast.error(mapCashError(r.error.message), 6000)
+      }
+    })()
   }
 
   function handleDebtConfirm(payload: DebtRecordPayload) {
@@ -144,6 +291,8 @@ export function PosPage() {
   }
 
   const cartActionsDisabled = cart.length === 0
+  const payCashDisabled =
+    cartActionsDisabled || cartHasUnlinkedLines || payCashBusy
 
   return (
     <div className={`pos${loading ? ' pos--loading' : ''}`}>
@@ -184,7 +333,7 @@ export function PosPage() {
                   ref={searchRef}
                   className="pos-search__input"
                   type="text"
-                  inputMode="numeric"
+                  inputMode="text"
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
@@ -192,7 +341,7 @@ export function PosPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onSearchKeyDown}
-                  aria-describedby="pos-entry-desc"
+                  aria-describedby="pos-entry-desc pos-entry-exact"
                 />
                 <button type="button" className="pos-btn pos-btn--secondary" onClick={addFromQuery}>
                   {t('pos.entry.add')}
@@ -200,6 +349,9 @@ export function PosPage() {
               </div>
               <p className="pos-search__desc" id="pos-entry-desc">
                 {t('pos.entry.demoCodes')}
+              </p>
+              <p className="pos-search__desc pos-search__desc--exact" id="pos-entry-exact">
+                {t('pos.entry.exactCodeOnly')}
               </p>
             </div>
           </section>
@@ -227,7 +379,8 @@ export function PosPage() {
                 <button
                   type="button"
                   className="pos-btn pos-btn--primary pos-btn--checkout"
-                  disabled={cartActionsDisabled}
+                  disabled={payCashDisabled}
+                  title={cartHasUnlinkedLines ? t('pos.summary.payCashBlockedUnknown') : undefined}
                   onClick={handlePayCash}
                 >
                   {t('pos.summary.payCash')}
@@ -235,7 +388,8 @@ export function PosPage() {
                 <button
                   type="button"
                   className="pos-btn pos-btn--debt pos-btn--checkout"
-                  disabled={cartActionsDisabled}
+                  disabled={cartActionsDisabled || cartHasUnlinkedLines}
+                  title={cartHasUnlinkedLines ? t('pos.summary.payCashBlockedUnknown') : undefined}
                   onClick={() => setDebtOpen(true)}
                 >
                   <Wallet size={16} strokeWidth={2} aria-hidden className="pos-btn__icon" />
@@ -306,6 +460,10 @@ export function PosPage() {
                             : line.nameParams
                               ? t(line.nameKey, line.nameParams)
                               : t(line.nameKey)
+                        const atMax =
+                          line.productId != null &&
+                          line.maxStock != null &&
+                          line.qty >= line.maxStock
                         return (
                           <tr key={line.id}>
                             <td className="pos-table__cell-truncate">
@@ -314,8 +472,8 @@ export function PosPage() {
                               </span>
                             </td>
                             <td className="pos-table__cell-sku">
-                              <code className="pos-code" title={line.sku}>
-                                {line.sku}
+                              <code className="pos-code" title={codeLineTooltip(line)}>
+                                {line.matchCode}
                               </code>
                             </td>
                             <td className="pos-table__cell-qty pos-table__num">
@@ -332,6 +490,8 @@ export function PosPage() {
                                 <button
                                   type="button"
                                   className="pos-qty__btn"
+                                  disabled={atMax}
+                                  title={atMax ? t('pos.cart.maxQtyTitle', { max: line.maxStock ?? 0 }) : undefined}
                                   onClick={() => updateQty(line.id, 1)}
                                   aria-label={t('pos.cart.incQty')}
                                 >

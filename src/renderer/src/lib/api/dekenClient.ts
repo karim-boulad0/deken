@@ -1,8 +1,10 @@
 import type {
   CategoryDto,
+  CompleteCashSaleResult,
   CreateCategoryInput,
   CreateProductInput,
   IpcResult,
+  PosSaleLineInput,
   ProductDto,
   UpdateCategoryInput,
   UpdateProductInput,
@@ -70,4 +72,10 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<IpcResult<null>> {
   return assertDeken().categories.delete(id)
+}
+
+export async function completeCashSale(
+  lines: PosSaleLineInput[],
+): Promise<IpcResult<CompleteCashSaleResult>> {
+  return assertDeken().sales.completeCash(lines)
 }

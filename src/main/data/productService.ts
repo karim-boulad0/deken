@@ -264,6 +264,10 @@ export function updateProduct(
   })
 }
 
+/**
+ * POS / scanner lookup: **full exact match** on **SKU or barcode** (after trim + case-fold).
+ * No `LIKE` or partial — the full stored SKU or the full stored barcode.
+ */
 export function findProductByCode(db: Database, code: string): IpcResult<ProductDto | null> {
   if (isBlank(code)) {
     return { ok: true, data: null }
@@ -276,7 +280,16 @@ export function findProductByCode(db: Database, code: string): IpcResult<Product
            OR (p.barcode IS NOT NULL AND length(trim(p.barcode)) > 0 AND lower(trim(p.barcode)) = @c)`,
     )
     const r = st.get({ c }) as JoinedRow | undefined
-    return r ? joinedToDto(r) : null
+    if (!r) {
+      return null
+    }
+    const skuKey = norm(r.sku).toLowerCase()
+    const barKey =
+      r.barcode != null && r.barcode.trim() !== '' ? norm(r.barcode).toLowerCase() : null
+    if (skuKey !== c && (barKey == null || barKey !== c)) {
+      return null
+    }
+    return joinedToDto(r)
   })
 }
 
