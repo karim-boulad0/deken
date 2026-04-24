@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Store } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
@@ -7,6 +7,8 @@ import './AppLayout.css'
 
 export function AppLayout() {
   const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const isPosRoute = pathname === '/pos'
 
   return (
     <div className="app-shell">
@@ -26,8 +28,8 @@ export function AppLayout() {
         <header className="app-shell__header">
           <LanguageSwitcher />
         </header>
-        <main className="app-shell__content">
-          <div className="app-shell__page">
+        <main className={`app-shell__content${isPosRoute ? ' app-shell__content--pos' : ''}`}>
+          <div className={`app-shell__page${isPosRoute ? ' app-shell__page--pos' : ''}`}>
             <Outlet />
           </div>
         </main>

@@ -9,7 +9,8 @@
 | [01-master-plan.md](./01-master-plan.md)                             | الخطة الاستراتيجية الرئيسية (Stack، أهداف، مراحل)       |
 | [02-implementation-roadmap.md](./02-implementation-roadmap.md)       | تسلسل التنفيذ: تسطيب → layout → تصميم وi18n → منطق وDB  |
 | [02-implementation-checklists.md](./02-implementation-checklists.md) | قوائم مهام Markdown لكل مراحل 02 (ضع `[x]` عند الإنجاز) |
-| [future-reminders.md](./future-reminders.md)                         | تذكيرات وأفكار لاحقة (ليست خطة تسلسلية رسمية)          |
+| [future-reminders.md](./future-reminders.md)                         | تذكيرات وأفكار لاحقة (ليست خطة تسلسلية رسمية)           |
+| [03-page-content-design.md](./03-page-content-design.md)             | تصميم محتوى كل صفحة + قوائم `[x]` عند الإنجاز لكل مسار  |
 
 ## إضافة خطة جديدة
 

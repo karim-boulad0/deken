@@ -67,6 +67,7 @@
 .app-shell__column {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -87,8 +88,14 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
   padding: var(--space-lg) var(--space-xl) var(--space-2xl);
   overflow: auto;
+}
+
+/* POS fills the column height; inner panels scroll instead of the whole shell */
+.app-shell__content--pos {
+  overflow: hidden;
 }
 
 .app-shell__page {
@@ -101,6 +108,14 @@
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
   padding: var(--space-2xl);
+}
+
+.app-shell__page--pos {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--space-lg) var(--space-xl);
 }
 
 .sidebar-nav__list {

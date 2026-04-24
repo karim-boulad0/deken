@@ -18,11 +18,133 @@
     "ar": "العربية",
     "en": "English"
   },
+  "dashboard": {
+    "pageTitle": "Dashboard",
+    "intro": "Overview of today's activity. Numbers below are placeholders until live sales data is connected.",
+    "sections": {
+      "summary": "Today at a glance",
+      "shortcuts": "Quick actions",
+      "alerts": "Stock & reminders"
+    },
+    "summary": {
+      "salesLabel": "Today's sales",
+      "invoicesLabel": "Invoices",
+      "itemsLabel": "Items sold",
+      "salesMock": "$1,240",
+      "invoicesMock": "18",
+      "itemsMock": "96",
+      "mockAriaSales": "Sample value: one thousand two hundred forty dollars",
+      "footnote": "Figures shown are sample data for layout only."
+    },
+    "shortcuts": {
+      "newSale": "New sale",
+      "newSaleDesc": "Open the POS screen",
+      "products": "Products",
+      "productsDesc": "Catalog and stock",
+      "reports": "Reports",
+      "reportsDesc": "Sales history and charts"
+    },
+    "alerts": {
+      "emptyTitle": "No alerts yet",
+      "emptyBody": "Low stock and expiry reminders will appear here after inventory is connected."
+    }
+  },
+  "pos": {
+    "pageTitle": "Point of sale",
+    "toolbar": {
+      "rateLabel": "Demo rate: 1 USD = {{rate}} LBP (not live data)"
+    },
+    "loading": {
+      "aria": "Loading checkout layout"
+    },
+    "entry": {
+      "title": "Scan or search",
+      "hint": "Focus stays here for fast entry. Press Enter or tap Add to put a line on the ticket.",
+      "fieldLabel": "Barcode or SKU",
+      "placeholder": "Type code and press Enter…",
+      "add": "Add",
+      "demoCodes": "Try demo codes 123 (water) or 999 (bread). Any other code adds a custom line with zero price until pricing is linked."
+    },
+    "cart": {
+      "title": "Current ticket",
+      "clear": "Clear ticket",
+      "emptyTitle": "Cart is empty",
+      "emptyBody": "Scan a barcode or type a SKU to add the first line. This area will list items, quantities, and line totals.",
+      "colProduct": "Item",
+      "colSku": "Code",
+      "colQty": "Qty",
+      "colPrice": "Unit",
+      "colLine": "Line total",
+      "colActions": "Actions",
+      "removeLine": "Remove line",
+      "decQty": "Decrease quantity",
+      "incQty": "Increase quantity",
+      "unknownName": "Custom item ({{code}})"
+    },
+    "summary": {
+      "title": "Payment",
+      "subtotal": "Subtotal (LBP)",
+      "totalLbp": "Total (LBP)",
+      "totalUsd": "Approx. (USD)",
+      "payCash": "Pay cash",
+      "payDebt": "Record as customer debt"
+    },
+    "debt": {
+      "title": "Record as debt",
+      "subtitle": "Adds this ticket to a debtor’s balance (UI only — not saved yet). Pick someone who already owes you, or switch to new customer and type a name.",
+      "amountsAria": "Ticket totals",
+      "lineCount": "{{count}} line(s) on this ticket",
+      "modeLegend": "Debtor",
+      "modeAria": "Existing or new debtor",
+      "mode": {
+        "existing": "Existing debtor",
+        "new": "New customer"
+      },
+      "fields": {
+        "searchExisting": "Search by name or phone",
+        "noDebtorMatch": "No match. Try another search or add a new customer.",
+        "pickOne": "Tap a row to select.",
+        "name": "Customer name",
+        "phone": "Phone (optional)",
+        "hint": "Type a name you’ll recognize in the debt list. You can edit details when the customer module is ready.",
+        "note": "Note (optional)",
+        "notePlaceholder": "e.g. due date, agreement, reference…",
+        "noteHint": "Stored with this debt entry when the ledger is connected."
+      },
+      "mockDebtors": {
+        "d1": {
+          "name": "Ahmad Hasan",
+          "phone": "70 123 456"
+        },
+        "d2": {
+          "name": "Sara Turkmani",
+          "phone": "03 210 000"
+        },
+        "d3": {
+          "name": "Omar K. — corner shop",
+          "phone": ""
+        }
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "confirm": "Confirm debt"
+      },
+      "errors": {
+        "nameRequired": "Enter a customer name to continue.",
+        "debtorRequired": "Select a debtor from the list."
+      }
+    },
+    "toast": {
+      "paidCash": "Ticket closed as cash (demo).",
+      "recordedDebtDetail": "Debt saved for {{name}} (demo — not persisted).",
+      "recordedDebtDetailNote": "Debt saved for {{name}} — note: «{{note}}» (demo — not persisted)."
+    },
+    "mockItems": {
+      "water": "Water 0.5L",
+      "bread": "Bread loaf"
+    }
+  },
   "pages": {
-    "dashboardTitle": "Dashboard",
-    "dashboardHint": "Sales overview and shortcuts will appear here.",
-    "posTitle": "Point of sale",
-    "posHint": "Fast checkout screen will be built in a later phase.",
     "productsTitle": "Products & stock",
     "productsHint": "Catalog and inventory management will live here.",
     "debtsTitle": "Debts",

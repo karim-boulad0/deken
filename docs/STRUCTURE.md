@@ -18,6 +18,7 @@ docs/
     README.md               # فهرس الخطط فقط — يُحدَّث مع كل خطة جديدة
     01-master-plan.md       # مثال: الخطة الرئيسية
     future-reminders.md     # تذكيرات لاحقة (مخالف لترقيم 01/02 إن رغبت)
+    03-page-content-design.md  # تصميم محتوى كل صفحة + checklists
   architecture/             # ADR، مخططات، قرارات تقنية “لماذا”
   guides/                   # أدلة مطور / مستخدم نهائي، إجراءات تشغيل
 ```

@@ -36,7 +36,7 @@ alwaysApply: true
 
 ## التوثيق
 
-- الخطة الاستراتيجية: `docs/plans/01-master-plan.md`؛ تسلسل التنفيذ (bootstrap → UI → i18n → logic): `docs/plans/02-implementation-roadmap.md`؛ فهرس الخطط: `docs/plans/README.md`.
+- الخطة الاستراتيجية: `docs/plans/01-master-plan.md`؛ تسلسل التنفيذ (bootstrap → UI → i18n → logic): `docs/plans/02-implementation-roadmap.md`؛ تصميم محتوى كل صفحة (قوائم إنجاز): `docs/plans/03-page-content-design.md`؛ فهرس الخطط: `docs/plans/README.md`.
 - تنظيم المجلدات والتوثيق: `docs/STRUCTURE.md` — عند إضافة `.md` جديد، حدّث الفهرس المناسب (`docs/README.md` و/أو `docs/plans/README.md`).
 
 ## اللغة والواجهة

@@ -1,6 +1,8 @@
-import { BarChart3, LayoutDashboard, Package, ScanBarcode, Settings, Wallet } from 'lucide-react'
+import { BarChart3, Package, Settings, Wallet } from 'lucide-react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './layout/AppLayout'
+import { DashboardPage } from './pages/dashboard/DashboardPage'
+import { PosPage } from './pages/pos/PosPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 
 export default function App() {
@@ -9,26 +11,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route
-            path="dashboard"
-            element={
-              <PlaceholderPage
-                titleKey="pages.dashboardTitle"
-                hintKey="pages.dashboardHint"
-                Icon={LayoutDashboard}
-              />
-            }
-          />
-          <Route
-            path="pos"
-            element={
-              <PlaceholderPage
-                titleKey="pages.posTitle"
-                hintKey="pages.posHint"
-                Icon={ScanBarcode}
-              />
-            }
-          />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="pos" element={<PosPage />} />
           <Route
             path="products"
             element={

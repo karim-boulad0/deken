@@ -17,6 +17,7 @@
 | [plans/02-implementation-roadmap.md](./plans/02-implementation-roadmap.md)       | خارطة التنفيذ (bootstrap → UI → i18n → logic)        |
 | [plans/02-implementation-checklists.md](./plans/02-implementation-checklists.md) | تتبع المهام لخارطة 02 (checkboxes)                   |
 | [plans/future-reminders.md](./plans/future-reminders.md)                         | تذكيرات لاحقة (مثلاً قائمة التطبيق من الإعدادات)     |
+| [plans/03-page-content-design.md](./plans/03-page-content-design.md)             | تصميم محتوى الصفحات الست + تتبع إنجاز كل صفحة        |
 | `architecture/`                                                                  | قرارات معمارية و ADR (جاهز للمحتوى)                  |
 | [guides/dev-setup.md](./guides/dev-setup.md)                                     | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
 
