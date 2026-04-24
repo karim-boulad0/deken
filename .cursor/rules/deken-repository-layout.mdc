@@ -29,8 +29,13 @@ alwaysApply: true
 | `src/preload/` | **preload** (جسر آمن، `contextBridge`) |
 | `src/renderer/` | **React** + `index.html` (مدخل Vite) |
 | `src/renderer/src/i18n/` | تهيئة **i18next** وملفات `locales/*.json` (`ar` / `en`) |
+| `src/renderer/src/components/toast/` | تذكيرات **عامة** (Toast) — `ToastProvider` + `useToast()`، ألوان حسب `variant`، مكدّس عند `inset-inline-end` (مناسب LTR/RTL) |
 | `src/renderer/src/pages/<route>/` | صفحات المسارات (`dashboard/`, `pos/`, `products/`, `debts/`, `reports/`, `settings/`, …) |
-| `db/migrations/` أو `resources/migrations/` | (لاحقاً) ترحيلات SQL فقط |
+| `db/migrations/` | ترحيلات **SQL** فقط — يُنفّذ تطبيقها في **main** بترتيب أسماء الملفات | 
+| `src/main/db/` | فتح **SQLite**، **تركيب الترحيلات** (لا يحتوي مكوّنات واجهة) |
+| `src/main/data/` | استعلامات/خدمات (مثل المنتجات) — **لا** TSX | 
+| `src/main/ipc/` | تسجيل `ipcMain.handle` كطبقة تستدعي `src/main/data` |
+| `src/shared/` | أسماء قنوات IPC + أنواع DTO/نتيجة `IpcResult` مشترَكة بين main و preload و renderer |
 | `out/` | مخرجات البناء — **لا تُحرَّر يدوياً** |
 | `electron.vite.config.ts` | إعداد electron-vite |
 

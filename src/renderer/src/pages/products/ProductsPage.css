@@ -80,32 +80,6 @@
   gap: var(--space-sm);
 }
 
-.prod__filter {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.prod__filter-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
-}
-
-.prod__filter-select {
-  min-width: 10rem;
-  padding: 0.5rem 0.65rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  font: inherit;
-  font-size: 0.88rem;
-  background: var(--color-surface-muted);
-  color: var(--color-muted);
-  cursor: not-allowed;
-}
-
 .prod-btn {
   display: inline-flex;
   align-items: center;
@@ -183,11 +157,7 @@
 }
 
 .prod-table__col-name {
-  width: 26%;
-}
-
-.prod-table__col-cat {
-  width: 18%;
+  width: 40%;
 }
 
 .prod-table__col-stock {
@@ -199,7 +169,8 @@
 }
 
 .prod-table__col-actions {
-  width: 9%;
+  width: 12%;
+  min-width: 5rem;
 }
 
 .prod-table th,
@@ -247,6 +218,13 @@
   text-align: center;
 }
 
+.prod-table__action-btns {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
 .prod-code {
   font-size: 0.8rem;
   font-weight: 600;
@@ -270,7 +248,25 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-muted);
+  cursor: pointer;
+}
+
+.prod-iconbtn:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+
+.prod-iconbtn:disabled {
   cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.prod-iconbtn--danger {
+  color: #b91c1c;
+}
+
+.prod-iconbtn--danger:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.1);
+  color: #991b1b;
 }
 
 .prod-empty {
@@ -297,6 +293,34 @@
   font-size: 0.88rem;
   color: var(--color-muted);
   line-height: 1.5;
+}
+
+.prod-banner {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+}
+
+.prod-banner--error {
+  color: #8b1538;
+  border-color: #f0c0ce;
+  background: #fff5f7;
+}
+
+[dir='rtl'] .prod-banner--error {
+  text-align: right;
+}
+
+[dir='ltr'] .prod-banner--error {
+  text-align: left;
+}
+
+.prod-banner--after-section {
+  margin-block-start: 0.5rem;
 }
 
 .prod-visually-hidden {

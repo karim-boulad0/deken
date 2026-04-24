@@ -1,15 +1,11 @@
 import { Minus, Plus, ScanBarcode, Trash2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../../components/toast'
+import { findProductByCode } from '../../lib/api/dekenClient'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
 import './PosPage.css'
-
-/** Demo catalog: scan these codes to add lines (until real inventory is wired). */
-const DEMO_SKU: Record<string, { nameKey: string; unitPriceLbp: number }> = {
-  '123': { nameKey: 'pos.mockItems.water', unitPriceLbp: 500 },
-  '999': { nameKey: 'pos.mockItems.bread', unitPriceLbp: 3500 },
-}
 
 const MOCK_LBP_PER_USD = 89_500
 
@@ -18,6 +14,8 @@ type CartLine = {
   sku: string
   nameKey: string
   nameParams?: Record<string, string>
+  /** When set, shows catalog name (not an i18n key). */
+  displayName?: string
   qty: number
   unitPriceLbp: number
 }
@@ -28,6 +26,7 @@ function newId(): string {
 
 export function PosPage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const lng = i18n.language
   const searchRef = useRef<HTMLInputElement>(null)
   const cartRegionId = useId()
@@ -35,7 +34,6 @@ export function PosPage() {
   const [cart, setCart] = useState<CartLine[]>([])
   const [loading, setLoading] = useState(true)
   const [debtOpen, setDebtOpen] = useState(false)
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const tmr = window.setTimeout(() => setLoading(false), 380)
@@ -65,41 +63,46 @@ export function PosPage() {
   const addFromQuery = useCallback(() => {
     const code = query.trim()
     if (!code) return
-    const hit = DEMO_SKU[code]
-    if (hit) {
-      setCart((prev) => {
-        const idx = prev.findIndex((l) => l.sku === code)
-        if (idx >= 0) {
-          const next = [...prev]
-          next[idx] = { ...next[idx], qty: next[idx].qty + 1 }
-          return next
-        }
-        return [
+    setQuery('')
+
+    void (async () => {
+      const res = await findProductByCode(code)
+      if (res.ok && res.data) {
+        const p = res.data
+        setCart((prev) => {
+          const idx = prev.findIndex((l) => l.sku === p.sku)
+          if (idx >= 0) {
+            const next = [...prev]
+            next[idx] = { ...next[idx], qty: next[idx].qty + 1 }
+            return next
+          }
+          return [
+            ...prev,
+            {
+              id: newId(),
+              sku: p.sku,
+              nameKey: 'app.name',
+              displayName: p.name,
+              qty: 1,
+              unitPriceLbp: p.priceLbp,
+            },
+          ]
+        })
+      } else {
+        setCart((prev) => [
           ...prev,
           {
             id: newId(),
             sku: code,
-            nameKey: hit.nameKey,
+            nameKey: 'pos.cart.unknownName',
+            nameParams: { code },
             qty: 1,
-            unitPriceLbp: hit.unitPriceLbp,
+            unitPriceLbp: 0,
           },
-        ]
-      })
-    } else {
-      setCart((prev) => [
-        ...prev,
-        {
-          id: newId(),
-          sku: code,
-          nameKey: 'pos.cart.unknownName',
-          nameParams: { code },
-          qty: 1,
-          unitPriceLbp: 0,
-        },
-      ])
-    }
-    setQuery('')
-    requestAnimationFrame(() => searchRef.current?.focus())
+        ])
+      }
+      requestAnimationFrame(() => searchRef.current?.focus())
+    })()
   }, [query])
 
   function onSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -128,19 +131,16 @@ export function PosPage() {
   function handlePayCash() {
     if (cart.length === 0) return
     clearCart()
-    setToastMessage(t('pos.toast.paidCash'))
-    window.setTimeout(() => setToastMessage(null), 4200)
+    toast.success(t('pos.toast.paidCash'), 5000)
   }
 
   function handleDebtConfirm(payload: DebtRecordPayload) {
     clearCart()
     const note = payload.note.trim()
-    setToastMessage(
-      note
-        ? t('pos.toast.recordedDebtDetailNote', { name: payload.customerName, note })
-        : t('pos.toast.recordedDebtDetail', { name: payload.customerName }),
-    )
-    window.setTimeout(() => setToastMessage(null), 5200)
+    const msg = note
+      ? t('pos.toast.recordedDebtDetailNote', { name: payload.customerName, note })
+      : t('pos.toast.recordedDebtDetail', { name: payload.customerName })
+    toast.info(msg, 6000)
   }
 
   const cartActionsDisabled = cart.length === 0
@@ -300,9 +300,12 @@ export function PosPage() {
                     <tbody>
                       {cart.map((line) => {
                         const lineTotal = line.qty * line.unitPriceLbp
-                        const label = line.nameParams
-                          ? t(line.nameKey, line.nameParams)
-                          : t(line.nameKey)
+                        const label =
+                          line.displayName != null
+                            ? line.displayName
+                            : line.nameParams
+                              ? t(line.nameKey, line.nameParams)
+                              : t(line.nameKey)
                         return (
                           <tr key={line.id}>
                             <td className="pos-table__cell-truncate">
@@ -373,11 +376,6 @@ export function PosPage() {
         onConfirm={handleDebtConfirm}
       />
 
-      {toastMessage ? (
-        <div className="pos-toast" role="status" aria-live="polite">
-          {toastMessage}
-        </div>
-      ) : null}
     </div>
   )
 }

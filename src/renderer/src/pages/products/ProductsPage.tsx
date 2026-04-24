@@ -1,78 +1,139 @@
-import { Pencil, Plus, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
+import { useToast } from '../../components/toast'
+import { createProduct, deleteProduct, listProducts, updateProduct } from '../../lib/api/dekenClient'
 import { formatLbp } from '../pos/formatPos'
+import { DeleteProductDialog } from './DeleteProductDialog'
+import { ProductFormDialog } from './ProductFormDialog'
 import './ProductsPage.css'
 
-type MockProduct = {
-  id: string
-  sku: string
-  nameKey: string
-  categoryKey: string
-  stock: number
-  priceLbp: number
-}
+type FormMode = { type: 'closed' } | { type: 'create' } | { type: 'edit'; product: ProductDto }
 
-const MOCK_PRODUCTS: MockProduct[] = [
-  {
-    id: 'p1',
-    sku: '123',
-    nameKey: 'products.mock.nameWater',
-    categoryKey: 'products.mock.catBeverages',
-    stock: 120,
-    priceLbp: 500,
-  },
-  {
-    id: 'p2',
-    sku: '999',
-    nameKey: 'products.mock.nameBread',
-    categoryKey: 'products.mock.catBakery',
-    stock: 36,
-    priceLbp: 3500,
-  },
-  {
-    id: 'p3',
-    sku: 'SKU-RICE-1',
-    nameKey: 'products.mock.nameRice',
-    categoryKey: 'products.mock.catDry',
-    stock: 0,
-    priceLbp: 185_000,
-  },
-  {
-    id: 'p4',
-    sku: 'SKU-OIL-1L',
-    nameKey: 'products.mock.nameOil',
-    categoryKey: 'products.mock.catDry',
-    stock: 14,
-    priceLbp: 72_000,
-  },
-  {
-    id: 'p5',
-    sku: 'SKU-SUGAR',
-    nameKey: 'products.mock.nameSugar',
-    categoryKey: 'products.mock.catDry',
-    stock: 88,
-    priceLbp: 45_000,
-  },
-]
+function mapIpcErrorKey(message: string): string {
+  const m = message.trim()
+  if (m === 'sku_required' || m === 'name_required' || m === 'id_required') {
+    return m
+  }
+  if (m === 'price_invalid' || m === 'stock_invalid') {
+    return m
+  }
+  if (m.toLowerCase().includes('unique') || m.includes('UNIQUE')) {
+    return 'sku_taken'
+  }
+  return 'generic'
+}
 
 export function ProductsPage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const lng = i18n.language
   const [query, setQuery] = useState('')
+  const [searchDebounced, setSearchDebounced] = useState('')
+  const [rows, setRows] = useState<ProductDto[]>([])
+  const [loading, setLoading] = useState(true)
+  const [formBusy, setFormBusy] = useState(false)
+  const [formMode, setFormMode] = useState<FormMode>({ type: 'closed' })
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ProductDto | null>(null)
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return MOCK_PRODUCTS
-    return MOCK_PRODUCTS.filter((row) => {
-      const name = t(row.nameKey).toLowerCase()
-      const cat = t(row.categoryKey).toLowerCase()
-      const sku = row.sku.toLowerCase()
-      return name.includes(q) || cat.includes(q) || sku.includes(q)
-    })
-  }, [query, t])
+  useEffect(() => {
+    const tmr = window.setTimeout(() => setSearchDebounced(query), 200)
+    return () => window.clearTimeout(tmr)
+  }, [query])
+
+  const refresh = useCallback(async () => {
+    setLoadError(null)
+    setLoading(true)
+    const res = await listProducts(searchDebounced)
+    setLoading(false)
+    if (res.ok) {
+      setRows(res.data)
+    } else {
+      setLoadError(res.error.message)
+    }
+  }, [searchDebounced])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  const filtered = useMemo(() => rows, [rows])
 
   const showEmpty = query.trim().length > 0 && filtered.length === 0
+  const showCatalogEmpty = query.trim() === '' && !loading && filtered.length === 0
+
+  async function onFormSave(
+    payload: { create: CreateProductInput } | { id: string; input: UpdateProductInput },
+  ) {
+    setFormError(null)
+    setFormBusy(true)
+    try {
+      if ('create' in payload) {
+        const r = await createProduct(payload.create)
+        if (r.ok) {
+          setFormMode({ type: 'closed' })
+          await refresh()
+          setFormError(null)
+          toast.success(t('products.toast.added'))
+        } else {
+          const k = mapIpcErrorKey(r.error.message)
+          setFormError(
+            k === 'generic'
+              ? t('products.errors.generic', { message: r.error.message })
+              : t(`products.errors.${k}`),
+          )
+        }
+      } else {
+        const r = await updateProduct(payload.id, payload.input)
+        if (r.ok) {
+          setFormMode({ type: 'closed' })
+          await refresh()
+          setFormError(null)
+          toast.success(t('products.toast.updated'))
+        } else {
+          const k = mapIpcErrorKey(r.error.message)
+          setFormError(
+            k === 'generic'
+              ? t('products.errors.generic', { message: r.error.message })
+              : t(`products.errors.${k}`),
+          )
+        }
+      }
+    } finally {
+      setFormBusy(false)
+    }
+  }
+
+  async function executeDelete() {
+    if (deleteTarget == null) {
+      return
+    }
+    const row = deleteTarget
+    setFormError(null)
+    setDeletingId(row.id)
+    const r = await deleteProduct(row.id)
+    setDeletingId(null)
+    setDeleteTarget(null)
+    if (r.ok) {
+      if (formMode.type === 'edit' && formMode.product.id === row.id) {
+        setFormMode({ type: 'closed' })
+      }
+      await refresh()
+      setFormError(null)
+      toast.warning(t('products.toast.deleted', { name: row.name }))
+    } else {
+      const k = mapIpcErrorKey(r.error.message)
+      setFormError(
+        k === 'generic'
+          ? t('products.errors.generic', { message: r.error.message })
+          : t(`products.errors.${k}`),
+      )
+    }
+  }
 
   return (
     <div className="prod">
@@ -84,6 +145,12 @@ export function ProductsPage() {
           <p className="prod__intro">{t('products.intro')}</p>
         </div>
       </header>
+
+      {loadError ? (
+        <p className="prod-banner prod-banner--error" role="alert">
+          {t('products.loadError', { message: loadError })}
+        </p>
+      ) : null}
 
       <div className="prod__toolbar" role="search">
         <div className="prod__search">
@@ -98,26 +165,18 @@ export function ProductsPage() {
             aria-label={t('products.toolbar.searchAria')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            disabled={loading}
           />
         </div>
         <div className="prod__toolbar-end">
-          <label className="prod__filter">
-            <span className="prod__filter-label">{t('products.toolbar.filterLabel')}</span>
-            <select
-              className="prod__filter-select"
-              disabled
-              title={t('products.toolbar.filterDisabledTitle')}
-              aria-label={t('products.toolbar.filterLabel')}
-              defaultValue="all"
-            >
-              <option value="all">{t('products.toolbar.allCategories')}</option>
-            </select>
-          </label>
           <button
             type="button"
             className="prod-btn prod-btn--primary"
-            disabled
-            title={t('products.actions.addDisabledTitle')}
+            onClick={() => {
+              setFormError(null)
+              setFormMode({ type: 'create' })
+            }}
+            title={t('products.actions.add')}
           >
             <Plus size={18} strokeWidth={2} aria-hidden />
             {t('products.actions.add')}
@@ -129,6 +188,7 @@ export function ProductsPage() {
         <div className="prod-panel__head">
           <h2 className="prod-panel__title" id="prod-table-title">
             {t('products.table.sectionTitle')}
+            {loading ? <span className="prod-visually-hidden"> {t('products.loadingShort')}</span> : null}
           </h2>
         </div>
 
@@ -140,13 +200,31 @@ export function ProductsPage() {
               {t('products.empty.clearSearch')}
             </button>
           </div>
-        ) : (
-          <div className="prod-table-wrap">
+        ) : null}
+
+        {showCatalogEmpty ? (
+          <div className="prod-empty" role="status">
+            <p className="prod-empty__title">{t('products.empty.catalogEmptyTitle')}</p>
+            <p className="prod-empty__body">{t('products.empty.catalogEmptyBody')}</p>
+            <button
+              type="button"
+              className="prod-btn prod-btn--primary"
+              onClick={() => {
+                setFormError(null)
+                setFormMode({ type: 'create' })
+              }}
+            >
+              {t('products.empty.addFirstProduct')}
+            </button>
+          </div>
+        ) : null}
+
+        {!showEmpty && !showCatalogEmpty ? (
+          <div className="prod-table-wrap" aria-busy={loading || undefined}>
             <table className="prod-table">
               <colgroup>
                 <col className="prod-table__col-sku" />
                 <col className="prod-table__col-name" />
-                <col className="prod-table__col-cat" />
                 <col className="prod-table__col-stock" />
                 <col className="prod-table__col-price" />
                 <col className="prod-table__col-actions" />
@@ -155,7 +233,6 @@ export function ProductsPage() {
                 <tr>
                   <th scope="col">{t('products.table.sku')}</th>
                   <th scope="col">{t('products.table.name')}</th>
-                  <th scope="col">{t('products.table.category')}</th>
                   <th scope="col" className="prod-table__num">
                     {t('products.table.stock')}
                   </th>
@@ -168,47 +245,109 @@ export function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
-                  <tr key={row.id}>
-                    <td>
-                      <code className="prod-code">{row.sku}</code>
-                    </td>
-                    <td className="prod-table__cell-truncate">
-                      <span className="prod-table__ellipsis" title={t(row.nameKey)}>
-                        {t(row.nameKey)}
-                      </span>
-                    </td>
-                    <td className="prod-table__cell-muted prod-table__cell-truncate">
-                      <span className="prod-table__ellipsis" title={t(row.categoryKey)}>
-                        {t(row.categoryKey)}
-                      </span>
-                    </td>
-                    <td className="prod-table__num">
-                      <span className={row.stock === 0 ? 'prod-stock prod-stock--out' : 'prod-stock'}>
-                        {row.stock.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US')}
-                      </span>
-                    </td>
-                    <td className="prod-table__num prod-table__strong">
-                      {formatLbp(row.priceLbp, lng)}
-                    </td>
-                    <td className="prod-table__actions">
-                      <button
-                        type="button"
-                        className="prod-iconbtn"
-                        disabled
-                        title={t('products.actions.editDisabledTitle')}
-                        aria-label={t('products.actions.edit')}
-                      >
-                        <Pencil size={17} strokeWidth={2} aria-hidden />
-                      </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="prod-table__cell-muted">
+                      {t('products.table.loadingRow')}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filtered.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <code className="prod-code">{row.sku}</code>
+                      </td>
+                      <td className="prod-table__cell-truncate">
+                        <span className="prod-table__ellipsis" title={row.name}>
+                          {row.name}
+                        </span>
+                      </td>
+                      <td className="prod-table__num">
+                        <span className={row.stock === 0 ? 'prod-stock prod-stock--out' : 'prod-stock'}>
+                          {row.stock.toLocaleString(
+                            lng.startsWith('ar') ? 'ar-LB' : 'en-US',
+                          )}
+                        </span>
+                      </td>
+                      <td className="prod-table__num prod-table__strong">
+                        {formatLbp(row.priceLbp, lng)}
+                      </td>
+                      <td className="prod-table__actions">
+                        <div className="prod-table__action-btns">
+                          <button
+                            type="button"
+                            className="prod-iconbtn"
+                            title={t('products.actions.edit')}
+                            aria-label={t('products.actions.edit')}
+                            disabled={deletingId != null}
+                            onClick={() => {
+                              setFormError(null)
+                              setFormMode({ type: 'edit', product: row })
+                            }}
+                          >
+                            <Pencil size={17} strokeWidth={2} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className="prod-iconbtn prod-iconbtn--danger"
+                            title={t('products.actions.delete')}
+                            aria-label={t('products.actions.delete')}
+                            disabled={deletingId != null}
+                            onClick={() => {
+                              setFormError(null)
+                              setDeleteTarget(row)
+                            }}
+                          >
+                            <Trash2 size={17} strokeWidth={2} aria-hidden />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
+
+      {formError ? (
+        <p className="prod-banner prod-banner--error prod-banner--after-section" role="alert">
+          {formError}
+        </p>
+      ) : null}
+
+      {formMode.type === 'create' || formMode.type === 'edit' ? (
+        <ProductFormDialog
+          open
+          mode={formMode}
+          onOpenChange={(o) => {
+            if (!o) {
+              setFormError(null)
+              setFormMode({ type: 'closed' })
+            }
+          }}
+          onSave={(p) => {
+            void onFormSave(p)
+          }}
+          busy={formBusy}
+        />
+      ) : null}
+
+      {deleteTarget ? (
+        <DeleteProductDialog
+          product={deleteTarget}
+          busy={deletingId != null}
+          onCancel={() => {
+            if (deletingId == null) {
+              setDeleteTarget(null)
+            }
+          }}
+          onConfirm={() => {
+            void executeDelete()
+          }}
+        />
+      ) : null}
     </div>
   )
 }

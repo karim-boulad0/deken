@@ -18,6 +18,9 @@
     "ar": "العربية",
     "en": "English"
   },
+  "common": {
+    "emDash": "—"
+  },
   "dashboard": {
     "pageTitle": "Dashboard",
     "intro": "Overview of today's activity. Numbers below are placeholders until live sales data is connected.",
@@ -63,7 +66,7 @@
       "fieldLabel": "Barcode or SKU",
       "placeholder": "Type code and press Enter…",
       "add": "Add",
-      "demoCodes": "Try demo codes 123 (water) or 999 (bread). Any other code adds a custom line with zero price until pricing is linked."
+      "demoCodes": "Type a product SKU or barcode from your catalog, or an unknown code for a custom line (zero price until you set a price in Products)."
     },
     "cart": {
       "title": "Current ticket",
@@ -146,43 +149,65 @@
   },
   "products": {
     "pageTitle": "Products & stock",
-    "intro": "Sample catalog rows for layout. Search filters the mock list; add, edit, and category filter stay disabled until the inventory module is wired.",
+    "intro": "The catalog is stored in the local database on this computer. Add products here; they are available in POS by SKU or barcode.",
+    "loadError": "Could not load products: {{message}}",
+    "loadingShort": "(Loading)",
     "toolbar": {
-      "searchPlaceholder": "Search by name, category, or SKU…",
-      "searchAria": "Search products",
-      "filterLabel": "Category",
-      "allCategories": "All categories",
-      "filterDisabledTitle": "Category filter will be available when the catalog is connected."
+      "searchPlaceholder": "Search by name, SKU, or barcode…",
+      "searchAria": "Search products"
     },
     "actions": {
       "add": "Add product",
       "edit": "Edit",
-      "addDisabledTitle": "Creating products will open a form in a later release.",
-      "editDisabledTitle": "Editing SKUs will be available when the catalog API is ready."
+      "delete": "Delete"
+    },
+    "delete": {
+      "title": "Delete this product?",
+      "confirm": "Remove “{{name}}” ({{sku}}) from the catalog? This cannot be undone."
+    },
+    "toast": {
+      "added": "Product added successfully.",
+      "updated": "Product updated successfully.",
+      "deleted": "“{{name}}” was removed from the catalog."
     },
     "table": {
       "sectionTitle": "Catalog",
+      "loadingRow": "Loading…",
       "sku": "SKU",
       "name": "Name",
-      "category": "Category",
       "stock": "Stock",
       "price": "Price (LBP)",
       "actions": "Actions"
     },
+    "form": {
+      "titleCreate": "New product",
+      "titleEdit": "Edit product",
+      "scannerHint": "USB/Bluetooth barcode or QR readers in keyboard mode type into the focused field and often send Enter after the code. Enter goes to the next field; use Add (or Save) when you’re done — it does not auto-save on scan.",
+      "sku": "SKU (code)",
+      "name": "Name",
+      "barcode": "Barcode (optional)",
+      "priceLbp": "Price (LBP)",
+      "stock": "Stock quantity",
+      "cancel": "Cancel",
+      "save": "Save",
+      "add": "Add"
+    },
+    "errors": {
+      "generic": "Could not save: {{message}}",
+      "sku_required": "Enter a product code (SKU).",
+      "name_required": "Enter a name.",
+      "id_required": "Product not found. Refresh the list and try again.",
+      "price_invalid": "Price must be a non‑negative whole number.",
+      "stock_invalid": "Stock must be a non‑negative whole number.",
+      "sku_taken": "This SKU (or a duplicate barcode) is already in use. Choose another code."
+    },
     "empty": {
       "noResultsTitle": "No matching products",
-      "noResultsBody": "Try another keyword or clear the search to see the full demo list.",
-      "clearSearch": "Clear search"
-    },
-    "mock": {
-      "catBeverages": "Beverages",
-      "catBakery": "Bakery",
-      "catDry": "Dry goods",
-      "nameWater": "Water 0.5 L",
-      "nameBread": "Bread loaf",
-      "nameRice": "Rice 1 kg",
-      "nameOil": "Sunflower oil 1 L",
-      "nameSugar": "Sugar 1 kg"
+      "noResultsBody": "Try another keyword or clear the search to see the full list.",
+      "clearSearch": "Clear search",
+      "catalogEmptyTitle": "No products yet",
+      "catalogEmptyBody": "Add your first product to use it in POS. Search and stock updates will apply to this list.",
+      "addFirstProduct": "Add a product"
     }
   },
   "debts": {

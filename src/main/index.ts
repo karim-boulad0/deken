@@ -1,6 +1,8 @@
-import { app, BrowserWindow, Menu } from 'electron'
+import { app, BrowserWindow, dialog, Menu } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { closeDatabase, getDatabase } from './db/connection'
+import { registerIpc } from './ipc/registerIpc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -35,6 +37,16 @@ app.whenReady().then(() => {
     Menu.setApplicationMenu(null)
   }
 
+  try {
+    getDatabase()
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    void dialog.showErrorBox('Deken', msg)
+    app.exit(1)
+    return
+  }
+
+  registerIpc()
   createWindow()
 
   app.on('activate', () => {
@@ -42,6 +54,10 @@ app.whenReady().then(() => {
       createWindow()
     }
   })
+})
+
+app.on('before-quit', () => {
+  closeDatabase()
 })
 
 app.on('window-all-closed', () => {

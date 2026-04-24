@@ -1,0 +1,140 @@
+.pf-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: rgba(15, 20, 35, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.pf-dialog {
+  box-sizing: border-box;
+  width: min(28rem, calc(100vw - 2 * var(--space-md)));
+  max-width: 100%;
+  max-height: 90dvh;
+  overflow: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-md);
+}
+
+.pf-dialog__title {
+  margin: 0 0 var(--space-md);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.pf-hint {
+  margin: 0 0 var(--space-md);
+  max-inline-size: 100%;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.pf-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.pf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pf-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.pf-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.5rem;
+  font: inherit;
+  font-size: 0.95rem;
+  background: var(--color-surface);
+}
+
+.pf-input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 0;
+}
+
+.pf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+  min-width: 0;
+  width: 100%;
+}
+
+.pf-row .pf-field {
+  min-width: 0;
+}
+
+/* Native number spinners sit at the field edge; in tight RTL/LTR layouts they can sit over the dim
+   and register as a scrim click. Use a plain numeric field; spinners are not needed for LBP. */
+.pf-input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.pf-input[type='number']::-webkit-outer-spin-button,
+.pf-input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pf-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-block-start: var(--space-sm);
+}
+
+.pf-btn {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.85rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: var(--color-surface-elevated);
+  color: inherit;
+}
+
+.pf-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pf-btn--ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.pf-btn--primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: transparent;
+}
+
+.pf-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
