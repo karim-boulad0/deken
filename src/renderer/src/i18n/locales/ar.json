@@ -144,9 +144,48 @@
       "bread": "رغيف خبز"
     }
   },
+  "products": {
+    "pageTitle": "المنتجات والمخزون",
+    "intro": "صفوف تجريبية للتخطيط. البحث يصفّي القائمة الوهمية؛ الإضافة والتعديل وتصفية التصنيف معطّلة حتى ربط وحدة المخزون.",
+    "toolbar": {
+      "searchPlaceholder": "بحث بالاسم أو التصنيف أو الرمز…",
+      "searchAria": "بحث في المنتجات",
+      "filterLabel": "التصنيف",
+      "allCategories": "كل التصنيفات",
+      "filterDisabledTitle": "تصفية التصنيف ستُفعّل عند ربط الكتالوج."
+    },
+    "actions": {
+      "add": "إضافة منتج",
+      "edit": "تعديل",
+      "addDisabledTitle": "إنشاء منتج سيُفتح كنموذج في إصدار لاحق.",
+      "editDisabledTitle": "تعديل الرموز سيُتاح عند جاهزية واجهة الكتالوج."
+    },
+    "table": {
+      "sectionTitle": "الكتالوج",
+      "sku": "الرمز",
+      "name": "الاسم",
+      "category": "التصنيف",
+      "stock": "المخزون",
+      "price": "السعر (ل.ل)",
+      "actions": "إجراءات"
+    },
+    "empty": {
+      "noResultsTitle": "لا توجد نتائج",
+      "noResultsBody": "جرّب كلمات أخرى أو امسح البحث لعرض القائمة التجريبية كاملة.",
+      "clearSearch": "مسح البحث"
+    },
+    "mock": {
+      "catBeverages": "مشروبات",
+      "catBakery": "مخبوزات",
+      "catDry": "بقوليات وزيت وسكر",
+      "nameWater": "ماء 0.5 ل",
+      "nameBread": "رغيف خبز",
+      "nameRice": "أرز 1 كغ",
+      "nameOil": "زيت عباد 1 ل",
+      "nameSugar": "سكر 1 كغ"
+    }
+  },
   "pages": {
-    "productsTitle": "المنتجات والمخزون",
-    "productsHint": "إدارة الكتالوج والجرد ستكون هنا.",
     "debtsTitle": "الديون",
     "debtsHint": "سيتم ربط دفتر الديون هنا.",
     "reportsTitle": "التقارير",
