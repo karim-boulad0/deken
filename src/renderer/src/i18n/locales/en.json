@@ -1,0 +1,35 @@
+{
+  "app": {
+    "name": "Deken",
+    "tagline": "Desktop POS for shops and retail — sales, stock, and debts, for almost any storefront"
+  },
+  "nav": {
+    "ariaPrimary": "Main navigation",
+    "dashboard": "Dashboard",
+    "pos": "Point of sale",
+    "products": "Products & stock",
+    "debts": "Debts",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "lang": {
+    "aria": "Interface language",
+    "toggleAria": "Switch interface language between Arabic and English",
+    "ar": "العربية",
+    "en": "English"
+  },
+  "pages": {
+    "dashboardTitle": "Dashboard",
+    "dashboardHint": "Sales overview and shortcuts will appear here.",
+    "posTitle": "Point of sale",
+    "posHint": "Fast checkout screen will be built in a later phase.",
+    "productsTitle": "Products & stock",
+    "productsHint": "Catalog and inventory management will live here.",
+    "debtsTitle": "Debts",
+    "debtsHint": "Customer debt ledger will be connected here.",
+    "reportsTitle": "Reports",
+    "reportsHint": "Charts and exports will be added later.",
+    "settingsTitle": "Settings",
+    "settingsHint": "Language, printers, and shop preferences."
+  }
+}

@@ -2,7 +2,7 @@
   "name": "deken",
   "version": "0.0.1",
   "private": true,
-  "description": "Deken — desktop POS for grocery stores (Electron + React)",
+  "description": "Deken — desktop POS for retail shops and storefronts (Electron + React)",
   "main": "out/main/index.js",
   "type": "module",
   "scripts": {
@@ -13,8 +13,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "i18next": "^26.0.8",
+    "lucide-react": "^1.11.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.4",
+    "react-router-dom": "^7.14.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",

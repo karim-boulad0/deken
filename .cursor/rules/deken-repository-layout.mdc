@@ -28,7 +28,7 @@ alwaysApply: true
 | `src/main/` | Electron **main** process |
 | `src/preload/` | **preload** (جسر آمن، `contextBridge`) |
 | `src/renderer/` | **React** + `index.html` (مدخل Vite) |
-| `src/i18n/` أو `src/locales/` | (لاحقاً) ملفات `ar` / `en` |
+| `src/renderer/src/i18n/` | تهيئة **i18next** وملفات `locales/*.json` (`ar` / `en`) |
 | `db/migrations/` أو `resources/migrations/` | (لاحقاً) ترحيلات SQL فقط |
 | `out/` | مخرجات البناء — **لا تُحرَّر يدوياً** |
 | `electron.vite.config.ts` | إعداد electron-vite |

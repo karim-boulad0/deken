@@ -9,15 +9,16 @@
 
 ## الفهرس
 
-| المسار | الوصف |
-|--------|--------|
-| [STRUCTURE.md](./STRUCTURE.md) | قواعد تنظيم `docs/` والعلاقة مع القواعد والـ AGENTS |
-| [plans/README.md](./plans/README.md) | فهرس **خطط المنتج** |
-| [plans/01-master-plan.md](./plans/01-master-plan.md) | الخطة الاستراتيجية الرئيسية |
-| [plans/02-implementation-roadmap.md](./plans/02-implementation-roadmap.md) | خارطة التنفيذ (bootstrap → UI → i18n → logic) |
-| [plans/02-implementation-checklists.md](./plans/02-implementation-checklists.md) | تتبع المهام لخارطة 02 (checkboxes) |
-| `architecture/` | قرارات معمارية و ADR (جاهز للمحتوى) |
-| [guides/dev-setup.md](./guides/dev-setup.md) | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
+| المسار                                                                           | الوصف                                                |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [STRUCTURE.md](./STRUCTURE.md)                                                   | قواعد تنظيم `docs/` والعلاقة مع القواعد والـ AGENTS  |
+| [plans/README.md](./plans/README.md)                                             | فهرس **خطط المنتج**                                  |
+| [plans/01-master-plan.md](./plans/01-master-plan.md)                             | الخطة الاستراتيجية الرئيسية                          |
+| [plans/02-implementation-roadmap.md](./plans/02-implementation-roadmap.md)       | خارطة التنفيذ (bootstrap → UI → i18n → logic)        |
+| [plans/02-implementation-checklists.md](./plans/02-implementation-checklists.md) | تتبع المهام لخارطة 02 (checkboxes)                   |
+| [plans/future-reminders.md](./plans/future-reminders.md)                         | تذكيرات لاحقة (مثلاً قائمة التطبيق من الإعدادات)     |
+| `architecture/`                                                                  | قرارات معمارية و ADR (جاهز للمحتوى)                  |
+| [guides/dev-setup.md](./guides/dev-setup.md)                                     | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
 
 ## إضافة مستند جديد
 
