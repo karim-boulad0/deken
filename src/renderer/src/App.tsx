@@ -1,11 +1,11 @@
-import { BarChart3, Settings } from 'lucide-react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './layout/AppLayout'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { PosPage } from './pages/pos/PosPage'
 import { ProductsPage } from './pages/products/ProductsPage'
 import { DebtsPage } from './pages/debts/DebtsPage'
-import { PlaceholderPage } from './pages/PlaceholderPage'
+import { ReportsPage } from './pages/reports/ReportsPage'
+import { SettingsPage } from './pages/settings/SettingsPage'
 
 export default function App() {
   return (
@@ -17,26 +17,8 @@ export default function App() {
           <Route path="pos" element={<PosPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="debts" element={<DebtsPage />} />
-          <Route
-            path="reports"
-            element={
-              <PlaceholderPage
-                titleKey="pages.reportsTitle"
-                hintKey="pages.reportsHint"
-                Icon={BarChart3}
-              />
-            }
-          />
-          <Route
-            path="settings"
-            element={
-              <PlaceholderPage
-                titleKey="pages.settingsTitle"
-                hintKey="pages.settingsHint"
-                Icon={Settings}
-              />
-            }
-          />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>

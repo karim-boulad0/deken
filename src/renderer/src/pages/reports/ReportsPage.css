@@ -1,0 +1,219 @@
+.rep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  width: 100%;
+  min-width: 0;
+}
+
+.rep__header {
+  padding-block-end: var(--space-sm);
+  border-block-end: 1px solid var(--color-border-soft);
+}
+
+.rep__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.rep__intro {
+  margin: var(--space-xs) 0 0;
+  max-inline-size: 44rem;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
+.rep-toolbar {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  padding: var(--space-md) var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.rep-toolbar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-md);
+}
+
+.rep-toolbar__dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  align-items: flex-end;
+}
+
+.rep-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.rep-field--inline {
+  min-width: 0;
+}
+
+.rep-field__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.rep-field__select,
+.rep-field__input {
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--color-surface);
+}
+
+.rep-field__input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--color-surface-muted);
+}
+
+.rep-btn {
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.rep-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rep-btn--primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.rep__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+@media (max-width: 840px) {
+  .rep__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rep-empty {
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--color-border);
+  background: var(--color-surface-muted);
+  padding: var(--space-xl) var(--space-lg);
+}
+
+.rep-empty__title {
+  margin: 0 0 var(--space-sm);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.rep-empty__body {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-muted);
+  line-height: 1.55;
+  max-inline-size: 28rem;
+}
+
+.rep-preview {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.rep-preview__title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-muted);
+}
+
+.rep-preview__hint {
+  margin: calc(-1 * var(--space-xs)) 0 0;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.rep-chart {
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border-soft);
+  padding: var(--space-md);
+  min-block-size: 10rem;
+}
+
+.rep-chart__bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.35rem;
+  block-size: 9rem;
+}
+
+.rep-chart__bar {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: linear-gradient(180deg, var(--color-accent-muted) 0%, var(--color-accent) 100%);
+  opacity: 0.45;
+}
+
+.rep-table-mock {
+  overflow-x: auto;
+}
+
+.rep-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.rep-table th,
+.rep-table td {
+  padding: 0.45rem 0.35rem;
+  border-block-end: 1px solid var(--color-border-soft);
+  text-align: start;
+}
+
+.rep-table th {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+  background: var(--color-surface-muted);
+}
+
+.rep-table__num {
+  text-align: end;
+}

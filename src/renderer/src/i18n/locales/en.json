@@ -233,10 +233,60 @@
       "d3detail": "Two open tickets merged in UI preview — not persisted."
     }
   },
-  "pages": {
-    "reportsTitle": "Reports",
-    "reportsHint": "Charts and exports will be added later.",
-    "settingsTitle": "Settings",
-    "settingsHint": "Language, printers, and shop preferences."
+  "reports": {
+    "pageTitle": "Reports",
+    "intro": "Sales summaries and charts will load from the database here. Filters below are wired for layout only.",
+    "filters": {
+      "periodLabel": "Period",
+      "presetWeek": "This week",
+      "presetMonth": "This month",
+      "presetQuarter": "This quarter",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "rangeDisabledTitle": "Custom date range will be enabled when reporting is connected.",
+      "apply": "Apply",
+      "applyDisabledTitle": "Run report when the backend is ready."
+    },
+    "empty": {
+      "title": "No reporting data yet",
+      "body": "Once daily sales are stored, this panel will show totals for the selected period. Nothing is fetched in this preview build."
+    },
+    "preview": {
+      "title": "Layout preview",
+      "hint": "Decorative bars and sample table — not computed from your shop.",
+      "chartAria": "Sample bar chart placeholder"
+    },
+    "table": {
+      "colDay": "Day",
+      "colSales": "Sales",
+      "sampleRowLabel": "Sample"
+    }
+  },
+  "settings": {
+    "pageTitle": "Settings",
+    "intro": "Shop-wide preferences. Controls are placeholders until persistence and devices are integrated.",
+    "groups": {
+      "general": "General",
+      "language": "Language",
+      "printing": "Printing"
+    },
+    "general": {
+      "shopName": "Shop name",
+      "shopNamePlaceholder": "My shop",
+      "shopNameDisabledTitle": "Shop profile editing arrives with account storage.",
+      "currency": "Default currency",
+      "currencyValue": "LBP (display only in this build)"
+    },
+    "language": {
+      "note": "Use the language control in the top bar to switch Arabic and English. This section will later hold regional formats."
+    },
+    "printing": {
+      "receiptToggle": "Print receipt after sale",
+      "receiptDisabledTitle": "Printer pairing will enable this toggle.",
+      "paperLabel": "Receipt paper",
+      "paperDisabledTitle": "Paper presets will map to drivers later.",
+      "paperA4": "A4 (invoice)",
+      "paper80": "80 mm thermal"
+    }
   }
 }
