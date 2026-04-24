@@ -26,6 +26,45 @@
   line-height: 1.5;
 }
 
+.prod__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: 0;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.prod__tab {
+  position: relative;
+  margin: 0;
+  padding: 0.5rem 0.9rem 0.65rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.prod__tab:hover {
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+}
+
+.prod__tab--active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+.prod__tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .prod__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -78,6 +117,57 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-sm);
+}
+
+.prod__filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.prod__filter-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.prod__filter-select {
+  min-width: 10rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.prod__filter-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prod-categories__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.prod-categories__col-name {
+  width: auto;
+}
+
+.prod-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
 }
 
 .prod-btn {
@@ -157,7 +247,11 @@
 }
 
 .prod-table__col-name {
-  width: 40%;
+  width: 24%;
+}
+
+.prod-table__col-cat {
+  width: 16%;
 }
 
 .prod-table__col-stock {

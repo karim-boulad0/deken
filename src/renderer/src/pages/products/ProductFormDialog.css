@@ -73,6 +73,10 @@
   outline-offset: 0;
 }
 
+.pf-input--select {
+  cursor: pointer;
+}
+
 .pf-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

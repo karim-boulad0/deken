@@ -1,6 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
+import type { CategoryDto, CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
 import './ProductFormDialog.css'
 
 type Mode = { type: 'create' } | { type: 'edit'; product: ProductDto }
@@ -10,6 +10,7 @@ type SavePayload = { create: CreateProductInput } | { id: string; input: UpdateP
 type Props = {
   open: boolean
   mode: Mode
+  categoryOptions: CategoryDto[]
   onOpenChange: (open: boolean) => void
   onSave: (payload: SavePayload) => void
   busy?: boolean
@@ -19,11 +20,12 @@ const empty: CreateProductInput = {
   sku: '',
   name: '',
   barcode: '',
+  categoryId: null,
   priceLbp: 0,
   stock: 0,
 }
 
-export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Props) {
+export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, onSave, busy }: Props) {
   const { t } = useTranslation()
   const titleId = useId()
   const [form, setForm] = useState<CreateProductInput>(empty)
@@ -38,6 +40,7 @@ export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Pr
         sku: p.sku,
         name: p.name,
         barcode: p.barcode ?? '',
+        categoryId: p.category?.id ?? null,
         priceLbp: p.priceLbp,
         stock: p.stock,
       })
@@ -67,41 +70,54 @@ export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Pr
    */
   const nextFieldId: Record<string, string> = {
     'pf-sku': 'pf-name',
-    'pf-name': 'pf-barcode',
+    'pf-name': 'pf-cat',
+    'pf-cat': 'pf-barcode',
     'pf-barcode': 'pf-price',
     'pf-price': 'pf-stock',
+  }
+
+  function focusField(id: string) {
+    window.queueMicrotask(() => {
+      const el = document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null
+      if (el) {
+        el.focus()
+        if (el instanceof HTMLInputElement) {
+          if (el.type === 'text' || el.type === 'search' || el.type === 'number') {
+            el.select()
+          }
+        }
+      }
+    })
   }
 
   function onFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
     if (e.key !== 'Enter' || e.repeat) {
       return
     }
-    if (!(e.target instanceof HTMLInputElement)) {
+    if (!(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLSelectElement)) {
+      return
+    }
+    const target = e.target
+    if (target.id === 'pf-stock') {
       return
     }
     e.preventDefault()
-    const next = nextFieldId[e.target.id]
+    const next = nextFieldId[target.id]
     if (next) {
-      window.queueMicrotask(() => {
-        const el = document.getElementById(next) as HTMLInputElement | null
-        if (el) {
-          el.focus()
-          if (el.type === 'text' || el.type === 'search' || el.type === 'number') {
-            el.select()
-          }
-        }
-      })
+      focusField(next)
     }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const categoryId = form.categoryId && String(form.categoryId).trim() ? String(form.categoryId) : null
     if (isEdit) {
       onSave({
         id: mode.product.id,
         input: {
           sku: form.sku,
           name: form.name,
+          categoryId,
           barcode: form.barcode?.trim() ? form.barcode : null,
           priceLbp: form.priceLbp,
           stock: form.stock,
@@ -112,6 +128,7 @@ export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Pr
         create: {
           sku: form.sku,
           name: form.name,
+          categoryId: categoryId ?? undefined,
           barcode: form.barcode,
           priceLbp: form.priceLbp,
           stock: form.stock,
@@ -121,11 +138,12 @@ export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Pr
   }
 
   function onBackdropClick(e: React.MouseEvent) {
-    /* Only a direct click on the scrim closes the dialog — not bubbled/misdirected events. */
     if (e.target === e.currentTarget) {
       onClose()
     }
   }
+
+  const selectCategoryValue = form.categoryId ?? ''
 
   return (
     <div
@@ -174,6 +192,26 @@ export function ProductFormDialog({ open, mode, onOpenChange, onSave, busy }: Pr
               autoCorrect="off"
               spellCheck={false}
             />
+          </div>
+          <div className="pf-field">
+            <label htmlFor="pf-cat">{t('products.form.category')}</label>
+            <select
+              id="pf-cat"
+              className="pf-input pf-input--select"
+              value={selectCategoryValue}
+              onChange={(e) => {
+                const v = e.target.value
+                set('categoryId', v === '' ? null : v)
+              }}
+              aria-label={t('products.form.category')}
+            >
+              <option value="">{t('products.form.categoryNone')}</option>
+              {categoryOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="pf-field">
             <label htmlFor="pf-barcode">{t('products.form.barcode')}</label>

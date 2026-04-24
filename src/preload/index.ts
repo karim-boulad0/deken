@@ -1,9 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
+  CategoryDto,
+  CreateCategoryInput,
   CreateProductInput,
   IpcResult,
   ProductDto,
+  UpdateCategoryInput,
   UpdateProductInput,
 } from '../shared/ipc/types'
 
@@ -16,8 +19,8 @@ contextBridge.exposeInMainWorld('deken', {
     return invoke(IpcInvokes.getAppVersion)
   },
   products: {
-    list: (q: string): Promise<IpcResult<ProductDto[]>> => {
-      return invoke(IpcInvokes.listProducts, q)
+    list: (q: string, filterCategoryId?: string | null): Promise<IpcResult<ProductDto[]>> => {
+      return invoke(IpcInvokes.listProducts, q, filterCategoryId ?? null)
     },
     create: (input: CreateProductInput): Promise<IpcResult<ProductDto>> => {
       return invoke(IpcInvokes.createProduct, input)
@@ -30,6 +33,20 @@ contextBridge.exposeInMainWorld('deken', {
     },
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteProduct, id)
+    },
+  },
+  categories: {
+    list: (): Promise<IpcResult<CategoryDto[]>> => {
+      return invoke(IpcInvokes.listCategories)
+    },
+    create: (input: CreateCategoryInput): Promise<IpcResult<CategoryDto>> => {
+      return invoke(IpcInvokes.createCategory, input)
+    },
+    update: (id: string, input: UpdateCategoryInput): Promise<IpcResult<CategoryDto>> => {
+      return invoke(IpcInvokes.updateCategory, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteCategory, id)
     },
   },
 })

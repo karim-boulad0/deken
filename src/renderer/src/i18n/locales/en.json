@@ -149,12 +149,19 @@
   },
   "products": {
     "pageTitle": "Products & stock",
-    "intro": "The catalog is stored in the local database on this computer. Add products here; they are available in POS by SKU or barcode.",
+    "intro": "The catalog is stored in the local database on this computer. Add products here; they are available in POS by SKU or barcode. Define categories in the “Product categories” tab, then assign them to products and filter the catalog.",
     "loadError": "Could not load products: {{message}}",
     "loadingShort": "(Loading)",
+    "tabs": {
+      "aria": "Products area",
+      "catalog": "Catalog",
+      "categories": "Product categories"
+    },
     "toolbar": {
-      "searchPlaceholder": "Search by name, SKU, or barcode…",
-      "searchAria": "Search products"
+      "searchPlaceholder": "Search by name, category, SKU, or barcode…",
+      "searchAria": "Search products",
+      "filterLabel": "Category",
+      "allCategories": "All categories"
     },
     "actions": {
       "add": "Add product",
@@ -175,6 +182,7 @@
       "loadingRow": "Loading…",
       "sku": "SKU",
       "name": "Name",
+      "category": "Category",
       "stock": "Stock",
       "price": "Price (LBP)",
       "actions": "Actions"
@@ -185,6 +193,8 @@
       "scannerHint": "USB/Bluetooth barcode or QR readers in keyboard mode type into the focused field and often send Enter after the code. Enter goes to the next field; use Add (or Save) when you’re done — it does not auto-save on scan.",
       "sku": "SKU (code)",
       "name": "Name",
+      "category": "Category",
+      "categoryNone": "None",
       "barcode": "Barcode (optional)",
       "priceLbp": "Price (LBP)",
       "stock": "Stock quantity",
@@ -197,6 +207,7 @@
       "sku_required": "Enter a product code (SKU).",
       "name_required": "Enter a name.",
       "id_required": "Product not found. Refresh the list and try again.",
+      "category_not_found": "That category no longer exists. Choose another or refresh the list.",
       "price_invalid": "Price must be a non‑negative whole number.",
       "stock_invalid": "Stock must be a non‑negative whole number.",
       "sku_taken": "This SKU (or a duplicate barcode) is already in use. Choose another code."
@@ -205,9 +216,40 @@
       "noResultsTitle": "No matching products",
       "noResultsBody": "Try another keyword or clear the search to see the full list.",
       "clearSearch": "Clear search",
+      "clearCategoryFilter": "Show all categories",
       "catalogEmptyTitle": "No products yet",
       "catalogEmptyBody": "Add your first product to use it in POS. Search and stock updates will apply to this list.",
       "addFirstProduct": "Add a product"
+    }
+  },
+  "productCategories": {
+    "sectionTitle": "Product categories",
+    "loadError": "Could not load categories: {{message}}",
+    "actions": { "add": "Add category" },
+    "table": { "name": "Name" },
+    "form": {
+      "titleCreate": "New category",
+      "titleEdit": "Edit category",
+      "name": "Name",
+      "add": "Add"
+    },
+    "delete": {
+      "title": "Delete this category?",
+      "confirm": "Remove “{{name}}” from the list? Products that use it must be changed first, or the delete will fail."
+    },
+    "emptyTitle": "No categories yet",
+    "emptyBody": "Add categories here, then assign them on each product. Category names must be unique.",
+    "toast": {
+      "added": "Category added.",
+      "updated": "Category updated.",
+      "deleted": "“{{name}}” was removed."
+    },
+    "errors": {
+      "generic": "Could not save: {{message}}",
+      "name_required": "Enter a name.",
+      "id_required": "Category not found. Refresh and try again.",
+      "name_taken": "A category with that name already exists.",
+      "category_in_use": "This category is used by at least one product. Change or remove the category on those products first."
     }
   },
   "debts": {

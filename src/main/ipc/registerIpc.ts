@@ -1,5 +1,11 @@
 import { app, ipcMain } from 'electron'
 import {
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory,
+} from '../data/categoryService'
+import {
   createProduct,
   deleteProduct,
   findProductByCode,
@@ -8,7 +14,13 @@ import {
 } from '../data/productService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
-import type { CreateProductInput, IpcResult, UpdateProductInput } from '../../shared/ipc/types'
+import type {
+  CreateCategoryInput,
+  CreateProductInput,
+  IpcResult,
+  UpdateCategoryInput,
+  UpdateProductInput,
+} from '../../shared/ipc/types'
 
 /**
  * Wires all IPC invokers to main-process services. Renderer never runs SQL.
@@ -20,9 +32,12 @@ export function registerIpc(): void {
     return { ok: true, data: app.getVersion() }
   })
 
-  ipcMain.handle(IpcInvokes.listProducts, (_evt, q: string) => {
-    return listProducts(db(), q ?? '')
-  })
+  ipcMain.handle(
+    IpcInvokes.listProducts,
+    (_evt, q: string, filterCategoryId: string | null | undefined) => {
+      return listProducts(db(), q ?? '', filterCategoryId ?? null)
+    },
+  )
 
   ipcMain.handle(IpcInvokes.createProduct, (_evt, input: CreateProductInput) => {
     return createProduct(db(), input)
@@ -38,5 +53,21 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.findProductByCode, (_evt, code: string) => {
     return findProductByCode(db(), code ?? '')
+  })
+
+  ipcMain.handle(IpcInvokes.listCategories, () => {
+    return listCategories(db())
+  })
+
+  ipcMain.handle(IpcInvokes.createCategory, (_evt, input: CreateCategoryInput) => {
+    return createCategory(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.updateCategory, (_evt, id: string, input: UpdateCategoryInput) => {
+    return updateCategory(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.deleteCategory, (_evt, id: string) => {
+    return deleteCategory(db(), id)
   })
 }
