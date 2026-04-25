@@ -1,24 +1,43 @@
 import type {
   AppSettingsDto,
+  CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
   CreateCustomerInput,
+  CreateExpenseCategoryInput,
+  CreateExpenseInput,
   CreateProductInput,
+  CreateSupplierInput,
+  CreateSupplierInvoiceInput,
+  CreateSupplierPaymentInput,
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
+  DashboardSnapshotInput,
   DashboardSnapshotDto,
+  ExpenseCategoryDto,
+  ExpenseDto,
+  ExpenseTotalInRangeDto,
   IpcResult,
+  ListExpensesInRangeInput,
+  ListRecentCashflowInput,
   PosSaleLineInput,
   ProductDto,
   RecordDebtPaymentInput,
   RecordDebtPaymentResult,
   SaleLineViewDto,
+  SupplierBalanceRow,
+  SupplierDto,
+  SupplierInvoiceDto,
+  SupplierPaymentDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateExpenseCategoryInput,
+  UpdateExpenseInput,
   UpdateProductInput,
+  UpdateSupplierInput,
   SalesReportDto,
   SalesReportInput,
 } from '../../../../shared/ipc/types'
@@ -164,20 +183,171 @@ function localDateYmd(): string {
 
 function emptyDashboardSnapshot(): DashboardSnapshotDto {
   return {
+    period: {
+      range: 'today',
+      startDateYmd: localDateYmd(),
+      endDateYmd: localDateYmd(),
+    },
     today: {
       dateYmd: localDateYmd(),
       totalLbp: 0,
       saleCount: 0,
       itemsSold: 0,
     },
+    cashflowToday: { cashInLbp: 0, cashOutLbp: 0, netLbp: 0 },
+    dayComparison: {
+      todayTotalLbp: 0,
+      yesterdayTotalLbp: 0,
+      deltaLbp: 0,
+      deltaPct: null,
+    },
+    smartAlerts: [],
+    topProducts: [],
+    slowProducts: [],
+    todayTasks: [],
+    alertThresholds: {
+      lowStockThreshold: 10,
+      highDebtBalanceLbp: 10_000_000,
+      highSupplierPayableLbp: 12_000_000,
+      expenseSpikeMinLbp: 1_500_000,
+      expenseSpikeRatio: 1.5,
+    },
     lowStock: [],
     lowStockThreshold: 10,
   }
 }
 
-export async function getDashboardSnapshot(): Promise<IpcResult<DashboardSnapshotDto>> {
+export async function getDashboardSnapshot(
+  input: DashboardSnapshotInput = { range: 'today' },
+): Promise<IpcResult<DashboardSnapshotDto>> {
   if (!isDeken()) {
     return { ok: true, data: emptyDashboardSnapshot() }
   }
-  return assertDeken().dashboard.getSnapshot()
+  return assertDeken().dashboard.getSnapshot(input)
+}
+
+export async function listSupplierBalances(): Promise<IpcResult<SupplierBalanceRow[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().suppliers.listBalances()
+}
+
+export async function createSupplier(
+  input: CreateSupplierInput,
+): Promise<IpcResult<SupplierDto>> {
+  return assertDeken().suppliers.create(input)
+}
+
+export async function updateSupplier(
+  id: string,
+  input: UpdateSupplierInput,
+): Promise<IpcResult<SupplierDto>> {
+  return assertDeken().suppliers.update(id, input)
+}
+
+export async function deleteSupplier(id: string): Promise<IpcResult<null>> {
+  return assertDeken().suppliers.delete(id)
+}
+
+export async function listSupplierInvoices(
+  supplierId: string,
+): Promise<IpcResult<SupplierInvoiceDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().suppliers.listInvoices(supplierId)
+}
+
+export async function listSupplierPayments(
+  supplierId: string,
+): Promise<IpcResult<SupplierPaymentDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().suppliers.listPayments(supplierId)
+}
+
+export async function createSupplierInvoice(
+  input: CreateSupplierInvoiceInput,
+): Promise<IpcResult<SupplierInvoiceDto>> {
+  return assertDeken().suppliers.createInvoice(input)
+}
+
+export async function createSupplierPayment(
+  input: CreateSupplierPaymentInput,
+): Promise<IpcResult<SupplierPaymentDto>> {
+  return assertDeken().suppliers.createPayment(input)
+}
+
+export async function listExpenseCategories(): Promise<IpcResult<ExpenseCategoryDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().expenses.listCategories()
+}
+
+export async function createExpenseCategory(
+  input: CreateExpenseCategoryInput,
+): Promise<IpcResult<ExpenseCategoryDto>> {
+  return assertDeken().expenses.createCategory(input)
+}
+
+export async function updateExpenseCategory(
+  id: string,
+  input: UpdateExpenseCategoryInput,
+): Promise<IpcResult<ExpenseCategoryDto>> {
+  return assertDeken().expenses.updateCategory(id, input)
+}
+
+export async function deleteExpenseCategory(id: string): Promise<IpcResult<null>> {
+  return assertDeken().expenses.deleteCategory(id)
+}
+
+export async function listExpensesInRange(
+  input: ListExpensesInRangeInput,
+): Promise<IpcResult<ExpenseDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().expenses.listInRange(input)
+}
+
+export async function getExpenseTotalInRange(
+  input: ListExpensesInRangeInput,
+): Promise<IpcResult<ExpenseTotalInRangeDto>> {
+  if (!isDeken()) {
+    const from = input.fromDate
+    const to = input.toDate
+    return { ok: true, data: { fromDate: from, toDate: to, totalLbp: 0 } }
+  }
+  return assertDeken().expenses.totalInRange(input)
+}
+
+export async function createExpense(input: CreateExpenseInput): Promise<IpcResult<ExpenseDto>> {
+  return assertDeken().expenses.create(input)
+}
+
+export async function updateExpense(
+  id: string,
+  input: UpdateExpenseInput,
+): Promise<IpcResult<ExpenseDto>> {
+  return assertDeken().expenses.update(id, input)
+}
+
+export async function deleteExpense(id: string): Promise<IpcResult<null>> {
+  return assertDeken().expenses.delete(id)
+}
+
+export async function listRecentCashflow(
+  input: ListRecentCashflowInput,
+): Promise<IpcResult<CashflowLineDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().cashflow.listRecent(input)
+}
+
+export async function voidCashSale(saleId: string): Promise<IpcResult<{ saleId: string }>> {
+  return assertDeken().sales.voidCash(saleId)
 }

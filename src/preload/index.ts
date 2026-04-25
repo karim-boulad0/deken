@@ -2,27 +2,46 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
   AppSettingsDto,
+  CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
   CreateCustomerInput,
+  CreateExpenseCategoryInput,
+  CreateExpenseInput,
   CreateProductInput,
+  CreateSupplierInput,
+  CreateSupplierInvoiceInput,
+  CreateSupplierPaymentInput,
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
+  DashboardSnapshotInput,
   SaleLineViewDto,
   DashboardSnapshotDto,
+  ExpenseCategoryDto,
+  ExpenseDto,
+  ExpenseTotalInRangeDto,
   IpcResult,
+  ListExpensesInRangeInput,
+  ListRecentCashflowInput,
   PosSaleLineInput,
   ProductDto,
   RecordDebtPaymentInput,
   RecordDebtPaymentResult,
   SalesReportDto,
   SalesReportInput,
+  SupplierBalanceRow,
+  SupplierInvoiceDto,
+  SupplierPaymentDto,
+  SupplierDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateExpenseCategoryInput,
+  UpdateExpenseInput,
   UpdateProductInput,
+  UpdateSupplierInput,
 } from '../shared/ipc/types'
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
@@ -98,6 +117,9 @@ contextBridge.exposeInMainWorld('deken', {
     ): Promise<IpcResult<SaleLineViewDto[]>> => {
       return invoke(IpcInvokes.getDebtSaleLines, customerId, saleId)
     },
+    voidCash: (saleId: string): Promise<IpcResult<{ saleId: string }>> => {
+      return invoke(IpcInvokes.voidCashSale, saleId)
+    },
   },
   reports: {
     getSales: (r: SalesReportInput): Promise<IpcResult<SalesReportDto>> => {
@@ -113,8 +135,71 @@ contextBridge.exposeInMainWorld('deken', {
     },
   },
   dashboard: {
-    getSnapshot: (): Promise<IpcResult<DashboardSnapshotDto>> => {
-      return invoke(IpcInvokes.getDashboardSnapshot)
+    getSnapshot: (input?: DashboardSnapshotInput): Promise<IpcResult<DashboardSnapshotDto>> => {
+      return invoke(IpcInvokes.getDashboardSnapshot, input ?? { range: 'today' })
+    },
+  },
+  suppliers: {
+    listBalances: (): Promise<IpcResult<SupplierBalanceRow[]>> => {
+      return invoke(IpcInvokes.listSupplierBalances)
+    },
+    create: (input: CreateSupplierInput): Promise<IpcResult<SupplierDto>> => {
+      return invoke(IpcInvokes.createSupplier, input)
+    },
+    update: (id: string, input: UpdateSupplierInput): Promise<IpcResult<SupplierDto>> => {
+      return invoke(IpcInvokes.updateSupplier, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteSupplier, id)
+    },
+    listInvoices: (supplierId: string): Promise<IpcResult<SupplierInvoiceDto[]>> => {
+      return invoke(IpcInvokes.listSupplierInvoices, supplierId)
+    },
+    listPayments: (supplierId: string): Promise<IpcResult<SupplierPaymentDto[]>> => {
+      return invoke(IpcInvokes.listSupplierPayments, supplierId)
+    },
+    createInvoice: (input: CreateSupplierInvoiceInput): Promise<IpcResult<SupplierInvoiceDto>> => {
+      return invoke(IpcInvokes.createSupplierInvoice, input)
+    },
+    createPayment: (input: CreateSupplierPaymentInput): Promise<IpcResult<SupplierPaymentDto>> => {
+      return invoke(IpcInvokes.createSupplierPayment, input)
+    },
+  },
+  expenses: {
+    listCategories: (): Promise<IpcResult<ExpenseCategoryDto[]>> => {
+      return invoke(IpcInvokes.listExpenseCategories)
+    },
+    createCategory: (input: CreateExpenseCategoryInput): Promise<IpcResult<ExpenseCategoryDto>> => {
+      return invoke(IpcInvokes.createExpenseCategory, input)
+    },
+    updateCategory: (
+      id: string,
+      input: UpdateExpenseCategoryInput,
+    ): Promise<IpcResult<ExpenseCategoryDto>> => {
+      return invoke(IpcInvokes.updateExpenseCategory, id, input)
+    },
+    deleteCategory: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteExpenseCategory, id)
+    },
+    listInRange: (input: ListExpensesInRangeInput): Promise<IpcResult<ExpenseDto[]>> => {
+      return invoke(IpcInvokes.listExpensesInRange, input)
+    },
+    totalInRange: (input: ListExpensesInRangeInput): Promise<IpcResult<ExpenseTotalInRangeDto>> => {
+      return invoke(IpcInvokes.getExpenseTotalInRange, input)
+    },
+    create: (input: CreateExpenseInput): Promise<IpcResult<ExpenseDto>> => {
+      return invoke(IpcInvokes.createExpense, input)
+    },
+    update: (id: string, input: UpdateExpenseInput): Promise<IpcResult<ExpenseDto>> => {
+      return invoke(IpcInvokes.updateExpense, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteExpense, id)
+    },
+  },
+  cashflow: {
+    listRecent: (input: ListRecentCashflowInput): Promise<IpcResult<CashflowLineDto[]>> => {
+      return invoke(IpcInvokes.listRecentCashflow, input)
     },
   },
 })

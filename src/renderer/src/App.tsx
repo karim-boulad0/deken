@@ -5,6 +5,9 @@ import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { PosPage } from './pages/pos/PosPage'
 import { ProductsPage } from './pages/products/ProductsPage'
 import { DebtsPage } from './pages/debts/DebtsPage'
+import { SuppliersPage } from './pages/suppliers/SuppliersPage'
+import { ExpensesPage } from './pages/expenses/ExpensesPage'
+import { CashflowPage } from './pages/cashflow/CashflowPage'
 import { ReportsPage } from './pages/reports/ReportsPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 
@@ -19,6 +22,9 @@ export default function App() {
           <Route path="pos" element={<PosPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="debts" element={<DebtsPage />} />
+          <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="cashflow" element={<CashflowPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

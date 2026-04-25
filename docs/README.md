@@ -21,6 +21,7 @@
 | [plans/04-phase-5-data-and-ipc.md](./plans/04-phase-5-data-and-ipc.md)         | **الخطة التالية** بعد التصميم: بيانات، IPC، ربط الميزات |
 | `architecture/`                                                                  | قرارات معمارية و ADR (جاهز للمحتوى)                  |
 | [guides/dev-setup.md](./guides/dev-setup.md)                                     | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
+| [guides/scanner-qr-products-guide.md](./guides/scanner-qr-products-guide.md)     | إعداد وتشغيل سكانر QR/Barcode لإدخال أكواد المنتجات |
 
 ## إضافة مستند جديد
 

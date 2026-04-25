@@ -2,25 +2,44 @@
 
 import type {
   AppSettingsDto,
+  CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
   CreateCustomerInput,
+  CreateExpenseCategoryInput,
+  CreateExpenseInput,
   CreateProductInput,
+  CreateSupplierInput,
+  CreateSupplierInvoiceInput,
+  CreateSupplierPaymentInput,
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
+  DashboardSnapshotInput,
   DashboardSnapshotDto,
+  ExpenseCategoryDto,
+  ExpenseDto,
+  ExpenseTotalInRangeDto,
   IpcResult,
+  ListExpensesInRangeInput,
+  ListRecentCashflowInput,
   RecordDebtPaymentInput,
   RecordDebtPaymentResult,
   SaleLineViewDto,
   PosSaleLineInput,
   ProductDto,
+  SupplierBalanceRow,
+  SupplierDto,
+  SupplierInvoiceDto,
+  SupplierPaymentDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateExpenseCategoryInput,
+  UpdateExpenseInput,
   UpdateProductInput,
+  UpdateSupplierInput,
   SalesReportDto,
   SalesReportInput,
 } from '../../shared/ipc/types'
@@ -53,6 +72,7 @@ type DekenPreload = {
     completeCash: (lines: PosSaleLineInput[]) => Promise<IpcResult<CompleteCashSaleResult>>
     completeDebt: (input: CompleteDebtSaleInput) => Promise<IpcResult<CompleteCashSaleResult>>
     getDebtSaleLines: (customerId: string, saleId: string) => Promise<IpcResult<SaleLineViewDto[]>>
+    voidCash: (saleId: string) => Promise<IpcResult<{ saleId: string }>>
   }
   reports: {
     getSales: (r: SalesReportInput) => Promise<IpcResult<SalesReportDto>>
@@ -62,7 +82,31 @@ type DekenPreload = {
     set: (input: UpdateAppSettingsInput) => Promise<IpcResult<AppSettingsDto>>
   }
   dashboard: {
-    getSnapshot: () => Promise<IpcResult<DashboardSnapshotDto>>
+    getSnapshot: (input?: DashboardSnapshotInput) => Promise<IpcResult<DashboardSnapshotDto>>
+  }
+  suppliers: {
+    listBalances: () => Promise<IpcResult<SupplierBalanceRow[]>>
+    create: (input: CreateSupplierInput) => Promise<IpcResult<SupplierDto>>
+    update: (id: string, input: UpdateSupplierInput) => Promise<IpcResult<SupplierDto>>
+    delete: (id: string) => Promise<IpcResult<null>>
+    listInvoices: (supplierId: string) => Promise<IpcResult<SupplierInvoiceDto[]>>
+    listPayments: (supplierId: string) => Promise<IpcResult<SupplierPaymentDto[]>>
+    createInvoice: (input: CreateSupplierInvoiceInput) => Promise<IpcResult<SupplierInvoiceDto>>
+    createPayment: (input: CreateSupplierPaymentInput) => Promise<IpcResult<SupplierPaymentDto>>
+  }
+  expenses: {
+    listCategories: () => Promise<IpcResult<ExpenseCategoryDto[]>>
+    createCategory: (input: CreateExpenseCategoryInput) => Promise<IpcResult<ExpenseCategoryDto>>
+    updateCategory: (id: string, input: UpdateExpenseCategoryInput) => Promise<IpcResult<ExpenseCategoryDto>>
+    deleteCategory: (id: string) => Promise<IpcResult<null>>
+    listInRange: (input: ListExpensesInRangeInput) => Promise<IpcResult<ExpenseDto[]>>
+    totalInRange: (input: ListExpensesInRangeInput) => Promise<IpcResult<ExpenseTotalInRangeDto>>
+    create: (input: CreateExpenseInput) => Promise<IpcResult<ExpenseDto>>
+    update: (id: string, input: UpdateExpenseInput) => Promise<IpcResult<ExpenseDto>>
+    delete: (id: string) => Promise<IpcResult<null>>
+  }
+  cashflow: {
+    listRecent: (input: ListRecentCashflowInput) => Promise<IpcResult<CashflowLineDto[]>>
   }
 }
 

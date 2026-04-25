@@ -195,11 +195,224 @@ export type StockAlertRow = {
   stock: number
 }
 
+export type DashboardCashflowTodayDto = {
+  cashInLbp: number
+  cashOutLbp: number
+  netLbp: number
+}
+
+export type DashboardDayComparisonDto = {
+  todayTotalLbp: number
+  yesterdayTotalLbp: number
+  deltaLbp: number
+  /**
+   * Percent change compared to yesterday.
+   * Null when yesterday baseline is zero (undefined growth rate).
+   */
+  deltaPct: number | null
+}
+
+export type DashboardSmartAlertDto = {
+  id: string
+  kind: 'low_stock' | 'customer_debt' | 'supplier_payable' | 'expense_spike'
+  severity: 'high' | 'medium'
+  label: string
+  value: number
+  context: string | null
+}
+
+export type DashboardRange = 'today' | '7d' | '30d'
+
+export type DashboardSnapshotInput = {
+  range: DashboardRange
+}
+
+export type DashboardProductSalesDto = {
+  productId: string
+  name: string
+  sku: string
+  quantitySold: number
+}
+
+export type DashboardTaskKind =
+  | 'collect_customer_debt'
+  | 'pay_supplier'
+  | 'reorder_stock'
+  | 'review_expenses'
+
+export type DashboardTaskDto = {
+  id: string
+  kind: DashboardTaskKind
+  severity: 'high' | 'medium'
+  label: string
+  value: number
+  routeTo: '/debts' | '/suppliers' | '/products' | '/expenses'
+}
+
+export type DashboardAlertThresholdsDto = {
+  lowStockThreshold: number
+  highDebtBalanceLbp: number
+  highSupplierPayableLbp: number
+  expenseSpikeMinLbp: number
+  expenseSpikeRatio: number
+}
+
+export type DashboardPeriodDto = {
+  range: DashboardRange
+  startDateYmd: string
+  endDateYmd: string
+}
+
 export type DashboardSnapshotDto = {
+  period: DashboardPeriodDto
   today: DashboardTodayDto
+  cashflowToday: DashboardCashflowTodayDto
+  dayComparison: DashboardDayComparisonDto
+  smartAlerts: DashboardSmartAlertDto[]
+  topProducts: DashboardProductSalesDto[]
+  slowProducts: DashboardProductSalesDto[]
+  todayTasks: DashboardTaskDto[]
+  alertThresholds: DashboardAlertThresholdsDto
   lowStock: StockAlertRow[]
   /** Same value as the query threshold (products with stock at or below this are listed). */
   lowStockThreshold: number
+}
+
+/** What the shop owes the supplier: invoices minus payments (positive = outstanding). */
+export type SupplierBalanceRow = SupplierDto & {
+  balanceLbp: number
+}
+
+export type SupplierDto = {
+  id: string
+  name: string
+  phone: string | null
+  note: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreateSupplierInput = {
+  name: string
+  phone?: string
+  note?: string
+}
+
+export type UpdateSupplierInput = {
+  name?: string
+  phone?: string | null
+  note?: string | null
+}
+
+export type SupplierInvoiceDto = {
+  id: string
+  supplierId: string
+  invoiceDate: string
+  amountLbp: number
+  reference: string | null
+  note: string | null
+  createdAt: string
+}
+
+export type CreateSupplierInvoiceInput = {
+  supplierId: string
+  invoiceDate: string
+  amountLbp: number
+  reference?: string
+  note?: string
+}
+
+export type SupplierPaymentDto = {
+  id: string
+  supplierId: string
+  amountLbp: number
+  createdAt: string
+  note: string | null
+}
+
+export type CreateSupplierPaymentInput = {
+  supplierId: string
+  amountLbp: number
+  note?: string
+}
+
+export type ExpenseCategoryDto = {
+  id: string
+  name: string
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreateExpenseCategoryInput = {
+  name: string
+  sortOrder?: number
+}
+
+export type UpdateExpenseCategoryInput = {
+  name?: string
+  sortOrder?: number
+}
+
+export type ExpenseDto = {
+  id: string
+  categoryId: string
+  categoryName: string
+  amountLbp: number
+  spentAt: string
+  note: string | null
+  paidFromCash: boolean
+  createdAt: string
+}
+
+export type CreateExpenseInput = {
+  categoryId: string
+  amountLbp: number
+  spentAt: string
+  note?: string
+  paidFromCash?: boolean
+}
+
+export type UpdateExpenseInput = {
+  categoryId?: string
+  amountLbp?: number
+  spentAt?: string
+  note?: string | null
+  paidFromCash?: boolean
+}
+
+export type ListExpensesInRangeInput = {
+  fromDate: string
+  toDate: string
+}
+
+export type ExpenseTotalInRangeDto = {
+  fromDate: string
+  toDate: string
+  totalLbp: number
+}
+
+export type CashflowLineKind =
+  | 'cash_sale'
+  | 'debt_sale'
+  | 'debt_payment'
+  | 'supplier_payment'
+  | 'expense'
+
+export type CashflowLineDto = {
+  rowKey: string
+  at: string
+  kind: CashflowLineKind
+  /** Inflow positive (sales, debt payments); outflow negative (supplier payment, expense). */
+  amountSignedLbp: number
+  primaryLabel: string | null
+  secondaryLabel: string | null
+  saleId: string | null
+  canVoid: boolean
+}
+
+export type ListRecentCashflowInput = {
+  limit: number
 }
 
 export const IpcInvokes = {
@@ -225,6 +438,25 @@ export const IpcInvokes = {
   getAppSettings: 'deken:settings:get',
   setAppSettings: 'deken:settings:set',
   getDashboardSnapshot: 'deken:dashboard:getSnapshot',
+  listSupplierBalances: 'deken:suppliers:listBalances',
+  createSupplier: 'deken:suppliers:create',
+  updateSupplier: 'deken:suppliers:update',
+  deleteSupplier: 'deken:suppliers:delete',
+  listSupplierInvoices: 'deken:suppliers:listInvoices',
+  listSupplierPayments: 'deken:suppliers:listPayments',
+  createSupplierInvoice: 'deken:suppliers:createInvoice',
+  createSupplierPayment: 'deken:suppliers:createPayment',
+  listExpenseCategories: 'deken:expenses:listCategories',
+  createExpenseCategory: 'deken:expenses:createCategory',
+  updateExpenseCategory: 'deken:expenses:updateCategory',
+  deleteExpenseCategory: 'deken:expenses:deleteCategory',
+  listExpensesInRange: 'deken:expenses:listInRange',
+  getExpenseTotalInRange: 'deken:expenses:totalInRange',
+  createExpense: 'deken:expenses:create',
+  updateExpense: 'deken:expenses:update',
+  deleteExpense: 'deken:expenses:delete',
+  listRecentCashflow: 'deken:cashflow:listRecent',
+  voidCashSale: 'deken:sales:voidCash',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

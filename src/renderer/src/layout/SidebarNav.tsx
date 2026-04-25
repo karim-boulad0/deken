@@ -1,10 +1,13 @@
 import {
   type LucideIcon,
   BarChart3,
+  History,
   LayoutDashboard,
   Package,
+  Receipt,
   ScanBarcode,
   Settings,
+  Truck,
   Wallet,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -15,6 +18,9 @@ const routes: readonly { to: string; labelKey: string; Icon: LucideIcon }[] = [
   { to: '/pos', labelKey: 'nav.pos', Icon: ScanBarcode },
   { to: '/products', labelKey: 'nav.products', Icon: Package },
   { to: '/debts', labelKey: 'nav.debts', Icon: Wallet },
+  { to: '/suppliers', labelKey: 'nav.suppliers', Icon: Truck },
+  { to: '/expenses', labelKey: 'nav.expenses', Icon: Receipt },
+  { to: '/cashflow', labelKey: 'nav.cashflow', Icon: History },
   { to: '/reports', labelKey: 'nav.reports', Icon: BarChart3 },
   { to: '/settings', labelKey: 'nav.settings', Icon: Settings },
 ]

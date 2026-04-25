@@ -9,6 +9,9 @@
     "pos": "Point of sale",
     "products": "Products & stock",
     "debts": "Debts",
+    "suppliers": "Suppliers",
+    "expenses": "Expenses",
+    "cashflow": "Cashflow",
     "reports": "Reports",
     "settings": "Settings"
   },
@@ -27,22 +30,30 @@
   },
   "dashboard": {
     "pageTitle": "Dashboard",
-    "intro": "Today's snapshot from the local database: all recorded sales in your device's local day (from midnight to midnight), cash and on-account. USD amounts are approximate, using the LBP/USD rate in Settings.",
-    "dateLine": "Calendar day: {{date}}",
+    "intro": "Operational snapshot from the local database. Switch period to review short trends, priorities, and stock pressure before you start the day.",
+    "dateLine": "Period: {{from}} → {{to}}",
     "loadError": "Could not load dashboard data.",
     "retry": "Retry",
+    "range": {
+      "aria": "Dashboard period",
+      "today": "Today",
+      "7d": "7 days",
+      "30d": "30 days"
+    },
     "sections": {
       "summary": "Today at a glance",
       "shortcuts": "Quick actions",
-      "alerts": "Stock & reminders"
+      "alerts": "Stock & reminders",
+      "topProducts": "Product movers",
+      "tasks": "Today tasks"
     },
     "summary": {
-      "salesLabel": "Today's sales (approx. USD)",
+      "salesLabel": "Sales (approx. USD)",
       "invoicesLabel": "Invoices",
       "itemsLabel": "Items sold (units)",
       "salesAria": "Approximate US dollars: {{usd}}. Total in Lebanese pounds: {{lbp}}",
       "loading": "Loading…",
-      "footnote": "The summary uses the device's local time zone. Approximate US dollars = total LBP ÷ the rate in Settings. Expiry dates are not part of the catalog yet; alerts are stock-only."
+      "footnote": "Values use local device time and selected period. Approximate US dollars = total LBP ÷ rate in Settings."
     },
     "shortcuts": {
       "newSale": "New sale",
@@ -58,11 +69,55 @@
       "emptyTitle": "Stock looks good",
       "emptyBody": "No products are at or below the low threshold ({{threshold}}) on hand.",
       "tableHint": "Products with on-hand count at or below {{threshold}} (out of stock first, then low).",
+      "viewAll": "View all in Products",
       "colName": "Product",
       "colSku": "SKU",
       "colStock": "On hand",
       "badgeOut": "Out of stock",
       "badgeLow": "Low: {{n}}"
+    },
+    "cashflow": {
+      "title": "Cashflow today",
+      "cashIn": "Cash in",
+      "cashOut": "Cash out",
+      "net": "Net"
+    },
+    "compare": {
+      "title": "Current period vs previous",
+      "noBaseline": "No baseline",
+      "deltaPct": "{{n}} change",
+      "line": "Current {{today}} vs previous {{yesterday}} (delta {{delta}})."
+    },
+    "smartAlerts": {
+      "title": "Smart alerts",
+      "empty": "No urgent financial or stock alerts right now.",
+      "severityHigh": "High",
+      "severityMedium": "Medium",
+      "lowStockTitle": "Low stock: {{name}}",
+      "lowStockValue": "{{n}} on hand",
+      "lowStockHint": "Threshold: {{threshold}} or less",
+      "customerDebtTitle": "Customer debt risk: {{name}}",
+      "customerDebtHint": "High risk threshold: {{threshold}}",
+      "supplierPayableTitle": "Supplier payable due: {{name}}",
+      "supplierPayableHint": "High risk threshold: {{threshold}}",
+      "expenseSpikeTitle": "Cash expense spike",
+      "expenseSpikeHint": "Triggered at min {{min}} and at least {{ratio}} of baseline"
+    },
+    "topProducts": {
+      "bestTitle": "Top sold",
+      "slowTitle": "Slow movers",
+      "empty": "No sold products in this period yet.",
+      "qty": "{{n}} units",
+      "openProducts": "Open Products",
+      "openReports": "Open Reports"
+    },
+    "tasks": {
+      "empty": "No urgent tasks right now.",
+      "collectDebt": "Collect debt from {{name}}",
+      "paySupplier": "Schedule supplier payment: {{name}}",
+      "reorderStock": "Reorder stock: {{name}}",
+      "reviewExpenses": "Review unusual cash expenses",
+      "open": "Open"
     }
   },
   "pos": {
@@ -400,6 +455,208 @@
       "d2detail": "Balance cleared after partial cash — placeholder timeline.",
       "d3name": "Omar K. — corner shop",
       "d3detail": "Two open tickets merged in UI preview — not persisted."
+    }
+  },
+  "suppliers": {
+    "pageTitle": "Suppliers",
+    "intro": "Track what you owe suppliers: purchase invoices (obligations) minus payments. Positive balance means outstanding payables.",
+    "loading": "Loading…",
+    "loadError": "Could not load suppliers.",
+    "retryLoad": "Retry",
+    "empty": "No suppliers yet. Add one to record invoices and payments.",
+    "toolbar": {
+      "searchPlaceholder": "Search by name, phone, or note…",
+      "searchAria": "Search suppliers",
+      "balanceFilterLabel": "Balance",
+      "filterAll": "All",
+      "filterOwes": "Outstanding payables",
+      "filterZero": "Settled (zero)",
+      "addSupplier": "Add supplier"
+    },
+    "table": {
+      "sectionTitle": "Suppliers",
+      "name": "Supplier",
+      "phone": "Phone",
+      "balanceLbp": "Balance (LBP)",
+      "balanceUsd": "Approx. (USD)",
+      "actions": "Actions",
+      "noPhone": "—"
+    },
+    "actions": {
+      "invoice": "Invoice",
+      "payment": "Payment",
+      "edit": "Edit",
+      "delete": "Delete",
+      "viewHistory": "View invoices and payments",
+      "ariaViewHistory": "View history for {{name}}"
+    },
+    "historyDialog": {
+      "subtitle": "Supplier: {{name}}",
+      "close": "Close"
+    },
+    "ledger": {
+      "title": "History (invoices and payments)",
+      "loading": "Loading history…",
+      "loadError": "Could not load this supplier’s history. Try again.",
+      "empty": "No invoices or payments recorded yet for this supplier.",
+      "colType": "Type",
+      "colWhen": "Date",
+      "colAmount": "Amount (LBP)",
+      "colDetail": "Reference / note",
+      "typeInvoice": "Purchase invoice",
+      "typePayment": "Payment",
+      "amountInvoice": "+ {{n}}",
+      "amountPayment": "− {{n}}",
+      "noDetail": "—"
+    },
+    "form": {
+      "createTitle": "Add supplier",
+      "editTitle": "Edit supplier",
+      "name": "Name",
+      "phone": "Phone (optional)",
+      "note": "Note (optional)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "invoice": {
+      "title": "Record purchase — {{name}}",
+      "date": "Invoice date",
+      "amount": "Amount (LBP)",
+      "reference": "Reference / document no. (optional)",
+      "note": "Note (optional)",
+      "submit": "Save invoice"
+    },
+    "payment": {
+      "title": "Pay supplier — {{name}}",
+      "amount": "Amount (LBP)",
+      "note": "Note (optional)",
+      "submit": "Save payment"
+    },
+    "delete": {
+      "title": "Delete supplier",
+      "body": "Delete «{{name}}» and all linked invoices and payments? This cannot be undone.",
+      "confirm": "Delete"
+    },
+    "toast": {
+      "created": "Supplier saved.",
+      "updated": "Supplier updated.",
+      "invoiceAdded": "Invoice recorded.",
+      "paymentAdded": "Payment recorded.",
+      "deleted": "Supplier deleted."
+    },
+    "errors": {
+      "name_required": "Enter a supplier name.",
+      "supplier_not_found": "Supplier was not found.",
+      "amount_invalid": "Enter a valid whole amount in LBP (at least 1).",
+      "invalid_date": "Pick a valid invoice date.",
+      "name_too_long": "Name is too long.",
+      "note_too_long": "Note is too long.",
+      "reference_too_long": "Reference is too long.",
+      "generic": "Could not save: {{message}}"
+    }
+  },
+  "expenses": {
+    "pageTitle": "Expenses",
+    "intro": "Record operating costs by category. Totals for a date range help compare against sales when you run reports.",
+    "loading": "Loading…",
+    "tabs": {
+      "ledger": "Expense log",
+      "categories": "Categories"
+    },
+    "categories": {
+      "title": "Expense categories",
+      "add": "Add category",
+      "name": "Name",
+      "createTitle": "New category",
+      "editTitle": "Rename category",
+      "edit": "Edit",
+      "delete": "Delete",
+      "empty": "No categories yet. Add one to log expenses.",
+      "confirmDelete": "Delete category «{{name}}»? Expenses cannot use it afterward.",
+      "toastAdded": "Category added.",
+      "toastUpdated": "Category updated.",
+      "toastDeleted": "Category deleted."
+    },
+    "ledger": {
+      "from": "From",
+      "to": "To",
+      "add": "Add expense",
+      "total": "Total in range: {{n}}",
+      "colDate": "Date",
+      "colCategory": "Category",
+      "colAmount": "Amount (LBP)",
+      "colNote": "Note",
+      "colCash": "From cash",
+      "colActions": "Actions",
+      "yes": "Yes",
+      "no": "No",
+      "empty": "No expenses in this range.",
+      "createTitle": "Add expense",
+      "editTitle": "Edit expense",
+      "edit": "Edit",
+      "delete": "Delete",
+      "confirmDelete": "Delete this expense line?",
+      "toastAdded": "Expense saved.",
+      "toastUpdated": "Expense updated.",
+      "toastDeleted": "Expense deleted.",
+      "paidFromCash": "Paid from cash drawer (for cashflow alignment)"
+    },
+    "form": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "errors": {
+      "name_required": "Enter a category name.",
+      "not_found": "Record was not found.",
+      "category_in_use": "This category still has expenses — delete or reassign them first.",
+      "amount_invalid": "Enter a valid whole amount in LBP (at least 1).",
+      "invalid_date_range": "Invalid dates.",
+      "name_too_long": "Name is too long.",
+      "note_too_long": "Note is too long.",
+      "generic": "Could not save: {{message}}"
+    }
+  },
+  "cashflow": {
+    "pageTitle": "Cashflow",
+    "intro": "Latest mixed operations: cash sales, on-account sales, customer payments, supplier payments, and expenses. Void is available only for today’s cash sales.",
+    "loading": "Loading…",
+    "empty": "No recent operations.",
+    "limitLabel": "Rows to show",
+    "colWhen": "When",
+    "colKind": "Type",
+    "colDetail": "Detail",
+    "colAmount": "Amount (signed LBP)",
+    "colActions": "Actions",
+    "kinds": {
+      "cash_sale": "Cash sale",
+      "debt_sale": "On-account sale",
+      "debt_payment": "Customer payment",
+      "supplier_payment": "Supplier payment",
+      "expense": "Expense"
+    },
+    "actions": {
+      "void": "Void sale"
+    },
+    "hintVoid": "Void restores stock and hides the sale from reports and dashboard. Only same-day cash sales can be voided.",
+    "voidDialog": {
+      "title": "Void this cash sale?",
+      "body": "Stock will be restored and the sale will be excluded from totals. This is meant for quick corrections.",
+      "cancel": "Cancel",
+      "confirm": "Void sale",
+      "working": "Voiding…"
+    },
+    "toast": {
+      "voided": "Cash sale voided."
+    },
+    "errors": {
+      "sale_not_found": "Sale was not found.",
+      "not_cash_sale": "Only cash sales can be voided here.",
+      "already_voided": "This sale is already voided.",
+      "void_not_same_day": "Only sales from today (local date) can be voided.",
+      "invalid_input": "Invalid request.",
+      "generic": "Could not void: {{message}}"
     }
   },
   "reports": {

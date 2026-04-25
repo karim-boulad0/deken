@@ -80,3 +80,12 @@
 
 - [فهرس الخطط](./README.md)
 - [تذكيرات لاحقة (ليست تسليماً تفصيلياً)](./future-reminders.md)
+
+---
+
+## تنفيذ v1 (مختصر تقني)
+
+- **الموردون:** جداول `suppliers`, `supplier_invoices`, `supplier_payments`؛ الرصيد = مجموع الفواتير − مجموع الدفعات؛ واجهة في [`src/renderer/src/pages/suppliers/SuppliersPage.tsx`](../../src/renderer/src/pages/suppliers/SuppliersPage.tsx).
+- **المصاريف:** `expense_categories`, `expenses` (حقل `paid_from_cash` للتماشي لاحقاً مع الصندوق)؛ [`ExpensesPage.tsx`](../../src/renderer/src/pages/expenses/ExpensesPage.tsx).
+- **حركة الصندوق:** دمج أحداث من `sales` (مع `voided_at IS NULL` للنقدي)، مبيعات الدين، `debt_payments`، `supplier_payments`، `expenses`؛ [`cashflowService.ts`](../../src/main/data/cashflowService.ts) و[`CashflowPage.tsx`](../../src/renderer/src/pages/cashflow/CashflowPage.tsx).
+- **إلغاء البيع النقدي:** فقط `payment_type = 'cash'` و`voided_at` فارغ و**نفس يوم التقويم المحلي** لـ`created_at`؛ يعيد الكميات من `sale_lines` إلى `products`؛ التقارير واللوحة تستبعد الصفوف ذات `voided_at` غير فارغ.

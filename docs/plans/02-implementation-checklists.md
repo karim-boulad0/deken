@@ -83,6 +83,16 @@
 
 ---
 
+## Phase 6 — الموردون، المصاريف، حركة الصندوق (توسعة تشغيلية)
+
+**المرجع:** [05-suppliers-expenses-cashflow.md](./05-suppliers-expenses-cashflow.md)
+
+- [x] ترحيلات `0010` (موردون + فواتير شراء + دفعات مورد)، خدمة `supplierService`، IPC، صفحة `/suppliers`، i18n.
+- [x] ترحيلات `0011` (تصنيفات مصاريف + مصاريف)، خدمة `expenseService`، IPC، صفحة `/expenses` (سجل + تصنيفات)، i18n.
+- [x] ترحيل `0012` (`sales.voided_at`)، `voidCashSale` (نقدي + نفس اليوم المحلي + إعادة مخزون)، استبعاد الملغى من التقرير واللوحة، `cashflowService` + صفحة `/cashflow` (حد 5–20 + إلغاء)، i18n.
+
+---
+
 ## روابط
 
 - [خارطة التنفيذ 02](./02-implementation-roadmap.md)

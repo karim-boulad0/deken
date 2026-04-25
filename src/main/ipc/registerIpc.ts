@@ -12,7 +12,34 @@ import {
   listCustomers,
   recordDebtPayment,
 } from '../data/customerService'
-import { completeCashSale, completeDebtSale, getDebtSaleLines } from '../data/saleService'
+import {
+  completeCashSale,
+  completeDebtSale,
+  getDebtSaleLines,
+  voidCashSale,
+} from '../data/saleService'
+import {
+  createExpense,
+  createExpenseCategory,
+  deleteExpense,
+  deleteExpenseCategory,
+  getExpenseTotalInRange,
+  listExpenseCategories,
+  listExpensesInRange,
+  updateExpense,
+  updateExpenseCategory,
+} from '../data/expenseService'
+import { listRecentCashflow } from '../data/cashflowService'
+import {
+  createSupplier,
+  createSupplierInvoice,
+  createSupplierPayment,
+  deleteSupplier,
+  listSupplierBalances,
+  listSupplierInvoices,
+  listSupplierPayments,
+  updateSupplier,
+} from '../data/supplierService'
 import {
   createProduct,
   deleteProduct,
@@ -29,15 +56,26 @@ import { IpcInvokes } from '../../shared/ipc/types'
 import type {
   CreateCategoryInput,
   CreateCustomerInput,
+  CreateExpenseCategoryInput,
+  CreateExpenseInput,
   CreateProductInput,
+  CreateSupplierInput,
+  CreateSupplierInvoiceInput,
+  CreateSupplierPaymentInput,
   CompleteDebtSaleInput,
+  DashboardSnapshotInput,
   IpcResult,
+  ListExpensesInRangeInput,
+  ListRecentCashflowInput,
   PosSaleLineInput,
   RecordDebtPaymentInput,
   SalesReportInput,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateExpenseCategoryInput,
+  UpdateExpenseInput,
   UpdateProductInput,
+  UpdateSupplierInput,
 } from '../../shared/ipc/types'
 
 /**
@@ -155,7 +193,144 @@ export function registerIpc(): void {
     return r
   })
 
-  ipcMain.handle(IpcInvokes.getDashboardSnapshot, () => {
-    return getDashboardSnapshot(db())
+  ipcMain.handle(IpcInvokes.getDashboardSnapshot, (_evt, input: DashboardSnapshotInput | undefined) => {
+    if (
+      input != null &&
+      (typeof input !== 'object' || !['today', '7d', '30d'].includes(String(input.range)))
+    ) {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return getDashboardSnapshot(db(), input ?? { range: 'today' })
+  })
+
+  ipcMain.handle(IpcInvokes.listSupplierBalances, () => {
+    return listSupplierBalances(db())
+  })
+
+  ipcMain.handle(IpcInvokes.createSupplier, (_evt, input: CreateSupplierInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createSupplier(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.updateSupplier, (_evt, id: string, input: UpdateSupplierInput) => {
+    if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return updateSupplier(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.deleteSupplier, (_evt, id: string) => {
+    if (typeof id !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return deleteSupplier(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.listSupplierInvoices, (_evt, supplierId: string) => {
+    if (typeof supplierId !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return listSupplierInvoices(db(), supplierId)
+  })
+
+  ipcMain.handle(IpcInvokes.listSupplierPayments, (_evt, supplierId: string) => {
+    if (typeof supplierId !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return listSupplierPayments(db(), supplierId)
+  })
+
+  ipcMain.handle(IpcInvokes.createSupplierInvoice, (_evt, input: CreateSupplierInvoiceInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createSupplierInvoice(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.createSupplierPayment, (_evt, input: CreateSupplierPaymentInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createSupplierPayment(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.listExpenseCategories, () => {
+    return listExpenseCategories(db())
+  })
+
+  ipcMain.handle(IpcInvokes.createExpenseCategory, (_evt, input: CreateExpenseCategoryInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createExpenseCategory(db(), input)
+  })
+
+  ipcMain.handle(
+    IpcInvokes.updateExpenseCategory,
+    (_evt, id: string, input: UpdateExpenseCategoryInput) => {
+      if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+        return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+      }
+      return updateExpenseCategory(db(), id, input)
+    },
+  )
+
+  ipcMain.handle(IpcInvokes.deleteExpenseCategory, (_evt, id: string) => {
+    if (typeof id !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return deleteExpenseCategory(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.listExpensesInRange, (_evt, input: ListExpensesInRangeInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return listExpensesInRange(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.getExpenseTotalInRange, (_evt, input: ListExpensesInRangeInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return getExpenseTotalInRange(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.createExpense, (_evt, input: CreateExpenseInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createExpense(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.updateExpense, (_evt, id: string, input: UpdateExpenseInput) => {
+    if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return updateExpense(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.deleteExpense, (_evt, id: string) => {
+    if (typeof id !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return deleteExpense(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.listRecentCashflow, (_evt, input: ListRecentCashflowInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    const lim = Number((input as ListRecentCashflowInput).limit)
+    return listRecentCashflow(db(), { limit: lim })
+  })
+
+  ipcMain.handle(IpcInvokes.voidCashSale, (_evt, saleId: string) => {
+    if (typeof saleId !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return voidCashSale(db(), saleId)
   })
 }

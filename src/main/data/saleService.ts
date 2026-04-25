@@ -25,7 +25,11 @@ function asResult<T>(fn: () => T): IpcResult<T> {
       m === 'product_not_found' ||
       m === 'insufficient_stock' ||
       m === 'customer_not_found' ||
-      m === 'name_required'
+      m === 'name_required' ||
+      m === 'sale_not_found' ||
+      m === 'not_cash_sale' ||
+      m === 'already_voided' ||
+      m === 'void_not_same_day'
     ) {
       return { ok: false, error: makeError('validation', m) }
     }
@@ -231,6 +235,67 @@ export function completeDebtSale(
 /**
  * Lines for one on-account sale, scoped to the customer (so IDs cannot be probed across customers).
  */
+function localYmdFromIso(iso: string): string {
+  const d = new Date(iso)
+  const y = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mo}-${day}`
+}
+
+function todayLocalYmd(): string {
+  return localYmdFromIso(new Date().toISOString())
+}
+
+/**
+ * Void a cash sale from today (local calendar): mark voided_at and restore catalog stock.
+ */
+export function voidCashSale(db: Database, saleId: string): IpcResult<{ saleId: string }> {
+  return asResult(() => {
+    const sid = (saleId ?? '').trim()
+    if (!sid) {
+      throw new Error('sale_not_found')
+    }
+    const row = db
+      .prepare(
+        `SELECT id, created_at, payment_type, voided_at FROM sales WHERE id = ?`,
+      )
+      .get(sid) as
+      | { id: string; created_at: string; payment_type: string; voided_at: string | null }
+      | undefined
+    if (!row) {
+      throw new Error('sale_not_found')
+    }
+    if (row.payment_type !== 'cash') {
+      throw new Error('not_cash_sale')
+    }
+    if (row.voided_at != null && String(row.voided_at).trim() !== '') {
+      throw new Error('already_voided')
+    }
+    if (localYmdFromIso(row.created_at) !== todayLocalYmd()) {
+      throw new Error('void_not_same_day')
+    }
+    const now = new Date().toISOString()
+    const lines = db
+      .prepare(
+        `SELECT product_id, quantity FROM sale_lines WHERE sale_id = ?`,
+      )
+      .all(sid) as { product_id: string; quantity: number }[]
+
+    const tx = db.transaction(() => {
+      const stInc = db.prepare(
+        `UPDATE products SET stock = stock + @q, updated_at = @u WHERE id = @id`,
+      )
+      for (const ln of lines) {
+        stInc.run({ id: ln.product_id, q: ln.quantity, u: now })
+      }
+      db.prepare('UPDATE sales SET voided_at = ? WHERE id = ?').run(now, sid)
+    })
+    tx()
+    return { saleId: sid }
+  })
+}
+
 export function getDebtSaleLines(
   db: Database,
   customerId: string,

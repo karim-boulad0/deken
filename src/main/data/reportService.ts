@@ -34,7 +34,7 @@ export function getSalesReport(
          SUM(total_lbp) AS total_lbp,
          COUNT(*) AS sale_count
        FROM sales
-       WHERE date(created_at) >= @fromD AND date(created_at) <= @toD
+       WHERE voided_at IS NULL AND date(created_at) >= @fromD AND date(created_at) <= @toD
        GROUP BY date(created_at)
        ORDER BY d`,
     )
@@ -50,7 +50,7 @@ export function getSalesReport(
          COALESCE(SUM(total_lbp), 0) AS s,
          COUNT(*) AS c
        FROM sales
-       WHERE date(created_at) >= @fromD AND date(created_at) <= @toD
+       WHERE voided_at IS NULL AND date(created_at) >= @fromD AND date(created_at) <= @toD
        GROUP BY payment_type`,
     )
     const byType = stType.all({ fromD: fromDate, toD: toDate }) as {
@@ -73,7 +73,7 @@ export function getSalesReport(
 
     const stSum = db.prepare(
       `SELECT COALESCE(SUM(total_lbp), 0) AS t FROM sales
-       WHERE date(created_at) >= @fromD AND date(created_at) <= @toD`,
+       WHERE voided_at IS NULL AND date(created_at) >= @fromD AND date(created_at) <= @toD`,
     )
     const totalLbp = (stSum.get({ fromD: fromDate, toD: toDate }) as { t: number }).t
 
