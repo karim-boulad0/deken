@@ -1,5 +1,13 @@
 import { randomUUID } from 'node:crypto'
-import type { CreateCustomerInput, CustomerBalanceRow, CustomerDto, IpcErrorShape, IpcResult } from '../../shared/ipc/types'
+import type {
+  CreateCustomerInput,
+  CustomerBalanceRow,
+  CustomerDto,
+  IpcErrorShape,
+  IpcResult,
+  RecordDebtPaymentInput,
+  RecordDebtPaymentResult,
+} from '../../shared/ipc/types'
 import type { Database } from 'better-sqlite3'
 
 type CustomerRow = {
@@ -13,6 +21,7 @@ type CustomerRow = {
 type BalanceRow = CustomerRow & {
   balance_lbp: number
   last_debt_at: string | null
+  last_debt_note: string | null
 }
 
 function makeError(code: string, message: string, details?: string): IpcErrorShape {
@@ -24,7 +33,13 @@ function asResult<T>(fn: () => T): IpcResult<T> {
     return { ok: true, data: fn() }
   } catch (e) {
     const m = e instanceof Error ? e.message : String(e)
-    if (m === 'name_required') {
+    if (
+      m === 'name_required' ||
+      m === 'amount_invalid' ||
+      m === 'payment_exceeds_balance' ||
+      m === 'no_outstanding_balance' ||
+      m === 'customer_not_found'
+    ) {
       return { ok: false, error: makeError('validation', m) }
     }
     return { ok: false, error: makeError('internal_error', m) }
@@ -50,7 +65,18 @@ export function listCustomers(db: Database): IpcResult<CustomerDto[]> {
   })
 }
 
-/** Customers with balance from sum of on-account (debt) sales; last on-account sale time for UI. */
+function normalizeNote(n: string | null): string | null {
+  if (n == null) {
+    return null
+  }
+  const t = String(n).trim()
+  return t.length === 0 ? null : t
+}
+
+/**
+ * Customers with balance = (sum of debt sales) − (sum of debt payments);
+ * last on-account sale time and note on the most recent such sale.
+ */
 export function listCustomerBalances(db: Database): IpcResult<CustomerBalanceRow[]> {
   return asResult(() => {
     const st = db.prepare(
@@ -60,11 +86,28 @@ export function listCustomerBalances(db: Database): IpcResult<CustomerBalanceRow
          c.phone,
          c.created_at,
          c.updated_at,
-         COALESCE(SUM(CASE WHEN s.payment_type = 'debt' THEN s.total_lbp END), 0) AS balance_lbp,
-         MAX(CASE WHEN s.payment_type = 'debt' THEN s.created_at END) AS last_debt_at
+         (
+           SELECT COALESCE(SUM(s.total_lbp), 0)
+           FROM sales s
+           WHERE s.customer_id = c.id AND s.payment_type = 'debt'
+         ) - (
+           SELECT COALESCE(SUM(p.amount_lbp), 0)
+           FROM debt_payments p
+           WHERE p.customer_id = c.id
+         ) AS balance_lbp,
+         (
+           SELECT MAX(s.created_at)
+           FROM sales s
+           WHERE s.customer_id = c.id AND s.payment_type = 'debt'
+         ) AS last_debt_at,
+         (
+           SELECT s.note
+           FROM sales s
+           WHERE s.customer_id = c.id AND s.payment_type = 'debt'
+           ORDER BY s.created_at DESC
+           LIMIT 1
+         ) AS last_debt_note
        FROM customers c
-       LEFT JOIN sales s ON s.customer_id = c.id
-       GROUP BY c.id, c.name, c.phone, c.created_at, c.updated_at
        ORDER BY c.name COLLATE NOCASE`,
     )
     const rows = st.all() as BalanceRow[]
@@ -72,7 +115,65 @@ export function listCustomerBalances(db: Database): IpcResult<CustomerBalanceRow
       ...toDto(r),
       balanceLbp: r.balance_lbp,
       lastDebtSaleAt: r.last_debt_at,
+      lastDebtNote: normalizeNote(r.last_debt_note),
     }))
+  })
+}
+
+function getCustomerDebtTotalLbp(db: Database, customerId: string): number {
+  const row = db
+    .prepare(
+      `SELECT COALESCE(SUM(total_lbp), 0) AS t
+       FROM sales
+       WHERE customer_id = ? AND payment_type = 'debt'`,
+    )
+    .get(customerId) as { t: number } | undefined
+  return row?.t ?? 0
+}
+
+function getCustomerPaymentsTotalLbp(db: Database, customerId: string): number {
+  const row = db
+    .prepare(`SELECT COALESCE(SUM(amount_lbp), 0) AS t FROM debt_payments WHERE customer_id = ?`)
+    .get(customerId) as { t: number } | undefined
+  return row?.t ?? 0
+}
+
+export function getCustomerBalanceLbp(db: Database, customerId: string): number {
+  const id = customerId.trim()
+  return getCustomerDebtTotalLbp(db, id) - getCustomerPaymentsTotalLbp(db, id)
+}
+
+export function recordDebtPayment(
+  db: Database,
+  input: RecordDebtPaymentInput,
+): IpcResult<RecordDebtPaymentResult> {
+  const id = (input.customerId ?? '').trim()
+  if (id.length === 0) {
+    return { ok: false, error: makeError('validation', 'customer_not_found') }
+  }
+  if (!Number.isInteger(input.amountLbp) || input.amountLbp < 1) {
+    return { ok: false, error: makeError('validation', 'amount_invalid') }
+  }
+  return asResult(() => {
+    const c = getCustomerById(db, id)
+    if (!c) {
+      throw new Error('customer_not_found')
+    }
+    const balance = getCustomerBalanceLbp(db, id)
+    if (balance <= 0) {
+      throw new Error('no_outstanding_balance')
+    }
+    if (input.amountLbp > balance) {
+      throw new Error('payment_exceeds_balance')
+    }
+    const now = new Date().toISOString()
+    const payId = randomUUID()
+    const noteTrim = (input.note ?? '').trim() || null
+    db.prepare(
+      `INSERT INTO debt_payments (id, customer_id, amount_lbp, created_at, note) VALUES (?, ?, ?, ?, ?)`,
+    ).run(payId, id, input.amountLbp, now, noteTrim)
+    const newBalance = getCustomerBalanceLbp(db, id)
+    return { paymentId: payId, newBalanceLbp: newBalance }
   })
 }
 

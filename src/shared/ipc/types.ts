@@ -76,6 +76,19 @@ export type CustomerDto = {
 export type CustomerBalanceRow = CustomerDto & {
   balanceLbp: number
   lastDebtSaleAt: string | null
+  /** Trimmed text from the most recent on-account sale, if any. */
+  lastDebtNote: string | null
+}
+
+export type RecordDebtPaymentInput = {
+  customerId: string
+  amountLbp: number
+  note?: string
+}
+
+export type RecordDebtPaymentResult = {
+  paymentId: string
+  newBalanceLbp: number
 }
 
 export type CreateCustomerInput = {
@@ -173,6 +186,7 @@ export const IpcInvokes = {
   deleteCategory: 'deken:categories:delete',
   listCustomers: 'deken:customers:list',
   listCustomerBalances: 'deken:customers:listBalances',
+  recordDebtPayment: 'deken:debt:recordPayment',
   createCustomer: 'deken:customers:create',
   completeCashSale: 'deken:sales:completeCash',
   completeDebtSale: 'deken:sales:completeDebt',

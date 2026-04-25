@@ -12,6 +12,8 @@ import type {
   IpcResult,
   PosSaleLineInput,
   ProductDto,
+  RecordDebtPaymentInput,
+  RecordDebtPaymentResult,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
@@ -95,6 +97,12 @@ export async function listCustomers(): Promise<IpcResult<CustomerDto[]>> {
 
 export async function listCustomerBalances(): Promise<IpcResult<CustomerBalanceRow[]>> {
   return assertDeken().customers.listBalances()
+}
+
+export async function recordDebtPayment(
+  input: RecordDebtPaymentInput,
+): Promise<IpcResult<RecordDebtPaymentResult>> {
+  return assertDeken().debt.recordPayment(input)
 }
 
 export async function createCustomer(

@@ -14,6 +14,8 @@ import type {
   IpcResult,
   PosSaleLineInput,
   ProductDto,
+  RecordDebtPaymentInput,
+  RecordDebtPaymentResult,
   SalesReportDto,
   SalesReportInput,
   UpdateAppSettingsInput,
@@ -69,6 +71,11 @@ contextBridge.exposeInMainWorld('deken', {
     },
     create: (input: CreateCustomerInput): Promise<IpcResult<CustomerDto>> => {
       return invoke(IpcInvokes.createCustomer, input)
+    },
+  },
+  debt: {
+    recordPayment: (input: RecordDebtPaymentInput): Promise<IpcResult<RecordDebtPaymentResult>> => {
+      return invoke(IpcInvokes.recordDebtPayment, input)
     },
   },
   sales: {

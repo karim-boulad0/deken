@@ -5,7 +5,12 @@ import {
   listCategories,
   updateCategory,
 } from '../data/categoryService'
-import { createCustomer, listCustomerBalances, listCustomers } from '../data/customerService'
+import {
+  createCustomer,
+  listCustomerBalances,
+  listCustomers,
+  recordDebtPayment,
+} from '../data/customerService'
 import { completeCashSale, completeDebtSale } from '../data/saleService'
 import {
   createProduct,
@@ -26,6 +31,7 @@ import type {
   CompleteDebtSaleInput,
   IpcResult,
   PosSaleLineInput,
+  RecordDebtPaymentInput,
   SalesReportInput,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
@@ -91,6 +97,13 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.listCustomerBalances, () => {
     return listCustomerBalances(db())
+  })
+
+  ipcMain.handle(IpcInvokes.recordDebtPayment, (_evt, input: RecordDebtPaymentInput) => {
+    if (input == null || typeof input !== 'object' || typeof input.customerId !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return recordDebtPayment(db(), input)
   })
 
   ipcMain.handle(IpcInvokes.createCustomer, (_evt, input: CreateCustomerInput) => {

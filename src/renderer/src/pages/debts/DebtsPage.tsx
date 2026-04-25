@@ -1,16 +1,33 @@
 import { ChevronDown, ChevronUp, Search } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { listCustomerBalances } from '../../lib/api/dekenClient'
+import { listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
 import { formatLbp, formatUsd } from '../pos/formatPos'
+import { RecordPaymentDialog } from './RecordPaymentDialog'
 import './DebtsPage.css'
 import type { CustomerBalanceRow } from '../../../../shared/ipc/types'
 
 type BalanceFilter = 'all' | 'positive' | 'zero'
 
+function mapPayError(m: string): string {
+  const s = m.trim()
+  if (
+    s === 'amount_invalid' ||
+    s === 'payment_exceeds_balance' ||
+    s === 'no_outstanding_balance' ||
+    s === 'customer_not_found' ||
+    s === 'invalid_input'
+  ) {
+    return s
+  }
+  return 'generic'
+}
+
 export function DebtsPage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const { settings } = useAppSettings()
   const lbpPerUsd = settings.lbpPerUsd
   const lng = i18n.language
@@ -20,6 +37,8 @@ export function DebtsPage() {
   const [rows, setRows] = useState<CustomerBalanceRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [payTarget, setPayTarget] = useState<CustomerBalanceRow | null>(null)
+  const [payBusy, setPayBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(false)
@@ -72,6 +91,38 @@ export function DebtsPage() {
   function clearFilters() {
     setQuery('')
     setBalanceFilter('all')
+  }
+
+  async function submitPayment(amountLbp: number, note: string) {
+    if (payTarget == null || window.deken == null) {
+      return
+    }
+    setPayBusy(true)
+    const r = await recordDebtPayment({
+      customerId: payTarget.id,
+      amountLbp,
+      note: note || undefined,
+    })
+    setPayBusy(false)
+    if (r.ok) {
+      toast.success(t('debts.payDialog.toastSaved', { lbp: formatLbp(amountLbp, lng) }))
+      setPayTarget(null)
+      setExpandedId(null)
+      void load()
+    } else {
+      const k = mapPayError(r.error.message)
+      if (k === 'payment_exceeds_balance' && payTarget) {
+        toast.error(
+          t('debts.errors.payment_exceeds_balance', { max: formatLbp(payTarget.balanceLbp, lng) }),
+          5000,
+        )
+      } else {
+        toast.error(
+          k === 'generic' ? t('debts.errors.generic', { message: r.error.message }) : t(`debts.errors.${k}`),
+          5000,
+        )
+      }
+    }
   }
 
   return (
@@ -243,11 +294,28 @@ export function DebtsPage() {
                                   ? t('debts.detail.lastSale', { at: lastAt })
                                   : t('debts.detail.noSalesYet')}
                               </p>
+                              {row.lastDebtNote != null && row.lastDebtNote.trim() !== '' ? (
+                                <div className="debts-detail__note">
+                                  <p className="debts-detail__label">{t('debts.detail.noteLabel')}</p>
+                                  <p className="debts-detail__noteText">{row.lastDebtNote}</p>
+                                </div>
+                              ) : null}
                               <button
                                 type="button"
                                 className="debts-btn debts-btn--primary"
-                                disabled
-                                title={t('debts.actions.recordPayDisabledTitle')}
+                                disabled={row.balanceLbp <= 0 || window.deken == null}
+                                title={
+                                  row.balanceLbp <= 0
+                                    ? t('debts.actions.recordPayZeroTitle')
+                                    : window.deken == null
+                                      ? t('debts.actions.recordPayNoBridgeTitle')
+                                      : undefined
+                                }
+                                onClick={() => {
+                                  if (row.balanceLbp > 0 && window.deken != null) {
+                                    setPayTarget(row)
+                                  }
+                                }}
                               >
                                 {t('debts.actions.recordPay')}
                               </button>
@@ -264,6 +332,20 @@ export function DebtsPage() {
           </div>
         )}
       </section>
+
+      {payTarget != null ? (
+        <RecordPaymentDialog
+          row={payTarget}
+          lbpPerUsd={lbpPerUsd}
+          onClose={() => {
+            if (!payBusy) {
+              setPayTarget(null)
+            }
+          }}
+          onSave={submitPayment}
+          busy={payBusy}
+        />
+      ) : null}
     </div>
   )
 }

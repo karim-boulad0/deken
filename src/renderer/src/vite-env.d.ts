@@ -12,6 +12,8 @@ import type {
   CustomerDto,
   DashboardSnapshotDto,
   IpcResult,
+  RecordDebtPaymentInput,
+  RecordDebtPaymentResult,
   PosSaleLineInput,
   ProductDto,
   UpdateAppSettingsInput,
@@ -40,6 +42,9 @@ type DekenPreload = {
     list: () => Promise<IpcResult<CustomerDto[]>>
     listBalances: () => Promise<IpcResult<CustomerBalanceRow[]>>
     create: (input: CreateCustomerInput) => Promise<IpcResult<CustomerDto>>
+  }
+  debt: {
+    recordPayment: (input: RecordDebtPaymentInput) => Promise<IpcResult<RecordDebtPaymentResult>>
   }
   sales: {
     completeCash: (lines: PosSaleLineInput[]) => Promise<IpcResult<CompleteCashSaleResult>>
