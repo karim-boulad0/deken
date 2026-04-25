@@ -65,7 +65,8 @@
     "export": "تصدير",
     "exportToast": "تم تنزيل ملف CSV",
     "exportEmpty": "لا بيانات للتصدير في العرض الحالي",
-    "exportAria": "تنزيل البيانات الحالية كملف CSV"
+    "exportAria": "تنزيل البيانات الحالية كملف CSV",
+    "byUser": "بواسطة"
   },
   "dashboard": {
     "pageTitle": "لوحة التحكم",

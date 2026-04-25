@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  ActorRefDto,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
   ExpenseCategoryDto,
@@ -51,6 +52,17 @@ type CatRow = {
   sort_order: number
   created_at: string
   updated_at: string
+}
+
+function actorFromRow(r: {
+  actor_id: string | null
+  actor_username: string | null
+  actor_full_name: string | null
+}): ActorRefDto | null {
+  if (r.actor_id == null || r.actor_username == null || r.actor_full_name == null) {
+    return null
+  }
+  return { id: r.actor_id, username: r.actor_username, fullName: r.actor_full_name }
 }
 
 function catToDto(r: CatRow): ExpenseCategoryDto {
@@ -162,6 +174,9 @@ type ExpRow = {
   paid_from_cash: number
   created_at: string
   category_name: string
+  actor_id: string | null
+  actor_username: string | null
+  actor_full_name: string | null
 }
 
 export function listExpensesInRange(
@@ -177,9 +192,13 @@ export function listExpensesInRange(
     const rows = db
       .prepare(
         `SELECT e.id, e.category_id, e.amount_lbp, e.spent_at, e.note, e.paid_from_cash, e.created_at,
-                c.name AS category_name
+                c.name AS category_name,
+                u.id AS actor_id,
+                u.username AS actor_username,
+                u.full_name AS actor_full_name
          FROM expenses e
          INNER JOIN expense_categories c ON c.id = e.category_id
+         LEFT JOIN users u ON u.id = e.created_by_user_id
          WHERE date(e.spent_at) >= @fromD AND date(e.spent_at) <= @toD
          ORDER BY e.spent_at DESC, e.created_at DESC`,
       )
@@ -193,6 +212,7 @@ export function listExpensesInRange(
       note: r.note,
       paidFromCash: r.paid_from_cash === 1,
       createdAt: r.created_at,
+      actor: actorFromRow(r),
     }))
   })
 }
@@ -216,7 +236,11 @@ export function getExpenseTotalInRange(
   })
 }
 
-export function createExpense(db: Database, input: CreateExpenseInput): IpcResult<ExpenseDto> {
+export function createExpense(
+  db: Database,
+  input: CreateExpenseInput,
+  actorUserId: string | null,
+): IpcResult<ExpenseDto> {
   return asResult(() => {
     const catId = (input.categoryId ?? '').trim()
     const cat = db.prepare('SELECT name FROM expense_categories WHERE id = ?').get(catId) as
@@ -242,9 +266,9 @@ export function createExpense(db: Database, input: CreateExpenseInput): IpcResul
     const now = new Date().toISOString()
     const id = randomUUID()
     db.prepare(
-      `INSERT INTO expenses (id, category_id, amount_lbp, spent_at, note, paid_from_cash, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(id, catId, amount, spentAt, note, paidFromCash, now)
+      `INSERT INTO expenses (id, category_id, amount_lbp, spent_at, note, paid_from_cash, created_at, created_by_user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, catId, amount, spentAt, note, paidFromCash, now, actorUserId)
     return {
       id,
       categoryId: catId,
@@ -254,6 +278,7 @@ export function createExpense(db: Database, input: CreateExpenseInput): IpcResul
       note,
       paidFromCash: paidFromCash === 1,
       createdAt: now,
+      actor: null,
     }
   })
 }
@@ -264,9 +289,13 @@ export function updateExpense(db: Database, id: string, input: UpdateExpenseInpu
     const row = db
       .prepare(
         `SELECT e.id, e.category_id, e.amount_lbp, e.spent_at, e.note, e.paid_from_cash, e.created_at,
-                c.name AS category_name
+                c.name AS category_name,
+                u.id AS actor_id,
+                u.username AS actor_username,
+                u.full_name AS actor_full_name
          FROM expenses e
          INNER JOIN expense_categories c ON c.id = e.category_id
+         LEFT JOIN users u ON u.id = e.created_by_user_id
          WHERE e.id = ?`,
       )
       .get(eid) as ExpRow | undefined
@@ -328,6 +357,7 @@ export function updateExpense(db: Database, id: string, input: UpdateExpenseInpu
       note,
       paidFromCash: paidFromCash === 1,
       createdAt: row.created_at,
+      actor: actorFromRow(row),
     }
   })
 }

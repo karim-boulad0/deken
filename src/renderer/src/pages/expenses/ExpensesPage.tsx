@@ -364,6 +364,7 @@ export function ExpensesPage() {
                   <th>{t('expenses.ledger.colCategory')}</th>
                   <th className="exp-table__num">{t('expenses.ledger.colAmount')}</th>
                   <th>{t('expenses.ledger.colNote')}</th>
+                  <th>{t('common.byUser')}</th>
                   <th>{t('expenses.ledger.colCash')}</th>
                   <th>{t('expenses.ledger.colActions')}</th>
                 </tr>
@@ -371,11 +372,11 @@ export function ExpensesPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6}>{t('expenses.loading')}</td>
+                    <td colSpan={7}>{t('expenses.loading')}</td>
                   </tr>
                 ) : expenses.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>{t('expenses.ledger.empty')}</td>
+                    <td colSpan={7}>{t('expenses.ledger.empty')}</td>
                   </tr>
                 ) : (
                   expenses.map((e) => {
@@ -386,6 +387,7 @@ export function ExpensesPage() {
                         <td>{e.categoryName}</td>
                         <td className="exp-table__num">{formatLbp(e.amountLbp, lng)}</td>
                         <td>{e.note ?? '—'}</td>
+                        <td>{e.actor?.fullName ?? ''}</td>
                         <td>{e.paidFromCash ? t('expenses.ledger.yes') : t('expenses.ledger.no')}</td>
                         <td>
                           <button type="button" className="exp-btn exp-btn--ghost" onClick={() => openEditExpense(e)}>

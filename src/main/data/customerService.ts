@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  ActorRefDto,
   CreateCustomerInput,
   CustomerBalanceRow,
   CustomerDto,
@@ -72,6 +73,17 @@ function normalizeNote(n: string | null): string | null {
   }
   const t = String(n).trim()
   return t.length === 0 ? null : t
+}
+
+function actorFromRow(r: {
+  actor_id: string | null
+  actor_username: string | null
+  actor_full_name: string | null
+}): ActorRefDto | null {
+  if (r.actor_id == null || r.actor_username == null || r.actor_full_name == null) {
+    return null
+  }
+  return { id: r.actor_id, username: r.actor_username, fullName: r.actor_full_name }
 }
 
 /**
@@ -160,19 +172,52 @@ export function getCustomerLedger(
   }
   return asResult(() => {
     const stSales = db.prepare(
-      `SELECT id, created_at, total_lbp, note
+      `SELECT
+         s.id,
+         s.created_at,
+         s.total_lbp,
+         s.note,
+         u.id AS actor_id,
+         u.username AS actor_username,
+         u.full_name AS actor_full_name
        FROM sales
-       WHERE customer_id = ? AND payment_type = 'debt'
-       ORDER BY created_at DESC`,
+       s
+       LEFT JOIN users u ON u.id = s.created_by_user_id
+       WHERE s.customer_id = ? AND s.payment_type = 'debt'
+       ORDER BY s.created_at DESC`,
     )
     const stPay = db.prepare(
-      `SELECT id, created_at, amount_lbp, note
-       FROM debt_payments
-       WHERE customer_id = ?
-       ORDER BY created_at DESC`,
+      `SELECT
+         p.id,
+         p.created_at,
+         p.amount_lbp,
+         p.note,
+         u.id AS actor_id,
+         u.username AS actor_username,
+         u.full_name AS actor_full_name
+       FROM debt_payments p
+       LEFT JOIN users u ON u.id = p.created_by_user_id
+       WHERE p.customer_id = ?
+       ORDER BY p.created_at DESC`,
     )
-    const sa = stSales.all(id) as { id: string; created_at: string; total_lbp: number; note: string | null }[]
-    const pa = stPay.all(id) as { id: string; created_at: string; amount_lbp: number; note: string | null }[]
+    const sa = stSales.all(id) as {
+      id: string
+      created_at: string
+      total_lbp: number
+      note: string | null
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
+    }[]
+    const pa = stPay.all(id) as {
+      id: string
+      created_at: string
+      amount_lbp: number
+      note: string | null
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
+    }[]
     const out: CustomerLedgerLineDto[] = [
       ...sa.map((r) => ({
         kind: 'debt_sale' as const,
@@ -180,6 +225,7 @@ export function getCustomerLedger(
         at: r.created_at,
         amountLbp: r.total_lbp,
         note: normalizeNote(r.note),
+        actor: actorFromRow(r),
       })),
       ...pa.map((r) => ({
         kind: 'payment' as const,
@@ -187,6 +233,7 @@ export function getCustomerLedger(
         at: r.created_at,
         amountLbp: r.amount_lbp,
         note: normalizeNote(r.note),
+        actor: actorFromRow(r),
       })),
     ]
     out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
@@ -197,6 +244,7 @@ export function getCustomerLedger(
 export function recordDebtPayment(
   db: Database,
   input: RecordDebtPaymentInput,
+  actorUserId: string | null,
 ): IpcResult<RecordDebtPaymentResult> {
   const id = (input.customerId ?? '').trim()
   if (id.length === 0) {
@@ -221,14 +269,18 @@ export function recordDebtPayment(
     const payId = randomUUID()
     const noteTrim = (input.note ?? '').trim() || null
     db.prepare(
-      `INSERT INTO debt_payments (id, customer_id, amount_lbp, created_at, note) VALUES (?, ?, ?, ?, ?)`,
-    ).run(payId, id, input.amountLbp, now, noteTrim)
+      `INSERT INTO debt_payments (id, customer_id, amount_lbp, created_at, note, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(payId, id, input.amountLbp, now, noteTrim, actorUserId)
     const newBalance = getCustomerBalanceLbp(db, id)
     return { paymentId: payId, newBalanceLbp: newBalance }
   })
 }
 
-export function createCustomer(db: Database, input: CreateCustomerInput): IpcResult<CustomerDto> {
+export function createCustomer(
+  db: Database,
+  input: CreateCustomerInput,
+  actorUserId: string | null,
+): IpcResult<CustomerDto> {
   if (isBlank(input.name)) {
     return { ok: false, error: makeError('validation', 'name_required') }
   }
@@ -236,7 +288,7 @@ export function createCustomer(db: Database, input: CreateCustomerInput): IpcRes
     const now = new Date().toISOString()
     const ph =
       input.phone != null && String(input.phone).trim() ? String(input.phone).trim() : null
-    const id = insertCustomerRow(db, input.name, ph, now)
+    const id = insertCustomerRow(db, input.name, ph, now, actorUserId)
     const r = db.prepare('SELECT * FROM customers WHERE id = ?').get(id) as CustomerRow
     return toDto(r)
   })
@@ -250,7 +302,13 @@ export function getCustomerById(db: Database, id: string): CustomerDto | null {
 /**
  * Insert one customer; used from `completeDebtSale` inside an outer database transaction.
  */
-export function insertCustomerRow(db: Database, name: string, phone: string | null, now: string): string {
+export function insertCustomerRow(
+  db: Database,
+  name: string,
+  phone: string | null,
+  now: string,
+  actorUserId: string | null,
+): string {
   const n = name.trim()
   if (isBlank(n)) {
     throw new Error('name_required')
@@ -258,7 +316,7 @@ export function insertCustomerRow(db: Database, name: string, phone: string | nu
   const ph = phone != null && String(phone).trim() ? String(phone).trim() : null
   const id = randomUUID()
   db.prepare(
-    `INSERT INTO customers (id, name, phone, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
-  ).run(id, n, ph, now, now)
+    `INSERT INTO customers (id, name, phone, created_at, updated_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?)`,
+  ).run(id, n, ph, now, now, actorUserId)
   return id
 }

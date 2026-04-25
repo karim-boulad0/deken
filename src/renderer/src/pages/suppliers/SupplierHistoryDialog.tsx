@@ -119,6 +119,7 @@ export function SupplierHistoryDialog({ row, refreshTrigger, onClose }: Props) {
       t('suppliers.ledger.colWhen'),
       'amount_lbp_signed',
       t('suppliers.ledger.colDetail'),
+      t('common.byUser'),
     ])
     const body = lines.map((l) =>
       toCsvLine([
@@ -126,6 +127,7 @@ export function SupplierHistoryDialog({ row, refreshTrigger, onClose }: Props) {
         l.whenDisplay,
         l.kind === 'invoice' ? l.amountLbp : -l.amountLbp,
         l.detail,
+        l.invoice?.actor?.fullName ?? l.payment?.actor?.fullName ?? '',
       ]),
     )
     const safe = String(row.name).replace(/[^\w\-.]+/g, '_').slice(0, 40) || 'supplier'
@@ -170,6 +172,7 @@ export function SupplierHistoryDialog({ row, refreshTrigger, onClose }: Props) {
                       {t('suppliers.ledger.colAmount')}
                     </th>
                     <th scope="col">{t('suppliers.ledger.colDetail')}</th>
+                    <th scope="col">{t('common.byUser')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,6 +203,7 @@ export function SupplierHistoryDialog({ row, refreshTrigger, onClose }: Props) {
                         <td className="dhist-ledger__note">
                           {line.detail !== '' ? line.detail : t('suppliers.ledger.noDetail')}
                         </td>
+                        <td>{line.invoice?.actor?.fullName ?? line.payment?.actor?.fullName ?? ''}</td>
                       </tr>
                     )
                   })}
@@ -246,6 +250,12 @@ export function SupplierHistoryDialog({ row, refreshTrigger, onClose }: Props) {
                       <p className="dhist-detail__value">{selectedLine.detail}</p>
                     </div>
                   ) : null}
+                  <div>
+                    <span className="dhist-detail__label">{t('common.byUser')}</span>
+                    <p className="dhist-detail__value">
+                      {selectedLine.invoice?.actor?.fullName ?? selectedLine.payment?.actor?.fullName ?? ''}
+                    </p>
+                  </div>
                 </div>
                 <div className="dhist-detail__image-wrap">
                   <span className="dhist-detail__label">{t('suppliers.ledger.attachment')}</span>

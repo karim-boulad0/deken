@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  ActorRefDto,
   CreateSupplierInput,
   CreateSupplierInvoiceInput,
   CreateSupplierPaymentInput,
@@ -64,6 +65,17 @@ function toSupplierDto(r: SupplierRow): SupplierDto {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }
+}
+
+function actorFromRow(r: {
+  actor_id: string | null
+  actor_username: string | null
+  actor_full_name: string | null
+}): ActorRefDto | null {
+  if (r.actor_id == null || r.actor_username == null || r.actor_full_name == null) {
+    return null
+  }
+  return { id: r.actor_id, username: r.actor_username, fullName: r.actor_full_name }
 }
 
 export function listSupplierBalances(db: Database): IpcResult<SupplierBalanceRow[]> {
@@ -207,9 +219,22 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
     }
     const rows = db
       .prepare(
-        `SELECT id, supplier_id, invoice_date, amount_lbp, reference, note, image_data_url, created_at
-         FROM supplier_invoices WHERE supplier_id = ?
-         ORDER BY invoice_date DESC, created_at DESC`,
+        `SELECT
+           i.id,
+           i.supplier_id,
+           i.invoice_date,
+           i.amount_lbp,
+           i.reference,
+           i.note,
+           i.image_data_url,
+           i.created_at,
+           u.id AS actor_id,
+           u.username AS actor_username,
+           u.full_name AS actor_full_name
+         FROM supplier_invoices i
+         LEFT JOIN users u ON u.id = i.created_by_user_id
+         WHERE i.supplier_id = ?
+         ORDER BY i.invoice_date DESC, i.created_at DESC`,
       )
       .all(sid) as {
       id: string
@@ -220,6 +245,9 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
       note: string | null
       image_data_url: string | null
       created_at: string
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
     return rows.map((r) => ({
       id: r.id,
@@ -230,6 +258,7 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
       note: r.note,
       imageDataUrl: r.image_data_url,
       createdAt: r.created_at,
+      actor: actorFromRow(r),
     }))
   })
 }
@@ -246,9 +275,19 @@ export function listSupplierPayments(db: Database, supplierId: string): IpcResul
     }
     const rows = db
       .prepare(
-        `SELECT id, supplier_id, amount_lbp, created_at, note
-         FROM supplier_payments WHERE supplier_id = ?
-         ORDER BY created_at DESC`,
+        `SELECT
+           p.id,
+           p.supplier_id,
+           p.amount_lbp,
+           p.created_at,
+           p.note,
+           u.id AS actor_id,
+           u.username AS actor_username,
+           u.full_name AS actor_full_name
+         FROM supplier_payments p
+         LEFT JOIN users u ON u.id = p.created_by_user_id
+         WHERE p.supplier_id = ?
+         ORDER BY p.created_at DESC`,
       )
       .all(sid) as {
       id: string
@@ -256,6 +295,9 @@ export function listSupplierPayments(db: Database, supplierId: string): IpcResul
       amount_lbp: number
       created_at: string
       note: string | null
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
     return rows.map((r) => ({
       id: r.id,
@@ -263,6 +305,7 @@ export function listSupplierPayments(db: Database, supplierId: string): IpcResul
       amountLbp: r.amount_lbp,
       createdAt: r.created_at,
       note: r.note,
+      actor: actorFromRow(r),
     }))
   })
 }
@@ -270,6 +313,7 @@ export function listSupplierPayments(db: Database, supplierId: string): IpcResul
 export function createSupplierInvoice(
   db: Database,
   input: CreateSupplierInvoiceInput,
+  actorUserId: string | null,
 ): IpcResult<SupplierInvoiceDto> {
   return asResult(() => {
     const supplierId = (input.supplierId ?? '').trim()
@@ -308,9 +352,9 @@ export function createSupplierInvoice(
     const now = new Date().toISOString()
     const id = randomUUID()
     db.prepare(
-      `INSERT INTO supplier_invoices (id, supplier_id, invoice_date, amount_lbp, reference, note, image_data_url, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(id, supplierId, invoiceDate, amount, reference, note, imageDataUrl, now)
+      `INSERT INTO supplier_invoices (id, supplier_id, invoice_date, amount_lbp, reference, note, image_data_url, created_at, created_by_user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, supplierId, invoiceDate, amount, reference, note, imageDataUrl, now, actorUserId)
     return {
       id,
       supplierId,
@@ -320,6 +364,7 @@ export function createSupplierInvoice(
       note,
       imageDataUrl,
       createdAt: now,
+      actor: null,
     }
   })
 }
@@ -327,6 +372,7 @@ export function createSupplierInvoice(
 export function createSupplierPayment(
   db: Database,
   input: CreateSupplierPaymentInput,
+  actorUserId: string | null,
 ): IpcResult<SupplierPaymentDto> {
   return asResult(() => {
     const supplierId = (input.supplierId ?? '').trim()
@@ -346,15 +392,16 @@ export function createSupplierPayment(
     const now = new Date().toISOString()
     const id = randomUUID()
     db.prepare(
-      `INSERT INTO supplier_payments (id, supplier_id, amount_lbp, created_at, note)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run(id, supplierId, amount, now, note)
+      `INSERT INTO supplier_payments (id, supplier_id, amount_lbp, created_at, note, created_by_user_id)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    ).run(id, supplierId, amount, now, note, actorUserId)
     return {
       id,
       supplierId,
       amountLbp: amount,
       createdAt: now,
       note,
+      actor: null,
     }
   })
 }

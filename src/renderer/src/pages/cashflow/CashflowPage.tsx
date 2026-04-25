@@ -131,6 +131,11 @@ export function CashflowPage() {
                       <td>
                         <div>{primaryCell(row)}</div>
                         {row.secondaryLabel ? <div className="cf-muted">{row.secondaryLabel}</div> : null}
+                        {row.actor?.fullName ? (
+                          <div className="cf-muted">
+                            {t('common.byUser')}: {row.actor.fullName}
+                          </div>
+                        ) : null}
                       </td>
                       <td className="cf-table__num">
                         {row.amountSignedLbp >= 0 ? '+' : ''}

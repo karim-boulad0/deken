@@ -39,6 +39,12 @@ export type UserWithPermissionsDto = {
   permissions: PermissionModule[]
 }
 
+export type ActorRefDto = {
+  id: string
+  username: string
+  fullName: string
+}
+
 export type AuthSessionDto = {
   user: UserDto
   permissions: PermissionModule[]
@@ -213,6 +219,7 @@ export type CustomerLedgerLineDto = {
   amountLbp: number
   /** Trimmed; null if none. */
   note: string | null
+  actor: ActorRefDto | null
 }
 
 /** One catalog line on a saved sale (prices and names are snapshots at sale time). */
@@ -433,6 +440,7 @@ export type SupplierInvoiceDto = {
   note: string | null
   imageDataUrl: string | null
   createdAt: string
+  actor: ActorRefDto | null
 }
 
 export type CreateSupplierInvoiceInput = {
@@ -450,6 +458,7 @@ export type SupplierPaymentDto = {
   amountLbp: number
   createdAt: string
   note: string | null
+  actor: ActorRefDto | null
 }
 
 export type CreateSupplierPaymentInput = {
@@ -485,6 +494,7 @@ export type ExpenseDto = {
   note: string | null
   paidFromCash: boolean
   createdAt: string
+  actor: ActorRefDto | null
 }
 
 export type CreateExpenseInput = {
@@ -529,6 +539,7 @@ export type CashflowLineDto = {
   amountSignedLbp: number
   primaryLabel: string | null
   secondaryLabel: string | null
+  actor: ActorRefDto | null
   saleId: string | null
   canVoid: boolean
 }

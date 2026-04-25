@@ -64,6 +64,7 @@ function mergeLines(lines: PosSaleLineInput[]): { productId: string; quantity: n
 export function completeCashSale(
   db: Database,
   lines: PosSaleLineInput[],
+  actorUserId: string | null,
 ): IpcResult<CompleteCashSaleResult> {
   return asResult(() => {
     const merged = mergeLines(lines)
@@ -102,8 +103,8 @@ export function completeCashSale(
 
     const tx = db.transaction(() => {
       db.prepare(
-        'INSERT INTO sales (id, created_at, total_lbp, payment_type) VALUES (?, ?, ?, ?)',
-      ).run(saleId, now, totalLbp, 'cash')
+        'INSERT INTO sales (id, created_at, total_lbp, payment_type, created_by_user_id) VALUES (?, ?, ?, ?, ?)',
+      ).run(saleId, now, totalLbp, 'cash', actorUserId)
 
       const stLine = db.prepare(
         `INSERT INTO sale_lines
@@ -143,6 +144,7 @@ export function completeCashSale(
 export function completeDebtSale(
   db: Database,
   input: CompleteDebtSaleInput,
+  actorUserId: string | null,
 ): IpcResult<CompleteCashSaleResult> {
   return asResult(() => {
     const merged = mergeLines(input.lines)
@@ -186,7 +188,7 @@ export function completeDebtSale(
           input.customerPhone != null && String(input.customerPhone).trim()
             ? String(input.customerPhone).trim()
             : null
-        customerId = insertCustomerRow(db, input.customerName, ph, now)
+        customerId = insertCustomerRow(db, input.customerName, ph, now, actorUserId)
       } else {
         const c = getCustomerById(db, input.customerId)
         if (!c) {
@@ -196,9 +198,9 @@ export function completeDebtSale(
       }
 
       db.prepare(
-        `INSERT INTO sales (id, created_at, total_lbp, payment_type, customer_id, note)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-      ).run(saleId, now, totalLbp, 'debt', customerId, noteTrim)
+        `INSERT INTO sales (id, created_at, total_lbp, payment_type, customer_id, note, created_by_user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ).run(saleId, now, totalLbp, 'debt', customerId, noteTrim, actorUserId)
 
       const stLine = db.prepare(
         `INSERT INTO sale_lines

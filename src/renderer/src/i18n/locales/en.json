@@ -65,7 +65,8 @@
     "export": "Export",
     "exportToast": "CSV file downloaded",
     "exportEmpty": "Nothing to export for the current view",
-    "exportAria": "Download current data as a CSV file"
+    "exportAria": "Download current data as a CSV file",
+    "byUser": "By"
   },
   "dashboard": {
     "pageTitle": "Dashboard",

@@ -65,6 +65,7 @@ export function CustomerHistoryDialog({ row, refreshTrigger, onClose }: Props) {
       t('debts.ledger.colWhen'),
       'amount_lbp',
       t('debts.ledger.colNote'),
+      t('common.byUser'),
     ])
     const body = lines.map((l) => {
       const isDebt = l.kind === 'debt_sale'
@@ -73,6 +74,7 @@ export function CustomerHistoryDialog({ row, refreshTrigger, onClose }: Props) {
         l.at,
         l.amountLbp,
         l.note ?? '',
+        l.actor?.fullName ?? '',
       ])
     })
     const safe = String(row.name).replace(/[^\w\-.]+/g, '_').slice(0, 40) || 'customer'
@@ -126,6 +128,7 @@ export function CustomerHistoryDialog({ row, refreshTrigger, onClose }: Props) {
                     {t('debts.ledger.colAmount')}
                   </th>
                   <th scope="col">{t('debts.ledger.colNote')}</th>
+                  <th scope="col">{t('common.byUser')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,6 +174,7 @@ export function CustomerHistoryDialog({ row, refreshTrigger, onClose }: Props) {
                           ? line.note
                           : t('debts.ledger.noNote')}
                       </td>
+                      <td>{line.actor?.fullName ?? ''}</td>
                     </tr>
                   )
                 })}

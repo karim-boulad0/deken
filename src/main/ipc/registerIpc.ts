@@ -92,6 +92,7 @@ import type {
   ListExpensesInRangeInput,
   ListRecentCashflowInput,
   PosSaleLineInput,
+  AuthSessionDto,
   RecordDebtPaymentInput,
   SalesReportInput,
   UpdateAppSettingsInput,
@@ -120,6 +121,9 @@ export function registerIpc(): void {
       return r
     }
     return { ok: true, data: null }
+  }
+  const guardSession = (moduleKey: PermissionModule): IpcResult<AuthSessionDto> => {
+    return requireModulePermission(db(), moduleKey)
   }
 
   ipcMain.handle(IpcInvokes.getAppVersion, (): IpcResult<string> => {
@@ -300,9 +304,9 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.completeCashSale, (_evt, lines: PosSaleLineInput[]) => {
-    const g = guard('pos')
+    const g = guardSession('pos')
     if (!g.ok) return g
-    return completeCashSale(db(), Array.isArray(lines) ? lines : [])
+    return completeCashSale(db(), Array.isArray(lines) ? lines : [], g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.listCustomers, () => {
@@ -324,27 +328,27 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.recordDebtPayment, (_evt, input: RecordDebtPaymentInput) => {
-    const g = guard('debts')
+    const g = guardSession('debts')
     if (!g.ok) return g
     if (input == null || typeof input !== 'object' || typeof input.customerId !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return recordDebtPayment(db(), input)
+    return recordDebtPayment(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.createCustomer, (_evt, input: CreateCustomerInput) => {
-    const g = guard('debts')
+    const g = guardSession('debts')
     if (!g.ok) return g
-    return createCustomer(db(), input)
+    return createCustomer(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.completeDebtSale, (_evt, input: CompleteDebtSaleInput) => {
-    const g = guard('debts')
+    const g = guardSession('debts')
     if (!g.ok) return g
     if (input == null || typeof input !== 'object' || !Array.isArray((input as CompleteDebtSaleInput).lines)) {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return completeDebtSale(db(), input)
+    return completeDebtSale(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(
@@ -451,21 +455,21 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createSupplierInvoice, (_evt, input: CreateSupplierInvoiceInput) => {
-    const g = guard('suppliers')
+    const g = guardSession('suppliers')
     if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return createSupplierInvoice(db(), input)
+    return createSupplierInvoice(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.createSupplierPayment, (_evt, input: CreateSupplierPaymentInput) => {
-    const g = guard('suppliers')
+    const g = guardSession('suppliers')
     if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return createSupplierPayment(db(), input)
+    return createSupplierPayment(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.listExpenseCategories, () => {
@@ -523,12 +527,12 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createExpense, (_evt, input: CreateExpenseInput) => {
-    const g = guard('expenses')
+    const g = guardSession('expenses')
     if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return createExpense(db(), input)
+    return createExpense(db(), input, g.data.user.id)
   })
 
   ipcMain.handle(IpcInvokes.updateExpense, (_evt, id: string, input: UpdateExpenseInput) => {

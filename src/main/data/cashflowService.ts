@@ -33,6 +33,9 @@ type RawLine = {
   amountSignedLbp: number
   primaryLabel: string | null
   secondaryLabel: string | null
+  actorId: string | null
+  actorUsername: string | null
+  actorFullName: string | null
   saleId: string | null
 }
 
@@ -50,19 +53,41 @@ export function listRecentCashflow(
 
     const cashSales = db
       .prepare(
-        `SELECT id, created_at, total_lbp
-         FROM sales
+        `SELECT
+           s.id,
+           s.created_at,
+           s.total_lbp,
+           u.id AS actor_id,
+           u.username AS actor_username,
+           u.full_name AS actor_full_name
+         FROM sales s
+         LEFT JOIN users u ON u.id = s.created_by_user_id
          WHERE payment_type = 'cash' AND voided_at IS NULL
          ORDER BY created_at DESC
          LIMIT ?`,
       )
-      .all(fetchCap) as { id: string; created_at: string; total_lbp: number }[]
+      .all(fetchCap) as {
+      id: string
+      created_at: string
+      total_lbp: number
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
+    }[]
 
     const debtSales = db
       .prepare(
-        `SELECT s.id, s.created_at, s.total_lbp, c.name AS customer_name
+        `SELECT
+           s.id,
+           s.created_at,
+           s.total_lbp,
+           c.name AS customer_name,
+           u.id AS actor_id,
+           u.username AS actor_username,
+           u.full_name AS actor_full_name
          FROM sales s
          LEFT JOIN customers c ON c.id = s.customer_id
+         LEFT JOIN users u ON u.id = s.created_by_user_id
          WHERE s.payment_type = 'debt'
          ORDER BY s.created_at DESC
          LIMIT ?`,
@@ -72,13 +97,18 @@ export function listRecentCashflow(
       created_at: string
       total_lbp: number
       customer_name: string | null
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
 
     const debtPayments = db
       .prepare(
-        `SELECT p.id, p.created_at, p.amount_lbp, p.note, c.name AS customer_name
+        `SELECT p.id, p.created_at, p.amount_lbp, p.note, c.name AS customer_name,
+                u.id AS actor_id, u.username AS actor_username, u.full_name AS actor_full_name
          FROM debt_payments p
          INNER JOIN customers c ON c.id = p.customer_id
+         LEFT JOIN users u ON u.id = p.created_by_user_id
          ORDER BY p.created_at DESC
          LIMIT ?`,
       )
@@ -88,13 +118,18 @@ export function listRecentCashflow(
       amount_lbp: number
       note: string | null
       customer_name: string
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
 
     const supplierPayments = db
       .prepare(
-        `SELECT p.id, p.created_at, p.amount_lbp, p.note, s.name AS supplier_name
+        `SELECT p.id, p.created_at, p.amount_lbp, p.note, s.name AS supplier_name,
+                u.id AS actor_id, u.username AS actor_username, u.full_name AS actor_full_name
          FROM supplier_payments p
          INNER JOIN suppliers s ON s.id = p.supplier_id
+         LEFT JOIN users u ON u.id = p.created_by_user_id
          ORDER BY p.created_at DESC
          LIMIT ?`,
       )
@@ -104,13 +139,18 @@ export function listRecentCashflow(
       amount_lbp: number
       note: string | null
       supplier_name: string
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
 
     const expenses = db
       .prepare(
-        `SELECT e.id, e.spent_at, e.amount_lbp, e.note, c.name AS category_name
+        `SELECT e.id, e.spent_at, e.amount_lbp, e.note, c.name AS category_name,
+                u.id AS actor_id, u.username AS actor_username, u.full_name AS actor_full_name
          FROM expenses e
          INNER JOIN expense_categories c ON c.id = e.category_id
+         LEFT JOIN users u ON u.id = e.created_by_user_id
          ORDER BY e.spent_at DESC, e.created_at DESC
          LIMIT ?`,
       )
@@ -120,6 +160,9 @@ export function listRecentCashflow(
       amount_lbp: number
       note: string | null
       category_name: string
+      actor_id: string | null
+      actor_username: string | null
+      actor_full_name: string | null
     }[]
 
     const merged: RawLine[] = []
@@ -133,6 +176,9 @@ export function listRecentCashflow(
         amountSignedLbp: r.total_lbp,
         primaryLabel: null,
         secondaryLabel: null,
+        actorId: r.actor_id,
+        actorUsername: r.actor_username,
+        actorFullName: r.actor_full_name,
         saleId: r.id,
       })
     }
@@ -144,6 +190,9 @@ export function listRecentCashflow(
         amountSignedLbp: r.total_lbp,
         primaryLabel: r.customer_name ?? null,
         secondaryLabel: null,
+        actorId: r.actor_id,
+        actorUsername: r.actor_username,
+        actorFullName: r.actor_full_name,
         saleId: r.id,
       })
     }
@@ -155,6 +204,9 @@ export function listRecentCashflow(
         amountSignedLbp: r.amount_lbp,
         primaryLabel: r.customer_name,
         secondaryLabel: r.note,
+        actorId: r.actor_id,
+        actorUsername: r.actor_username,
+        actorFullName: r.actor_full_name,
         saleId: null,
       })
     }
@@ -166,6 +218,9 @@ export function listRecentCashflow(
         amountSignedLbp: -r.amount_lbp,
         primaryLabel: r.supplier_name,
         secondaryLabel: r.note,
+        actorId: r.actor_id,
+        actorUsername: r.actor_username,
+        actorFullName: r.actor_full_name,
         saleId: null,
       })
     }
@@ -177,6 +232,9 @@ export function listRecentCashflow(
         amountSignedLbp: -r.amount_lbp,
         primaryLabel: r.category_name,
         secondaryLabel: r.note,
+        actorId: r.actor_id,
+        actorUsername: r.actor_username,
+        actorFullName: r.actor_full_name,
         saleId: null,
       })
     }
@@ -200,6 +258,10 @@ export function listRecentCashflow(
         amountSignedLbp: r.amountSignedLbp,
         primaryLabel: r.primaryLabel,
         secondaryLabel: r.secondaryLabel,
+        actor:
+          r.actorId != null && r.actorUsername != null && r.actorFullName != null
+            ? { id: r.actorId, username: r.actorUsername, fullName: r.actorFullName }
+            : null,
         saleId: r.saleId,
         canVoid,
       })
