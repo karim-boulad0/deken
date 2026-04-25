@@ -22,6 +22,9 @@
 | `architecture/`                                                                  | قرارات معمارية و ADR (جاهز للمحتوى)                  |
 | [guides/dev-setup.md](./guides/dev-setup.md)                                     | تشغيل المشروع محلياً (`npm install` / `npm run dev`) |
 | [guides/scanner-qr-products-guide.md](./guides/scanner-qr-products-guide.md)     | إعداد وتشغيل سكانر QR/Barcode لإدخال أكواد المنتجات |
+| [guides/new-shop-deployment-guide.md](./guides/new-shop-deployment-guide.md)     | طريقة تركيب النظام لدكان جديد خطوة بخطوة             |
+| [guides/customer-portable-transfer-guide.md](./guides/customer-portable-transfer-guide.md) | تجهيز نسخة Portable جاهزة للنقل والتشغيل عند الزبون |
+| [guides/customer-quick-start.md](./guides/customer-quick-start.md)                | ملف مختصر جدًا للزبون: المتطلبات وخطوات التشغيل       |
 
 ## إضافة مستند جديد
 
