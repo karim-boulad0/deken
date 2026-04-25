@@ -91,6 +91,17 @@ export type RecordDebtPaymentResult = {
   newBalanceLbp: number
 }
 
+/** One line in a customer’s debt ledger (newest first in API). */
+export type CustomerLedgerLineDto = {
+  kind: 'debt_sale' | 'payment'
+  id: string
+  /** ISO-8601 timestamp. */
+  at: string
+  amountLbp: number
+  /** Trimmed; null if none. */
+  note: string | null
+}
+
 export type CreateCustomerInput = {
   name: string
   phone?: string
@@ -186,6 +197,7 @@ export const IpcInvokes = {
   deleteCategory: 'deken:categories:delete',
   listCustomers: 'deken:customers:list',
   listCustomerBalances: 'deken:customers:listBalances',
+  getCustomerLedger: 'deken:customers:getLedger',
   recordDebtPayment: 'deken:debt:recordPayment',
   createCustomer: 'deken:customers:create',
   completeCashSale: 'deken:sales:completeCash',

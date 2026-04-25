@@ -3,13 +3,20 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
+import { getCustomerLedger, listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import { RecordPaymentDialog } from './RecordPaymentDialog'
 import './DebtsPage.css'
-import type { CustomerBalanceRow } from '../../../../shared/ipc/types'
+import type { CustomerBalanceRow, CustomerLedgerLineDto } from '../../../../shared/ipc/types'
 
 type BalanceFilter = 'all' | 'positive' | 'zero'
+
+type LedgerState = {
+  id: string | null
+  loading: boolean
+  error: boolean
+  lines: CustomerLedgerLineDto[]
+}
 
 function mapPayError(m: string): string {
   const s = m.trim()
@@ -39,6 +46,22 @@ export function DebtsPage() {
   const [loadError, setLoadError] = useState(false)
   const [payTarget, setPayTarget] = useState<CustomerBalanceRow | null>(null)
   const [payBusy, setPayBusy] = useState(false)
+  const [ledger, setLedger] = useState<LedgerState>({
+    id: null,
+    loading: false,
+    error: false,
+    lines: [],
+  })
+
+  const loadLedger = useCallback(async (customerId: string) => {
+    setLedger({ id: customerId, loading: true, error: false, lines: [] })
+    const r = await getCustomerLedger(customerId)
+    if (r.ok) {
+      setLedger({ id: customerId, loading: false, error: false, lines: r.data })
+    } else {
+      setLedger({ id: customerId, loading: false, error: true, lines: [] })
+    }
+  }, [])
 
   const load = useCallback(async () => {
     setLoadError(false)
@@ -55,6 +78,14 @@ export function DebtsPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (expandedId == null) {
+      setLedger({ id: null, loading: false, error: false, lines: [] })
+      return
+    }
+    void loadLedger(expandedId)
+  }, [expandedId, loadLedger])
 
   const filtered = useMemo(() => {
     let list = rows
@@ -105,10 +136,13 @@ export function DebtsPage() {
     })
     setPayBusy(false)
     if (r.ok) {
+      const cid = payTarget.id
       toast.success(t('debts.payDialog.toastSaved', { lbp: formatLbp(amountLbp, lng) }))
       setPayTarget(null)
-      setExpandedId(null)
       void load()
+      if (expandedId === cid) {
+        void loadLedger(cid)
+      }
     } else {
       const k = mapPayError(r.error.message)
       if (k === 'payment_exceeds_balance' && payTarget) {
@@ -236,12 +270,7 @@ export function DebtsPage() {
                   ? filtered.map((row) => {
                   const expanded = expandedId === row.id
                   const usd = row.balanceLbp / lbpPerUsd
-                  const lastAt =
-                    row.lastDebtSaleAt != null
-                      ? new Date(row.lastDebtSaleAt).toLocaleString(
-                          lng.startsWith('ar') ? 'ar-LB' : 'en-US',
-                        )
-                      : null
+                  const showLedger = expanded && ledger.id === row.id
                   return (
                     <Fragment key={row.id}>
                       <tr className={expanded ? 'debts-table__row--open' : undefined}>
@@ -288,16 +317,70 @@ export function DebtsPage() {
                               role="region"
                               aria-labelledby={`debt-expand-${row.id}`}
                             >
-                              <p className="debts-detail__label">{t('debts.detail.activityLabel')}</p>
-                              <p className="debts-detail__text">
-                                {lastAt
-                                  ? t('debts.detail.lastSale', { at: lastAt })
-                                  : t('debts.detail.noSalesYet')}
-                              </p>
-                              {row.lastDebtNote != null && row.lastDebtNote.trim() !== '' ? (
-                                <div className="debts-detail__note">
-                                  <p className="debts-detail__label">{t('debts.detail.noteLabel')}</p>
-                                  <p className="debts-detail__noteText">{row.lastDebtNote}</p>
+                              <h3 className="debts-detail__heading">{t('debts.ledger.title')}</h3>
+                              {showLedger && ledger.loading ? (
+                                <p className="debts-detail__text">{t('debts.ledger.loading')}</p>
+                              ) : null}
+                              {showLedger && ledger.error ? (
+                                <p className="debts-detail__err" role="alert">
+                                  {t('debts.ledger.loadError')}
+                                </p>
+                              ) : null}
+                              {showLedger && !ledger.loading && !ledger.error && ledger.lines.length === 0 ? (
+                                <p className="debts-detail__text">{t('debts.ledger.empty')}</p>
+                              ) : null}
+                              {showLedger && !ledger.loading && !ledger.error && ledger.lines.length > 0 ? (
+                                <div className="debts-ledger-wrap">
+                                  <table className="debts-ledger">
+                                    <thead>
+                                      <tr>
+                                        <th scope="col">{t('debts.ledger.colType')}</th>
+                                        <th scope="col">{t('debts.ledger.colWhen')}</th>
+                                        <th scope="col" className="debts-ledger__num">
+                                          {t('debts.ledger.colAmount')}
+                                        </th>
+                                        <th scope="col">{t('debts.ledger.colNote')}</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {ledger.lines.map((line) => {
+                                        const when = new Date(line.at).toLocaleString(
+                                          lng.startsWith('ar') ? 'ar-LB' : 'en-US',
+                                        )
+                                        const isDebt = line.kind === 'debt_sale'
+                                        return (
+                                          <tr key={`${line.kind}-${line.id}`}>
+                                            <td
+                                              className={
+                                                isDebt
+                                                  ? 'debts-ledger__type debts-ledger__type--debt'
+                                                  : 'debts-ledger__type debts-ledger__type--pay'
+                                              }
+                                            >
+                                              {isDebt
+                                                ? t('debts.ledger.typeDebt')
+                                                : t('debts.ledger.typePayment')}
+                                            </td>
+                                            <td className="debts-ledger__when">{when}</td>
+                                            <td className="debts-ledger__num debts-ledger__amount">
+                                              {isDebt
+                                                ? t('debts.ledger.amountCharge', {
+                                                    n: formatLbp(line.amountLbp, lng),
+                                                  })
+                                                : t('debts.ledger.amountPayment', {
+                                                    n: formatLbp(line.amountLbp, lng),
+                                                  })}
+                                            </td>
+                                            <td className="debts-ledger__note">
+                                              {line.note != null && line.note.trim() !== ''
+                                                ? line.note
+                                                : t('debts.ledger.noNote')}
+                                            </td>
+                                          </tr>
+                                        )
+                                      })}
+                                    </tbody>
+                                  </table>
                                 </div>
                               ) : null}
                               <button

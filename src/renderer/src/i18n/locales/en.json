@@ -290,7 +290,7 @@
     "loading": "Loading…",
     "loadError": "Could not load customer balances. Check the database, then try again.",
     "retryLoad": "Retry",
-    "intro": "Balances are: on-account sales minus payments you record here. The note under the last sale is the one saved from POS (most recent on-account sale).",
+    "intro": "Each row’s balance = all on-account sales (charges) minus all recorded payments. Expand a customer to see full history: every charge and payment, with the note saved for each (POS/memo and payment).",
     "toolbar": {
       "searchPlaceholder": "Search by customer name or phone…",
       "searchAria": "Search debtors",
@@ -320,6 +320,21 @@
       "lastSale": "{{at}}",
       "noSalesYet": "No on-account sales for this customer yet.",
       "noteLabel": "Note on last on-account sale"
+    },
+    "ledger": {
+      "title": "History (charges and payments)",
+      "loading": "Loading history…",
+      "loadError": "Could not load this customer’s history. Try again.",
+      "empty": "No charges or payments recorded yet for this customer.",
+      "colType": "Type",
+      "colWhen": "Date & time",
+      "colAmount": "Amount (LBP)",
+      "colNote": "Note",
+      "typeDebt": "On account (charge)",
+      "typePayment": "Payment",
+      "amountCharge": "+ {{n}}",
+      "amountPayment": "− {{n}}",
+      "noNote": "—"
     },
     "payDialog": {
       "title": "Record payment",

@@ -8,6 +8,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  CustomerLedgerLineDto,
   DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
@@ -97,6 +98,15 @@ export async function listCustomers(): Promise<IpcResult<CustomerDto[]>> {
 
 export async function listCustomerBalances(): Promise<IpcResult<CustomerBalanceRow[]>> {
   return assertDeken().customers.listBalances()
+}
+
+export async function getCustomerLedger(
+  customerId: string,
+): Promise<IpcResult<CustomerLedgerLineDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().customers.getLedger(customerId)
 }
 
 export async function recordDebtPayment(

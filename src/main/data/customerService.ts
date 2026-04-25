@@ -3,6 +3,7 @@ import type {
   CreateCustomerInput,
   CustomerBalanceRow,
   CustomerDto,
+  CustomerLedgerLineDto,
   IpcErrorShape,
   IpcResult,
   RecordDebtPaymentInput,
@@ -141,6 +142,56 @@ function getCustomerPaymentsTotalLbp(db: Database, customerId: string): number {
 export function getCustomerBalanceLbp(db: Database, customerId: string): number {
   const id = customerId.trim()
   return getCustomerDebtTotalLbp(db, id) - getCustomerPaymentsTotalLbp(db, id)
+}
+
+/**
+ * All on-account sales and all payments for one customer, newest first (with notes on each line).
+ */
+export function getCustomerLedger(
+  db: Database,
+  customerId: string,
+): IpcResult<CustomerLedgerLineDto[]> {
+  const id = (customerId ?? '').trim()
+  if (id.length === 0) {
+    return { ok: false, error: makeError('validation', 'invalid_input') }
+  }
+  if (!getCustomerById(db, id)) {
+    return { ok: false, error: makeError('validation', 'customer_not_found') }
+  }
+  return asResult(() => {
+    const stSales = db.prepare(
+      `SELECT id, created_at, total_lbp, note
+       FROM sales
+       WHERE customer_id = ? AND payment_type = 'debt'
+       ORDER BY created_at DESC`,
+    )
+    const stPay = db.prepare(
+      `SELECT id, created_at, amount_lbp, note
+       FROM debt_payments
+       WHERE customer_id = ?
+       ORDER BY created_at DESC`,
+    )
+    const sa = stSales.all(id) as { id: string; created_at: string; total_lbp: number; note: string | null }[]
+    const pa = stPay.all(id) as { id: string; created_at: string; amount_lbp: number; note: string | null }[]
+    const out: CustomerLedgerLineDto[] = [
+      ...sa.map((r) => ({
+        kind: 'debt_sale' as const,
+        id: r.id,
+        at: r.created_at,
+        amountLbp: r.total_lbp,
+        note: normalizeNote(r.note),
+      })),
+      ...pa.map((r) => ({
+        kind: 'payment' as const,
+        id: r.id,
+        at: r.created_at,
+        amountLbp: r.amount_lbp,
+        note: normalizeNote(r.note),
+      })),
+    ]
+    out.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
+    return out
+  })
 }
 
 export function recordDebtPayment(

@@ -10,6 +10,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  CustomerLedgerLineDto,
   DashboardSnapshotDto,
   IpcResult,
   RecordDebtPaymentInput,
@@ -41,6 +42,7 @@ type DekenPreload = {
   customers: {
     list: () => Promise<IpcResult<CustomerDto[]>>
     listBalances: () => Promise<IpcResult<CustomerBalanceRow[]>>
+    getLedger: (customerId: string) => Promise<IpcResult<CustomerLedgerLineDto[]>>
     create: (input: CreateCustomerInput) => Promise<IpcResult<CustomerDto>>
   }
   debt: {

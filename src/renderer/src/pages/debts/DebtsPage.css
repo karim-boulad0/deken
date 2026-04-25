@@ -239,6 +239,94 @@
   max-inline-size: 40rem;
 }
 
+.debts-detail__heading {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.debts-detail__err {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.86rem;
+  color: var(--color-danger, #b91c1c);
+  font-weight: 600;
+}
+
+.debts-ledger-wrap {
+  max-height: 18rem;
+  overflow: auto;
+  width: 100%;
+  max-inline-size: 52rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  margin-block-end: var(--space-md);
+}
+
+.debts-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.debts-ledger th,
+.debts-ledger td {
+  padding: 0.45rem 0.5rem;
+  text-align: start;
+  border-bottom: 1px solid var(--color-border-soft);
+  vertical-align: top;
+}
+
+.debts-ledger th {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  z-index: 1;
+}
+
+.debts-ledger__num {
+  text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.debts-ledger__type {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.debts-ledger__type--debt {
+  color: var(--color-accent, #0d9488);
+}
+
+.debts-ledger__type--pay {
+  color: var(--color-warn, #b45309);
+}
+
+.debts-ledger__when {
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.debts-ledger__amount {
+  font-weight: 700;
+}
+
+.debts-ledger__note {
+  word-break: break-word;
+  line-height: 1.4;
+  color: var(--color-text);
+  max-inline-size: 20rem;
+}
+
 .debts-detail__note {
   display: flex;
   flex-direction: column;

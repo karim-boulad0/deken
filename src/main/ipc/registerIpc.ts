@@ -7,6 +7,7 @@ import {
 } from '../data/categoryService'
 import {
   createCustomer,
+  getCustomerLedger,
   listCustomerBalances,
   listCustomers,
   recordDebtPayment,
@@ -97,6 +98,10 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.listCustomerBalances, () => {
     return listCustomerBalances(db())
+  })
+
+  ipcMain.handle(IpcInvokes.getCustomerLedger, (_evt, customerId: string) => {
+    return getCustomerLedger(db(), typeof customerId === 'string' ? customerId : '')
   })
 
   ipcMain.handle(IpcInvokes.recordDebtPayment, (_evt, input: RecordDebtPaymentInput) => {

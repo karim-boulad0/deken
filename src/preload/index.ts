@@ -10,6 +10,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  CustomerLedgerLineDto,
   DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
@@ -68,6 +69,9 @@ contextBridge.exposeInMainWorld('deken', {
     },
     listBalances: (): Promise<IpcResult<CustomerBalanceRow[]>> => {
       return invoke(IpcInvokes.listCustomerBalances)
+    },
+    getLedger: (customerId: string): Promise<IpcResult<CustomerLedgerLineDto[]>> => {
+      return invoke(IpcInvokes.getCustomerLedger, customerId)
     },
     create: (input: CreateCustomerInput): Promise<IpcResult<CustomerDto>> => {
       return invoke(IpcInvokes.createCustomer, input)
