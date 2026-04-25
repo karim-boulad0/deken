@@ -333,7 +333,17 @@
   },
   "reports": {
     "pageTitle": "Reports",
-    "intro": "Sales summaries and charts will load from the database here. Filters below are wired for layout only.",
+    "loading": "Loading report…",
+    "loadError": "Could not load the sales report. Check the database, then try again.",
+    "retryLoad": "Retry",
+    "intro": "Summaries and daily totals are read from sales saved on this device (cash and on-account). Pick a period or a custom from/to range, then Apply.",
+    "summary": {
+      "aria": "Report totals",
+      "totalLbp": "Total (LBP)",
+      "cashLbp": "Cash (LBP)",
+      "debtLbp": "On account (LBP)",
+      "saleCount": "Invoices"
+    },
     "filters": {
       "periodLabel": "Period",
       "presetWeek": "This week",
@@ -341,23 +351,22 @@
       "presetQuarter": "This quarter",
       "fromLabel": "From",
       "toLabel": "To",
-      "rangeDisabledTitle": "Custom date range will be enabled when reporting is connected.",
-      "apply": "Apply",
-      "applyDisabledTitle": "Run report when the backend is ready."
+      "apply": "Apply"
     },
     "empty": {
-      "title": "No reporting data yet",
-      "body": "Once daily sales are stored, this panel will show totals for the selected period. Nothing is fetched in this preview build."
+      "title": "No sales in this range",
+      "body": "There are no recorded sales between these dates. Complete a sale from POS, then run the report again or widen the range."
     },
-    "preview": {
-      "title": "Layout preview",
-      "hint": "Decorative bars and sample table — not computed from your shop.",
-      "chartAria": "Sample bar chart placeholder"
+    "chart": {
+      "title": "Sales by day (LBP)",
+      "hint": "Approx. USD: {{usd}} (demo rate from POS, not a live rate).",
+      "aria": "Bar chart: {{n}} day columns from the database (UTC day bucket)."
     },
     "table": {
+      "sectionTitle": "Daily detail",
       "colDay": "Day",
-      "colSales": "Sales",
-      "sampleRowLabel": "Sample"
+      "colSales": "Total (LBP)",
+      "colInvoices": "Invoices"
     }
   },
   "settings": {

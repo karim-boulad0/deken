@@ -14,6 +14,7 @@ import {
   listProducts,
   updateProduct,
 } from '../data/productService'
+import { getSalesReport } from '../data/reportService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
@@ -23,6 +24,7 @@ import type {
   CompleteDebtSaleInput,
   IpcResult,
   PosSaleLineInput,
+  SalesReportInput,
   UpdateCategoryInput,
   UpdateProductInput,
 } from '../../shared/ipc/types'
@@ -97,5 +99,12 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
     return completeDebtSale(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.getSalesReport, (_evt, r: SalesReportInput) => {
+    if (r == null || typeof r !== 'object' || typeof r.fromDate !== 'string' || typeof r.toDate !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return getSalesReport(db(), r.fromDate, r.toDate)
   })
 }

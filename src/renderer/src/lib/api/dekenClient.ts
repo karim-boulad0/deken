@@ -12,6 +12,8 @@ import type {
   ProductDto,
   UpdateCategoryInput,
   UpdateProductInput,
+  SalesReportDto,
+  SalesReportInput,
 } from '../../../../shared/ipc/types'
 
 function isDeken() {
@@ -102,4 +104,10 @@ export async function completeDebtSale(
   input: CompleteDebtSaleInput,
 ): Promise<IpcResult<CompleteCashSaleResult>> {
   return assertDeken().sales.completeDebt(input)
+}
+
+export async function getSalesReport(
+  r: SalesReportInput,
+): Promise<IpcResult<SalesReportDto>> {
+  return assertDeken().reports.getSales(r)
 }

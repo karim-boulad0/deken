@@ -101,6 +101,29 @@ export type CompleteDebtSaleInput = {
   | { mode: 'new'; customerName: string; customerPhone: string }
 )
 
+export type SalesReportInput = {
+  /** Inclusive `YYYY-MM-DD` (local calendar, compared to SQLite `date(created_at)` / UTC). */
+  fromDate: string
+  /** Inclusive `YYYY-MM-DD`. */
+  toDate: string
+}
+
+export type SalesReportDay = {
+  day: string
+  totalLbp: number
+  count: number
+}
+
+export type SalesReportDto = {
+  fromDate: string
+  toDate: string
+  totalLbp: number
+  totalCashLbp: number
+  totalDebtLbp: number
+  saleCount: number
+  byDay: SalesReportDay[]
+}
+
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
   listProducts: 'deken:products:list',
@@ -117,6 +140,7 @@ export const IpcInvokes = {
   createCustomer: 'deken:customers:create',
   completeCashSale: 'deken:sales:completeCash',
   completeDebtSale: 'deken:sales:completeDebt',
+  getSalesReport: 'deken:reports:salesInRange',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

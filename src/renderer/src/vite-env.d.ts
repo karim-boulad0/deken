@@ -14,6 +14,8 @@ import type {
   ProductDto,
   UpdateCategoryInput,
   UpdateProductInput,
+  SalesReportDto,
+  SalesReportInput,
 } from '../../shared/ipc/types'
 
 type DekenPreload = {
@@ -39,6 +41,9 @@ type DekenPreload = {
   sales: {
     completeCash: (lines: PosSaleLineInput[]) => Promise<IpcResult<CompleteCashSaleResult>>
     completeDebt: (input: CompleteDebtSaleInput) => Promise<IpcResult<CompleteCashSaleResult>>
+  }
+  reports: {
+    getSales: (r: SalesReportInput) => Promise<IpcResult<SalesReportDto>>
   }
 }
 

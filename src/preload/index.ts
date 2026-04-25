@@ -12,6 +12,8 @@ import type {
   IpcResult,
   PosSaleLineInput,
   ProductDto,
+  SalesReportDto,
+  SalesReportInput,
   UpdateCategoryInput,
   UpdateProductInput,
 } from '../shared/ipc/types'
@@ -74,6 +76,11 @@ contextBridge.exposeInMainWorld('deken', {
       input: CompleteDebtSaleInput,
     ): Promise<IpcResult<CompleteCashSaleResult>> => {
       return invoke(IpcInvokes.completeDebtSale, input)
+    },
+  },
+  reports: {
+    getSales: (r: SalesReportInput): Promise<IpcResult<SalesReportDto>> => {
+      return invoke(IpcInvokes.getSalesReport, r)
     },
   },
 })
