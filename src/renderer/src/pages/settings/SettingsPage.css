@@ -63,6 +63,13 @@
   line-height: 1.5;
 }
 
+.set-group__interface-intro {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.88rem;
+  color: var(--color-muted);
+  line-height: 1.5;
+}
+
 .set-field {
   display: flex;
   flex-direction: column;
@@ -167,6 +174,17 @@
   cursor: not-allowed;
   opacity: 0.55;
   padding: 0;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.set-switch:not(:disabled) {
+  cursor: pointer;
+  opacity: 1;
+}
+
+.set-switch--on {
+  background: var(--color-accent, #0d9488);
+  border-color: var(--color-accent, #0d9488);
 }
 
 .set-switch__thumb {
@@ -179,4 +197,10 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   pointer-events: none;
+  transition: inset-inline 0.15s ease, transform 0.15s ease;
+}
+
+.set-switch--on .set-switch__thumb {
+  inset-inline-start: auto;
+  inset-inline-end: 3px;
 }

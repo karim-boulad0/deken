@@ -19,6 +19,7 @@ function asResult<T>(fn: () => T): IpcResult<T> {
 
 const KEY_LBP = 'lbp_per_usd'
 const KEY_SHOP = 'shop_name'
+const KEY_CLASSIC = 'show_classic_menu'
 const MAX_SHOP = 200
 
 const DEFAULT_LBP = 89_500
@@ -35,15 +36,22 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
           ? 100_000_000
           : n
     const shopName = readRowValue(st, KEY_SHOP, '')
+    const rawClassic = readRowValue(st, KEY_CLASSIC, '0').trim()
+    const showClassicMenu = rawClassic === '1' || rawClassic === 'true'
     return {
       shopName: shopName.length > MAX_SHOP ? shopName.slice(0, MAX_SHOP) : shopName,
       lbpPerUsd,
+      showClassicMenu,
     }
   })
 }
 
 export function setAppSettings(db: Database, input: UpdateAppSettingsInput): IpcResult<AppSettingsDto> {
-  if (input.shopName === undefined && input.lbpPerUsd === undefined) {
+  if (
+    input.shopName === undefined &&
+    input.lbpPerUsd === undefined &&
+    input.showClassicMenu === undefined
+  ) {
     return getAppSettings(db)
   }
   if (input.lbpPerUsd !== undefined) {
@@ -67,6 +75,9 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     }
     if (input.lbpPerUsd !== undefined) {
       stUpsert.run({ k: KEY_LBP, v: String(input.lbpPerUsd) })
+    }
+    if (input.showClassicMenu !== undefined) {
+      stUpsert.run({ k: KEY_CLASSIC, v: input.showClassicMenu ? '1' : '0' })
     }
     const g = getAppSettings(db)
     if (!g.ok) {

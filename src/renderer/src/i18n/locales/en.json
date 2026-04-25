@@ -417,13 +417,20 @@
   },
   "settings": {
     "pageTitle": "Settings",
-    "intro": "Shop-wide preferences. General settings are saved in the local database. Printing options are not wired yet.",
+    "intro": "Shop-wide preferences. General options and the optional classic menu are saved in the local database. Printing options are not wired yet.",
     "save": "Save",
     "saving": "Saving…",
     "groups": {
       "general": "General",
+      "interface": "Window & menu",
       "language": "Language",
       "printing": "Printing"
+    },
+    "interface": {
+      "classicMenuIntro": "By default the app hides the full desktop menu bar (File / Edit / View) for a cleaner POS. Turn the option on if you need reload, DevTools, or the usual edit shortcuts (for support and advanced users).",
+      "classicMenuLabel": "Show classic application menu",
+      "classicMenuTitle": "Toggle the File/Edit/View menu bar (Windows and Linux: press Alt when the bar is auto-hidden and the menu is on).",
+      "classicMenuHint": "Takes effect immediately. On Windows and Linux the menu may stay hidden until you press Alt or turn this on. On macOS a small app menu remains in the menu bar when this is off."
     },
     "general": {
       "shopName": "Shop name",
@@ -438,7 +445,8 @@
       "note": "Use the language control in the top bar to switch Arabic and English. This section will later hold regional formats."
     },
     "toast": {
-      "saved": "Settings saved."
+      "saved": "Settings saved.",
+      "menuUpdated": "Menu bar setting updated."
     },
     "errors": {
       "lbp_per_usd_invalid": "Enter a whole number between 1 and 100,000,000 for LBP per dollar.",

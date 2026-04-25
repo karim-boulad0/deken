@@ -22,6 +22,7 @@ import {
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
 import { getDashboardSnapshot } from '../data/dashboardService'
+import { applyApplicationMenu } from '../appMenu'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
@@ -137,7 +138,11 @@ export function registerIpc(): void {
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    return setAppSettings(db(), input)
+    const r = setAppSettings(db(), input)
+    if (r.ok && 'showClassicMenu' in input && input.showClassicMenu !== undefined) {
+      applyApplicationMenu(db())
+    }
+    return r
   })
 
   ipcMain.handle(IpcInvokes.getDashboardSnapshot, () => {

@@ -23,6 +23,7 @@ export function SettingsPage() {
   const [lbpStr, setLbpStr] = useState('')
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [classicBusy, setClassicBusy] = useState(false)
 
   useEffect(() => {
     if (!loaded) {
@@ -72,6 +73,25 @@ export function SettingsPage() {
       )
     }
   }, [loaded, lbpStr, shopName, settings.lbpPerUsd, settings.shopName, refresh, t, toast])
+
+  const onToggleClassicMenu = useCallback(async () => {
+    if (!loaded || window.deken == null) {
+      return
+    }
+    const next = !settings.showClassicMenu
+    setClassicBusy(true)
+    const r = await setAppSettings({ showClassicMenu: next })
+    setClassicBusy(false)
+    if (r.ok) {
+      await refresh()
+      toast.success(t('settings.toast.menuUpdated'))
+    } else {
+      const k = mapSettingsErrorKey(r.error.message)
+      toast.error(
+        k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+      )
+    }
+  }, [loaded, settings.showClassicMenu, refresh, t, toast])
 
   return (
     <div className="set">
@@ -136,6 +156,37 @@ export function SettingsPage() {
                 {saving ? t('settings.saving') : t('settings.save')}
               </button>
             </div>
+          </div>
+        </section>
+
+        <section className="set-group" aria-labelledby="set-interface-title">
+          <h2 className="set-group__title" id="set-interface-title">
+            {t('settings.groups.interface')}
+          </h2>
+          <div className="set-group__body">
+            <p className="set-group__interface-intro">{t('settings.interface.classicMenuIntro')}</p>
+            <div className="set-toggle">
+              <span className="set-toggle__label" id="set-classic-menu-label">
+                {t('settings.interface.classicMenuLabel')}
+              </span>
+              <button
+                type="button"
+                className={
+                  settings.showClassicMenu
+                    ? 'set-switch set-switch--on'
+                    : 'set-switch'
+                }
+                role="switch"
+                aria-checked={settings.showClassicMenu}
+                aria-labelledby="set-classic-menu-label"
+                disabled={!loaded || classicBusy || window.deken == null}
+                title={t('settings.interface.classicMenuTitle')}
+                onClick={() => void onToggleClassicMenu()}
+              >
+                <span className="set-switch__thumb" />
+              </button>
+            </div>
+            <p className="set-field__hint">{t('settings.interface.classicMenuHint')}</p>
           </div>
         </section>
 

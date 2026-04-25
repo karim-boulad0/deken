@@ -143,11 +143,14 @@ export type AppSettingsDto = {
   shopName: string
   /** Lebanese pounds per 1 USD for display approximations. */
   lbpPerUsd: number
+  /** When true, show a classic File/Edit/View app menu (mainly for support / DevTools on Windows and Linux). */
+  showClassicMenu: boolean
 }
 
 export type UpdateAppSettingsInput = {
   shopName?: string
   lbpPerUsd?: number
+  showClassicMenu?: boolean
 }
 
 export type SalesReportDto = {

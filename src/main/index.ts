@@ -1,19 +1,21 @@
-import { app, BrowserWindow, dialog, Menu } from 'electron'
+import { app, BrowserWindow, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { applyApplicationMenu, getAutoHideMenuBarForNewWindow } from './appMenu'
 import { closeDatabase, getDatabase } from './db/connection'
 import { registerIpc } from './ipc/registerIpc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function createWindow(): void {
+  const autoHideMenuBar = getAutoHideMenuBarForNewWindow(getDatabase())
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 960,
     minHeight: 640,
     show: true,
-    autoHideMenuBar: true,
+    autoHideMenuBar,
     backgroundColor: '#eef1f7',
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.mjs'),
@@ -32,11 +34,6 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  /* Classic File/Edit/View menu is not needed for a POS UI; hide it on Windows/Linux. */
-  if (process.platform !== 'darwin') {
-    Menu.setApplicationMenu(null)
-  }
-
   try {
     getDatabase()
   } catch (e) {
@@ -47,6 +44,7 @@ app.whenReady().then(() => {
   }
 
   registerIpc()
+  applyApplicationMenu(getDatabase())
   createWindow()
 
   app.on('activate', () => {
