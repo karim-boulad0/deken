@@ -5,7 +5,8 @@ import {
   listCategories,
   updateCategory,
 } from '../data/categoryService'
-import { completeCashSale } from '../data/saleService'
+import { createCustomer, listCustomerBalances, listCustomers } from '../data/customerService'
+import { completeCashSale, completeDebtSale } from '../data/saleService'
 import {
   createProduct,
   deleteProduct,
@@ -17,7 +18,9 @@ import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
   CreateCategoryInput,
+  CreateCustomerInput,
   CreateProductInput,
+  CompleteDebtSaleInput,
   IpcResult,
   PosSaleLineInput,
   UpdateCategoryInput,
@@ -75,5 +78,24 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.completeCashSale, (_evt, lines: PosSaleLineInput[]) => {
     return completeCashSale(db(), Array.isArray(lines) ? lines : [])
+  })
+
+  ipcMain.handle(IpcInvokes.listCustomers, () => {
+    return listCustomers(db())
+  })
+
+  ipcMain.handle(IpcInvokes.listCustomerBalances, () => {
+    return listCustomerBalances(db())
+  })
+
+  ipcMain.handle(IpcInvokes.createCustomer, (_evt, input: CreateCustomerInput) => {
+    return createCustomer(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.completeDebtSale, (_evt, input: CompleteDebtSaleInput) => {
+    if (input == null || typeof input !== 'object' || !Array.isArray((input as CompleteDebtSaleInput).lines)) {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return completeDebtSale(db(), input)
   })
 }

@@ -65,11 +65,41 @@ export type PosSaleLineInput = {
   quantity: number
 }
 
+export type CustomerDto = {
+  id: string
+  name: string
+  phone: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type CustomerBalanceRow = CustomerDto & {
+  balanceLbp: number
+  lastDebtSaleAt: string | null
+}
+
+export type CreateCustomerInput = {
+  name: string
+  phone?: string
+}
+
 export type CompleteCashSaleResult = {
   saleId: string
   totalLbp: number
   createdAt: string
 }
+
+/**
+ * On-account (debt) sale: same line rules as cash; new customer is created in the same transaction.
+ */
+export type CompleteDebtSaleInput = {
+  lines: PosSaleLineInput[]
+  /** Trimmed; stored on the sale row. */
+  note: string
+} & (
+  | { mode: 'existing'; customerId: string }
+  | { mode: 'new'; customerName: string; customerPhone: string }
+)
 
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
@@ -82,7 +112,11 @@ export const IpcInvokes = {
   createCategory: 'deken:categories:create',
   updateCategory: 'deken:categories:update',
   deleteCategory: 'deken:categories:delete',
+  listCustomers: 'deken:customers:list',
+  listCustomerBalances: 'deken:customers:listBalances',
+  createCustomer: 'deken:customers:create',
   completeCashSale: 'deken:sales:completeCash',
+  completeDebtSale: 'deken:sales:completeDebt',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

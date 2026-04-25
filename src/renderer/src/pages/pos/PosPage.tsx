@@ -2,7 +2,7 @@ import { Minus, Plus, ScanBarcode, Trash2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
-import { completeCashSale, findProductByCode } from '../../lib/api/dekenClient'
+import { completeCashSale, completeDebtSale, findProductByCode } from '../../lib/api/dekenClient'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
 import { productMatchesLookupCode } from './posLookup'
@@ -44,6 +44,7 @@ export function PosPage() {
   const [cart, setCart] = useState<CartLine[]>([])
   const [loading, setLoading] = useState(true)
   const [payCashBusy, setPayCashBusy] = useState(false)
+  const [payDebtBusy, setPayDebtBusy] = useState(false)
   const [debtOpen, setDebtOpen] = useState(false)
 
   useEffect(() => {
@@ -281,18 +282,91 @@ export function PosPage() {
     })()
   }
 
-  function handleDebtConfirm(payload: DebtRecordPayload) {
-    clearCart()
-    const note = payload.note.trim()
-    const msg = note
-      ? t('pos.toast.recordedDebtDetailNote', { name: payload.customerName, note })
-      : t('pos.toast.recordedDebtDetail', { name: payload.customerName })
-    toast.info(msg, 6000)
-  }
+  const handleDebtConfirm = useCallback(
+    (payload: DebtRecordPayload) => {
+      if (cart.length === 0 || cartHasUnlinkedLines || payDebtBusy) {
+        return false
+      }
+      const byProduct = new Map<string, number>()
+      for (const l of cart) {
+        if (!l.productId) {
+          return false
+        }
+        byProduct.set(l.productId, (byProduct.get(l.productId) ?? 0) + l.qty)
+      }
+      const lines = [...byProduct.entries()].map(([productId, quantity]) => ({
+        productId,
+        quantity,
+      }))
+      if (lines.length === 0) {
+        return false
+      }
+
+      const input =
+        payload.mode === 'existing' && payload.debtorId
+          ? {
+              mode: 'existing' as const,
+              customerId: payload.debtorId,
+              note: payload.note,
+              lines,
+            }
+          : {
+              mode: 'new' as const,
+              customerName: payload.customerName,
+              customerPhone: payload.customerPhone,
+              note: payload.note,
+              lines,
+            }
+
+      return (async () => {
+        setPayDebtBusy(true)
+        const r = await completeDebtSale(input)
+        setPayDebtBusy(false)
+        if (r.ok) {
+          setCart([])
+          const noteT = payload.note.trim()
+          toast.success(
+            noteT
+              ? t('pos.toast.paidDebtRecordedNote', {
+                  total: formatLbp(r.data.totalLbp, lng),
+                  name: payload.customerName,
+                  note: noteT,
+                })
+              : t('pos.toast.paidDebtRecorded', {
+                  total: formatLbp(r.data.totalLbp, lng),
+                  name: payload.customerName,
+                }),
+            6000,
+          )
+          return true
+        }
+        const m = r.error.message.trim()
+        if (m === 'empty_lines') {
+          toast.error(t('pos.errors.debtEmpty'), 6000)
+        } else if (m === 'insufficient_stock') {
+          toast.error(t('pos.errors.cashInsufficientStock'), 6000)
+        } else if (m === 'product_not_found') {
+          toast.error(t('pos.errors.cashNotFound'), 6000)
+        } else if (m === 'invalid_line') {
+          toast.error(t('pos.errors.cashInvalid'), 6000)
+        } else if (m === 'customer_not_found') {
+          toast.error(t('pos.errors.debtCustomerNotFound'), 6000)
+        } else if (m === 'name_required') {
+          toast.error(t('pos.debt.errors.nameRequired'), 6000)
+        } else {
+          toast.error(t('pos.errors.debtGeneric', { message: m }), 6000)
+        }
+        return false
+      })() as Promise<boolean>
+    },
+    [cart, cartHasUnlinkedLines, lng, payDebtBusy, t, toast],
+  )
 
   const cartActionsDisabled = cart.length === 0
   const payCashDisabled =
     cartActionsDisabled || cartHasUnlinkedLines || payCashBusy
+  const payDebtDisabled =
+    cartActionsDisabled || cartHasUnlinkedLines || payDebtBusy
 
   return (
     <div className={`pos${loading ? ' pos--loading' : ''}`}>
@@ -388,7 +462,7 @@ export function PosPage() {
                 <button
                   type="button"
                   className="pos-btn pos-btn--debt pos-btn--checkout"
-                  disabled={cartActionsDisabled || cartHasUnlinkedLines}
+                  disabled={payDebtDisabled}
                   title={cartHasUnlinkedLines ? t('pos.summary.payCashBlockedUnknown') : undefined}
                   onClick={() => setDebtOpen(true)}
                 >

@@ -103,11 +103,14 @@
       "cashInsufficientStock": "Not enough stock for this ticket. Lower quantities or update stock in Products.",
       "cashNotFound": "A product is no longer in the catalog. Re-add lines from the catalog and try again.",
       "cashInvalid": "Invalid ticket lines. Check quantities and try again.",
-      "cashGeneric": "Could not complete sale: {{message}}"
+      "cashGeneric": "Could not complete sale: {{message}}",
+      "debtEmpty": "Nothing to put on the account. Add products to the cart first.",
+      "debtCustomerNotFound": "That customer is no longer in the list. Refresh the dialog and try again.",
+      "debtGeneric": "Could not record on-account sale: {{message}}"
     },
     "debt": {
       "title": "Record as debt",
-      "subtitle": "Adds this ticket to a debtor’s balance (UI only — not saved yet). Pick someone who already owes you, or switch to new customer and type a name.",
+      "subtitle": "Saves the ticket as a debt sale and updates your catalog stock. Pick an existing customer, or add a new name.",
       "amountsAria": "Ticket totals",
       "lineCount": "{{count}} line(s) on this ticket",
       "modeLegend": "Debtor",
@@ -147,7 +150,8 @@
       },
       "errors": {
         "nameRequired": "Enter a customer name to continue.",
-        "debtorRequired": "Select a debtor from the list."
+        "debtorRequired": "Select a debtor from the list.",
+        "loadCustomers": "Could not load customers. Try again, or add a new customer by name."
       }
     },
     "toast": {
@@ -158,7 +162,9 @@
       "paidCash": "Ticket closed as cash (demo).",
       "paidCashRecorded": "Sale saved — {{total}}. Stock updated in the catalog.",
       "recordedDebtDetail": "Debt saved for {{name}} (demo — not persisted).",
-      "recordedDebtDetailNote": "Debt saved for {{name}} — note: «{{note}}» (demo — not persisted)."
+      "recordedDebtDetailNote": "Debt saved for {{name}} — note: «{{note}}» (demo — not persisted).",
+      "paidDebtRecorded": "On-account sale saved: {{total}} for {{name}}. Stock was updated in the catalog.",
+      "paidDebtRecordedNote": "On-account sale saved: {{total}} for {{name}}. Note: «{{note}}». Stock was updated."
     },
     "mockItems": {
       "water": "Water 0.5L",
@@ -274,7 +280,10 @@
   },
   "debts": {
     "pageTitle": "Debts",
-    "intro": "Mock customer balances for layout. Search and balance filters work on this sample list; recording payments stays disabled until the ledger API exists.",
+    "loading": "Loading…",
+    "loadError": "Could not load customer balances. Check the database, then try again.",
+    "retryLoad": "Retry",
+    "intro": "Customer balances are built from on-account (debt) sales. Search and filter by balance; recording customer payments is not wired yet.",
     "toolbar": {
       "searchPlaceholder": "Search by customer name or phone…",
       "searchAria": "Search debtors",
@@ -299,7 +308,9 @@
       "recordPayDisabledTitle": "Payment entry will post to the ledger in a later release."
     },
     "detail": {
-      "activityLabel": "Last activity (demo)"
+      "activityLabel": "Last on-account sale",
+      "lastSale": "{{at}}",
+      "noSalesYet": "No on-account sales for this customer yet."
     },
     "empty": {
       "noSearchTitle": "No matching customers",

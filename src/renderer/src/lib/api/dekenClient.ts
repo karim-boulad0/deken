@@ -1,8 +1,12 @@
 import type {
   CategoryDto,
   CompleteCashSaleResult,
+  CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCustomerInput,
   CreateProductInput,
+  CustomerBalanceRow,
+  CustomerDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -78,4 +82,24 @@ export async function completeCashSale(
   lines: PosSaleLineInput[],
 ): Promise<IpcResult<CompleteCashSaleResult>> {
   return assertDeken().sales.completeCash(lines)
+}
+
+export async function listCustomers(): Promise<IpcResult<CustomerDto[]>> {
+  return assertDeken().customers.list()
+}
+
+export async function listCustomerBalances(): Promise<IpcResult<CustomerBalanceRow[]>> {
+  return assertDeken().customers.listBalances()
+}
+
+export async function createCustomer(
+  input: CreateCustomerInput,
+): Promise<IpcResult<CustomerDto>> {
+  return assertDeken().customers.create(input)
+}
+
+export async function completeDebtSale(
+  input: CompleteDebtSaleInput,
+): Promise<IpcResult<CompleteCashSaleResult>> {
+  return assertDeken().sales.completeDebt(input)
 }

@@ -3,8 +3,12 @@ import { IpcInvokes } from '../shared/ipc/types'
 import type {
   CategoryDto,
   CompleteCashSaleResult,
+  CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCustomerInput,
   CreateProductInput,
+  CustomerBalanceRow,
+  CustomerDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -51,9 +55,25 @@ contextBridge.exposeInMainWorld('deken', {
       return invoke(IpcInvokes.deleteCategory, id)
     },
   },
+  customers: {
+    list: (): Promise<IpcResult<CustomerDto[]>> => {
+      return invoke(IpcInvokes.listCustomers)
+    },
+    listBalances: (): Promise<IpcResult<CustomerBalanceRow[]>> => {
+      return invoke(IpcInvokes.listCustomerBalances)
+    },
+    create: (input: CreateCustomerInput): Promise<IpcResult<CustomerDto>> => {
+      return invoke(IpcInvokes.createCustomer, input)
+    },
+  },
   sales: {
     completeCash: (lines: PosSaleLineInput[]): Promise<IpcResult<CompleteCashSaleResult>> => {
       return invoke(IpcInvokes.completeCashSale, lines)
+    },
+    completeDebt: (
+      input: CompleteDebtSaleInput,
+    ): Promise<IpcResult<CompleteCashSaleResult>> => {
+      return invoke(IpcInvokes.completeDebtSale, input)
     },
   },
 })

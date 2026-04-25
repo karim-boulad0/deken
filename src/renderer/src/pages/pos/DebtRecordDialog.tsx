@@ -1,8 +1,7 @@
-import { type FormEvent, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-
-const MOCK_DEBTOR_IDS = ['d1', 'd2', 'd3'] as const
-type MockDebtorId = (typeof MOCK_DEBTOR_IDS)[number]
+import { listCustomers } from '../../lib/api/dekenClient'
+import type { CustomerDto } from '../../../../shared/ipc/types'
 
 export type DebtRecordPayload = {
   mode: 'existing' | 'new'
@@ -19,7 +18,8 @@ type DebtRecordDialogProps = {
   totalLbpDisplay: string
   totalUsdDisplay: string
   lineCount: number
-  onConfirm: (payload: DebtRecordPayload) => void
+  /** Return `true` to close, `false` to keep open (e.g. validation/IPC error). */
+  onConfirm: (payload: DebtRecordPayload) => boolean | Promise<boolean>
 }
 
 type DebtorMode = 'existing' | 'new'
@@ -46,30 +46,36 @@ export function DebtRecordDialog({
 
   const [mode, setMode] = useState<DebtorMode>('existing')
   const [pickerQuery, setPickerQuery] = useState('')
-  const [selectedDebtorId, setSelectedDebtorId] = useState<MockDebtorId | null>(null)
+  const [selectedDebtorId, setSelectedDebtorId] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [note, setNote] = useState('')
   const [errorKey, setErrorKey] = useState<ErrorKey>(null)
+  const [customers, setCustomers] = useState<CustomerDto[]>([])
+  const [loadError, setLoadError] = useState(false)
 
-  const mockRows = useMemo(
-    () =>
-      MOCK_DEBTOR_IDS.map((id) => ({
-        id,
-        name: t(`pos.debt.mockDebtors.${id}.name`),
-        phone: t(`pos.debt.mockDebtors.${id}.phone`),
-      })),
-    [t],
-  )
+  const loadCustomers = useCallback(async () => {
+    setLoadError(false)
+    const r = await listCustomers()
+    if (r.ok) {
+      setCustomers(r.data)
+    } else {
+      setLoadError(true)
+    }
+  }, [])
 
   const filteredDebtors = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase()
-    if (!q) return mockRows
-    return mockRows.filter((row) => {
-      const phone = row.phone.toLowerCase()
-      return row.name.toLowerCase().includes(q) || (phone && phone.includes(q))
+    if (!q) {
+      return customers
+    }
+    return customers.filter((row) => {
+      const p = (row.phone ?? '').toLowerCase()
+      return (
+        row.name.toLowerCase().includes(q) || (p.length > 0 && p.replace(/\s/g, '').includes(q.replace(/\s/g, '')))
+      )
     })
-  }, [mockRows, pickerQuery])
+  }, [customers, pickerQuery])
 
   const canConfirm =
     mode === 'existing' ? selectedDebtorId !== null : name.trim().length > 0
@@ -78,6 +84,7 @@ export function DebtRecordDialog({
     const el = dialogRef.current
     if (!el) return
     if (open) {
+      void loadCustomers()
       setMode('existing')
       setPickerQuery('')
       setSelectedDebtorId(null)
@@ -92,7 +99,7 @@ export function DebtRecordDialog({
     } else if (el.open) {
       el.close()
     }
-  }, [open])
+  }, [open, loadCustomers])
 
   function setModeAndFocus(next: DebtorMode) {
     setMode(next)
@@ -113,30 +120,45 @@ export function DebtRecordDialog({
         setErrorKey('debtorRequired')
         return
       }
-      const row = mockRows.find((r) => r.id === selectedDebtorId)
-      if (!row) return
-      onConfirm({
+      const row = customers.find((r) => r.id === selectedDebtorId)
+      if (!row) {
+        return
+      }
+      const payload: DebtRecordPayload = {
         mode: 'existing',
         debtorId: selectedDebtorId,
         customerName: row.name,
-        customerPhone: row.phone,
+        customerPhone: row.phone ?? '',
         note: note.trim(),
-      })
+      }
+      void (async () => {
+        const out = onConfirm(payload)
+        const ok = await Promise.resolve(out)
+        if (ok) {
+          onOpenChange(false)
+        }
+      })()
     } else {
       const trimmed = name.trim()
       if (!trimmed) {
         setErrorKey('nameRequired')
         return
       }
-      onConfirm({
+      const payload: DebtRecordPayload = {
         mode: 'new',
         debtorId: null,
         customerName: trimmed,
         customerPhone: phone.trim(),
         note: note.trim(),
-      })
+      }
+      void (async () => {
+        const out = onConfirm(payload)
+        const ok = await Promise.resolve(out)
+        if (ok) {
+          onOpenChange(false)
+        }
+      })()
     }
-    dialogRef.current?.close()
   }
 
   return (
@@ -195,6 +217,11 @@ export function DebtRecordDialog({
 
         {mode === 'existing' ? (
           <div className="pos-dialog__fields">
+            {loadError ? (
+              <p className="pos-dialog__error" role="alert">
+                {t('pos.debt.errors.loadCustomers')}
+              </p>
+            ) : null}
             <label className="pos-field">
               <span className="pos-field__label">{t('pos.debt.fields.searchExisting')}</span>
               <input

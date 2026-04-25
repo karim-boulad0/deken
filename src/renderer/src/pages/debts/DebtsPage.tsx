@@ -1,44 +1,14 @@
 import { ChevronDown, ChevronUp, Search } from 'lucide-react'
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { listCustomerBalances } from '../../lib/api/dekenClient'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import './DebtsPage.css'
+import type { CustomerBalanceRow } from '../../../../shared/ipc/types'
 
 const MOCK_LBP_PER_USD = 89_500
 
 type BalanceFilter = 'all' | 'positive' | 'zero'
-
-type MockDebtor = {
-  id: string
-  nameKey: string
-  phone: string
-  balanceLbp: number
-  detailKey: string
-}
-
-const MOCK_DEBTORS: MockDebtor[] = [
-  {
-    id: 'd1',
-    nameKey: 'debts.mock.d1name',
-    phone: '70 123 456',
-    balanceLbp: 2_150_000,
-    detailKey: 'debts.mock.d1detail',
-  },
-  {
-    id: 'd2',
-    nameKey: 'debts.mock.d2name',
-    phone: '',
-    balanceLbp: 0,
-    detailKey: 'debts.mock.d2detail',
-  },
-  {
-    id: 'd3',
-    nameKey: 'debts.mock.d3name',
-    phone: '03 210 000',
-    balanceLbp: 448_000,
-    detailKey: 'debts.mock.d3detail',
-  },
-]
 
 export function DebtsPage() {
   const { t, i18n } = useTranslation()
@@ -46,28 +16,53 @@ export function DebtsPage() {
   const [query, setQuery] = useState('')
   const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [rows, setRows] = useState<CustomerBalanceRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoadError(false)
+    setLoading(true)
+    const r = await listCustomerBalances()
+    if (r.ok) {
+      setRows(r.data)
+    } else {
+      setLoadError(true)
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
 
   const filtered = useMemo(() => {
-    let rows = MOCK_DEBTORS
+    let list = rows
     if (balanceFilter === 'positive') {
-      rows = rows.filter((r) => r.balanceLbp > 0)
+      list = list.filter((r) => r.balanceLbp > 0)
     } else if (balanceFilter === 'zero') {
-      rows = rows.filter((r) => r.balanceLbp === 0)
+      list = list.filter((r) => r.balanceLbp === 0)
     }
     const q = query.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter((row) => {
-      const name = t(row.nameKey).toLowerCase()
-      const phone = row.phone.toLowerCase()
+    if (!q) {
+      return list
+    }
+    return list.filter((row) => {
+      const name = row.name.toLowerCase()
+      const phone = (row.phone ?? '').toLowerCase()
       return name.includes(q) || phone.includes(q)
     })
-  }, [query, balanceFilter, t])
+  }, [query, balanceFilter, rows])
 
   const showEmptySearch = query.trim().length > 0 && filtered.length === 0
   const showEmptyFilter =
-    query.trim().length === 0 && filtered.length === 0 && balanceFilter !== 'all'
+    query.trim().length === 0 && filtered.length === 0 && balanceFilter !== 'all' && !loading
   const showLedgerEmpty =
-    filtered.length === 0 && query.trim().length === 0 && balanceFilter === 'all'
+    !loadError &&
+    !loading &&
+    rows.length === 0 &&
+    query.trim().length === 0 &&
+    balanceFilter === 'all'
 
   function toggleRow(id: string) {
     setExpandedId((prev) => (prev === id ? null : id))
@@ -140,6 +135,13 @@ export function DebtsPage() {
               {t('debts.empty.resetFilters')}
             </button>
           </div>
+        ) : loadError ? (
+          <div className="debts-empty" role="status">
+            <p className="debts-empty__title">{t('debts.loadError')}</p>
+            <button type="button" className="debts-btn debts-btn--primary" onClick={load}>
+              {t('debts.retryLoad')}
+            </button>
+          </div>
         ) : showLedgerEmpty ? (
           <div className="debts-empty" role="status">
             <p className="debts-empty__title">{t('debts.empty.noDebtorsTitle')}</p>
@@ -171,19 +173,33 @@ export function DebtsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => {
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="debts-table__cell-muted">
+                      {t('debts.loading')}
+                    </td>
+                  </tr>
+                ) : null}
+                {!loading
+                  ? filtered.map((row) => {
                   const expanded = expandedId === row.id
                   const usd = row.balanceLbp / MOCK_LBP_PER_USD
+                  const lastAt =
+                    row.lastDebtSaleAt != null
+                      ? new Date(row.lastDebtSaleAt).toLocaleString(
+                          lng.startsWith('ar') ? 'ar-LB' : 'en-US',
+                        )
+                      : null
                   return (
                     <Fragment key={row.id}>
                       <tr className={expanded ? 'debts-table__row--open' : undefined}>
                         <td className="debts-table__cell-strong debts-table__cell-truncate">
-                          <span className="debts-table__ellipsis" title={t(row.nameKey)}>
-                            {t(row.nameKey)}
+                          <span className="debts-table__ellipsis" title={row.name}>
+                            {row.name}
                           </span>
                         </td>
                         <td className="debts-table__cell-muted">
-                          {row.phone ? row.phone : t('debts.table.noPhone')}
+                          {row.phone && row.phone.trim() !== '' ? row.phone : t('debts.table.noPhone')}
                         </td>
                         <td className="debts-table__num debts-table__cell-strong">
                           {formatLbp(row.balanceLbp, lng)}
@@ -221,7 +237,11 @@ export function DebtsPage() {
                               aria-labelledby={`debt-expand-${row.id}`}
                             >
                               <p className="debts-detail__label">{t('debts.detail.activityLabel')}</p>
-                              <p className="debts-detail__text">{t(row.detailKey)}</p>
+                              <p className="debts-detail__text">
+                                {lastAt
+                                  ? t('debts.detail.lastSale', { at: lastAt })
+                                  : t('debts.detail.noSalesYet')}
+                              </p>
                               <button
                                 type="button"
                                 className="debts-btn debts-btn--primary"
@@ -236,7 +256,8 @@ export function DebtsPage() {
                       ) : null}
                     </Fragment>
                   )
-                })}
+                })
+                  : null}
               </tbody>
             </table>
           </div>

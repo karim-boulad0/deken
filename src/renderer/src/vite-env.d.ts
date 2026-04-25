@@ -3,8 +3,12 @@
 import type {
   CategoryDto,
   CompleteCashSaleResult,
+  CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCustomerInput,
   CreateProductInput,
+  CustomerBalanceRow,
+  CustomerDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -27,8 +31,14 @@ type DekenPreload = {
     update: (id: string, input: UpdateCategoryInput) => Promise<IpcResult<CategoryDto>>
     delete: (id: string) => Promise<IpcResult<null>>
   }
+  customers: {
+    list: () => Promise<IpcResult<CustomerDto[]>>
+    listBalances: () => Promise<IpcResult<CustomerBalanceRow[]>>
+    create: (input: CreateCustomerInput) => Promise<IpcResult<CustomerDto>>
+  }
   sales: {
     completeCash: (lines: PosSaleLineInput[]) => Promise<IpcResult<CompleteCashSaleResult>>
+    completeDebt: (input: CompleteDebtSaleInput) => Promise<IpcResult<CompleteCashSaleResult>>
   }
 }
 
