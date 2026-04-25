@@ -1,5 +1,7 @@
 import type {
   AppSettingsDto,
+  AuthLoginInput,
+  AuthSessionDto,
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
@@ -17,6 +19,7 @@ import type {
   CreateSupplierInput,
   CreateSupplierInvoiceInput,
   CreateSupplierPaymentInput,
+  CreateUserInput,
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
@@ -44,10 +47,14 @@ import type {
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
   UpdateProductInput,
-  UpdateSupplierInput,
-  VerifyActivationInput,
   SalesReportDto,
   SalesReportInput,
+  SetUserPermissionsInput,
+  UpdateSupplierInput,
+  UpdateUserInput,
+  VerifyActivationInput,
+  ResetUserCredentialsInput,
+  UserWithPermissionsDto,
 } from '../../../../shared/ipc/types'
 
 function isDeken() {
@@ -91,6 +98,51 @@ export async function deleteProduct(id: string): Promise<IpcResult<null>> {
 
 export async function getAppVersion(): Promise<IpcResult<string>> {
   return assertDeken().getAppVersion()
+}
+
+export async function getAuthSession(): Promise<IpcResult<AuthSessionDto | null>> {
+  return assertDeken().auth.getSession()
+}
+
+export async function login(input: AuthLoginInput): Promise<IpcResult<AuthSessionDto>> {
+  return assertDeken().auth.login(input)
+}
+
+export async function logout(): Promise<IpcResult<null>> {
+  return assertDeken().auth.logout()
+}
+
+export async function listUsers(): Promise<IpcResult<UserWithPermissionsDto[]>> {
+  return assertDeken().users.list()
+}
+
+export async function createUser(input: CreateUserInput): Promise<IpcResult<UserWithPermissionsDto>> {
+  return assertDeken().users.create(input)
+}
+
+export async function updateUser(
+  id: string,
+  input: UpdateUserInput,
+): Promise<IpcResult<UserWithPermissionsDto>> {
+  return assertDeken().users.update(id, input)
+}
+
+export async function setUserPermissions(
+  id: string,
+  input: SetUserPermissionsInput,
+): Promise<IpcResult<UserWithPermissionsDto>> {
+  return assertDeken().users.setPermissions(id, input)
+}
+
+export async function resetUserCredentials(
+  id: string,
+  input: ResetUserCredentialsInput,
+): Promise<IpcResult<UserWithPermissionsDto>> {
+  return assertDeken().users.resetCredentials(id, input)
+}
+
+export async function deleteUser(id: string): Promise<IpcResult<null>> {
+  return assertDeken().users.delete(id)
 }
 
 export async function getActivationStatus(): Promise<IpcResult<ActivationStatusDto>> {

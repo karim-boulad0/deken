@@ -2,6 +2,8 @@
 
 import type {
   AppSettingsDto,
+  AuthLoginInput,
+  AuthSessionDto,
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
@@ -50,10 +52,34 @@ import type {
   VerifyActivationInput,
   SalesReportDto,
   SalesReportInput,
+  CreateUserInput,
+  SetUserPermissionsInput,
+  ResetUserCredentialsInput,
+  UpdateUserInput,
+  UserWithPermissionsDto,
 } from '../../shared/ipc/types'
 
 type DekenPreload = {
   getAppVersion: () => Promise<IpcResult<string>>
+  auth: {
+    getSession: () => Promise<IpcResult<AuthSessionDto | null>>
+    login: (input: AuthLoginInput) => Promise<IpcResult<AuthSessionDto>>
+    logout: () => Promise<IpcResult<null>>
+  }
+  users: {
+    list: () => Promise<IpcResult<UserWithPermissionsDto[]>>
+    create: (input: CreateUserInput) => Promise<IpcResult<UserWithPermissionsDto>>
+    update: (id: string, input: UpdateUserInput) => Promise<IpcResult<UserWithPermissionsDto>>
+    setPermissions: (
+      id: string,
+      input: SetUserPermissionsInput,
+    ) => Promise<IpcResult<UserWithPermissionsDto>>
+    resetCredentials: (
+      id: string,
+      input: ResetUserCredentialsInput,
+    ) => Promise<IpcResult<UserWithPermissionsDto>>
+    delete: (id: string) => Promise<IpcResult<null>>
+  }
   activation: {
     status: () => Promise<IpcResult<ActivationStatusDto>>
     verify: (input: VerifyActivationInput) => Promise<IpcResult<ActivationStatusDto>>

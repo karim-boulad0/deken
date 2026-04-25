@@ -15,24 +15,11 @@ export function LanguageSwitcher() {
       role="switch"
       aria-checked={lng === 'en'}
       aria-label={t('lang.toggleAria')}
+      title={t('lang.toggleAria')}
       onClick={() => setAppLanguage(nextLng)}
     >
       <span className="lang-switcher__glyph" aria-hidden>
         <Languages size={16} strokeWidth={2} />
-      </span>
-      <span className="lang-switcher__track">
-        <span
-          className={`lang-switcher__seg${lng === 'ar' ? ' lang-switcher__seg--active' : ''}`}
-          aria-hidden
-        >
-          {t('lang.ar')}
-        </span>
-        <span
-          className={`lang-switcher__seg${lng === 'en' ? ' lang-switcher__seg--active' : ''}`}
-          aria-hidden
-        >
-          {t('lang.en')}
-        </span>
       </span>
     </button>
   )

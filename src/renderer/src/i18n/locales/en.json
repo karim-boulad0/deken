@@ -14,7 +14,8 @@
     "expenses": "Expenses",
     "cashflow": "Cashflow",
     "reports": "Reports",
-    "settings": "Settings"
+    "settings": "Settings",
+    "employees": "Employees"
   },
   "lang": {
     "aria": "Interface language",
@@ -35,6 +36,28 @@
       "activation_invalid_code": "Invalid activation code.",
       "invalid_input": "Invalid request.",
       "internal_error": "Could not verify activation."
+    }
+  },
+  "auth": {
+    "logout": "Logout",
+    "permissionDenied": "You do not have permission to access this section.",
+    "login": {
+      "title": "Sign in",
+      "intro": "Log in with your username and either password or PIN.",
+      "username": "Username",
+      "password": "Password",
+      "pin": "PIN",
+      "usePassword": "Password",
+      "usePin": "PIN",
+      "submit": "Sign in",
+      "loading": "Signing in…",
+      "errors": {
+        "invalid_credentials": "Invalid username or secret.",
+        "inactive_user": "This account is inactive.",
+        "username_required": "Username is required.",
+        "password_or_pin_required": "Provide password or PIN.",
+        "unknown": "Could not sign in."
+      }
     }
   },
   "common": {
@@ -827,6 +850,64 @@
       "colDay": "Day",
       "colSales": "Total (LBP)",
       "colInvoices": "Invoices"
+    }
+  },
+  "employees": {
+    "title": "Employees",
+    "intro": "Manage users and module permissions.",
+    "systemAdmin": "System admin",
+    "loading": "Loading…",
+    "active": "Active",
+    "inactive": "Inactive",
+    "role": {
+      "admin": "Admin",
+      "employee": "Employee"
+    },
+    "create": {
+      "title": "Add employee",
+      "username": "Username",
+      "fullName": "Full name",
+      "password": "Password (optional if PIN exists)",
+      "pin": "PIN (optional if password exists)",
+      "submit": "Create user"
+    },
+    "list": {
+      "title": "Users"
+    },
+    "actions": {
+      "disable": "Disable",
+      "enable": "Enable",
+      "resetPassword": "Reset credentials",
+      "applyDefaultPermissions": "Apply default permissions",
+      "delete": "Delete"
+    },
+    "toast": {
+      "created": "Employee created.",
+      "credentialsReset": "Credentials reset."
+    },
+    "errors": {
+      "load_failed": "Could not load employees.",
+      "username_required": "Username is required.",
+      "full_name_required": "Full name is required.",
+      "password_or_pin_required": "Provide password or PIN.",
+      "credentials_required": "Provide at least one credential.",
+      "system_admin_immutable": "System admin cannot be edited.",
+      "username_taken": "Username already exists.",
+      "permission_denied": "Permission denied.",
+      "not_found": "User not found.",
+      "internal_error": "Could not complete the request."
+    },
+    "modules": {
+      "dashboard": "Dashboard",
+      "pos": "POS",
+      "products": "Products",
+      "debts": "Debts",
+      "suppliers": "Suppliers",
+      "expenses": "Expenses",
+      "cashflow": "Cashflow",
+      "reports": "Reports",
+      "settings": "Settings",
+      "employees": "Employees"
     }
   },
   "settings": {

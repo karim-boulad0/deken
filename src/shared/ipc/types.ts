@@ -7,6 +7,74 @@ export type IpcErrorShape = {
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: IpcErrorShape }
 
+export const PermissionModules = [
+  'dashboard',
+  'pos',
+  'products',
+  'debts',
+  'suppliers',
+  'expenses',
+  'cashflow',
+  'reports',
+  'settings',
+  'employees',
+] as const
+
+export type PermissionModule = (typeof PermissionModules)[number]
+export type UserRole = 'admin' | 'employee'
+
+export type UserDto = {
+  id: string
+  username: string
+  fullName: string
+  role: UserRole
+  isSystemAdmin: boolean
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type UserWithPermissionsDto = {
+  user: UserDto
+  permissions: PermissionModule[]
+}
+
+export type AuthSessionDto = {
+  user: UserDto
+  permissions: PermissionModule[]
+}
+
+export type AuthLoginInput = {
+  username: string
+  password?: string
+  pin?: string
+}
+
+export type CreateUserInput = {
+  username: string
+  fullName: string
+  role: UserRole
+  password?: string
+  pin?: string
+  permissions: PermissionModule[]
+}
+
+export type UpdateUserInput = {
+  username?: string
+  fullName?: string
+  role?: UserRole
+  isActive?: boolean
+}
+
+export type ResetUserCredentialsInput = {
+  password?: string
+  pin?: string
+}
+
+export type SetUserPermissionsInput = {
+  permissions: PermissionModule[]
+}
+
 export type ProductCategoryRef = {
   id: string
   name: string
@@ -480,6 +548,15 @@ export type VerifyActivationInput = {
 
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
+  authGetSession: 'deken:auth:getSession',
+  authLogin: 'deken:auth:login',
+  authLogout: 'deken:auth:logout',
+  usersList: 'deken:users:list',
+  usersCreate: 'deken:users:create',
+  usersUpdate: 'deken:users:update',
+  usersSetPermissions: 'deken:users:setPermissions',
+  usersResetCredentials: 'deken:users:resetCredentials',
+  usersDelete: 'deken:users:delete',
   listProducts: 'deken:products:list',
   createProduct: 'deken:products:create',
   updateProduct: 'deken:products:update',

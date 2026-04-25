@@ -14,7 +14,8 @@
     "expenses": "المصاريف",
     "cashflow": "حركة الصندوق",
     "reports": "التقارير",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "employees": "الموظفون"
   },
   "lang": {
     "aria": "لغة الواجهة",
@@ -35,6 +36,28 @@
       "activation_invalid_code": "كود التفعيل غير صحيح.",
       "invalid_input": "طلب غير صالح.",
       "internal_error": "تعذّر التحقق من التفعيل."
+    }
+  },
+  "auth": {
+    "logout": "تسجيل الخروج",
+    "permissionDenied": "ليس لديك صلاحية للوصول إلى هذا القسم.",
+    "login": {
+      "title": "تسجيل الدخول",
+      "intro": "سجّل الدخول باسم المستخدم وكلمة المرور أو رمز PIN.",
+      "username": "اسم المستخدم",
+      "password": "كلمة المرور",
+      "pin": "رمز PIN",
+      "usePassword": "كلمة المرور",
+      "usePin": "PIN",
+      "submit": "دخول",
+      "loading": "جارٍ تسجيل الدخول…",
+      "errors": {
+        "invalid_credentials": "اسم المستخدم أو بيانات الدخول غير صحيحة.",
+        "inactive_user": "هذا الحساب غير نشط.",
+        "username_required": "اسم المستخدم مطلوب.",
+        "password_or_pin_required": "أدخل كلمة مرور أو PIN.",
+        "unknown": "تعذّر تسجيل الدخول."
+      }
     }
   },
   "common": {
@@ -827,6 +850,64 @@
       "colDay": "اليوم",
       "colSales": "الإجمالي (ل.ل.)",
       "colInvoices": "فواتير"
+    }
+  },
+  "employees": {
+    "title": "الموظفون",
+    "intro": "إدارة المستخدمين وصلاحيات الأقسام.",
+    "systemAdmin": "الأدمن الثابت",
+    "loading": "جارٍ التحميل…",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "role": {
+      "admin": "أدمن",
+      "employee": "موظف"
+    },
+    "create": {
+      "title": "إضافة موظف",
+      "username": "اسم المستخدم",
+      "fullName": "الاسم الكامل",
+      "password": "كلمة المرور (اختياري إذا يوجد PIN)",
+      "pin": "PIN (اختياري إذا توجد كلمة مرور)",
+      "submit": "إنشاء مستخدم"
+    },
+    "list": {
+      "title": "المستخدمون"
+    },
+    "actions": {
+      "disable": "تعطيل",
+      "enable": "تفعيل",
+      "resetPassword": "إعادة تعيين بيانات الدخول",
+      "applyDefaultPermissions": "تطبيق صلاحيات افتراضية",
+      "delete": "حذف"
+    },
+    "toast": {
+      "created": "تم إنشاء الموظف.",
+      "credentialsReset": "تمت إعادة تعيين بيانات الدخول."
+    },
+    "errors": {
+      "load_failed": "تعذّر تحميل الموظفين.",
+      "username_required": "اسم المستخدم مطلوب.",
+      "full_name_required": "الاسم الكامل مطلوب.",
+      "password_or_pin_required": "أدخل كلمة مرور أو PIN.",
+      "credentials_required": "أدخل وسيلة دخول واحدة على الأقل.",
+      "system_admin_immutable": "لا يمكن تعديل الأدمن الثابت.",
+      "username_taken": "اسم المستخدم مستخدم بالفعل.",
+      "permission_denied": "لا يوجد صلاحية.",
+      "not_found": "المستخدم غير موجود.",
+      "internal_error": "تعذّر إتمام العملية."
+    },
+    "modules": {
+      "dashboard": "لوحة التحكم",
+      "pos": "نقطة البيع",
+      "products": "المنتجات",
+      "debts": "الديون",
+      "suppliers": "الموردون",
+      "expenses": "المصاريف",
+      "cashflow": "حركة الصندوق",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "employees": "الموظفون"
     }
   },
   "settings": {

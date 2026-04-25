@@ -1,0 +1,74 @@
+.emp {
+  display: grid;
+  gap: 16px;
+}
+
+.emp__header h1,
+.emp__create h2,
+.emp__list h2 {
+  margin: 0;
+}
+
+.emp__system-admin {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.emp__create,
+.emp__list {
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.emp__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.emp__grid input,
+.emp__grid select {
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.emp__modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.emp__module {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.emp__table {
+  display: grid;
+  gap: 10px;
+}
+
+.emp__row {
+  border: 1px solid var(--border-color, #e1e1e1);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.emp__badges {
+  display: flex;
+  gap: 8px;
+}
+
+.emp__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

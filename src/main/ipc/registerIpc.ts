@@ -62,9 +62,19 @@ import { getDashboardSnapshot } from '../data/dashboardService'
 import { getActivationStatus, verifyActivation } from '../data/activationService'
 import { applyApplicationMenu } from '../appMenu'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
+import { getAuthSession, login, logout, requireModulePermission } from '../data/authService'
+import {
+  createUser,
+  deleteUser,
+  listUsers,
+  resetUserCredentials,
+  setUserPermissions,
+  updateUser,
+} from '../data/userService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
+  AuthLoginInput,
   CreateCategoryInput,
   CreateCategoryFlavorInput,
   CreateCategorySizeInput,
@@ -77,6 +87,7 @@ import type {
   CreateSupplierPaymentInput,
   CompleteDebtSaleInput,
   DashboardSnapshotInput,
+  CreateUserInput,
   IpcResult,
   ListExpensesInRangeInput,
   ListRecentCashflowInput,
@@ -91,7 +102,11 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  UpdateUserInput,
   VerifyActivationInput,
+  SetUserPermissionsInput,
+  ResetUserCredentialsInput,
+  PermissionModule,
 } from '../../shared/ipc/types'
 
 /**
@@ -99,9 +114,82 @@ import type {
  */
 export function registerIpc(): void {
   const db = () => getDatabase()
+  const guard = (moduleKey: PermissionModule): IpcResult<null> => {
+    const r = requireModulePermission(db(), moduleKey)
+    if (!r.ok) {
+      return r
+    }
+    return { ok: true, data: null }
+  }
 
   ipcMain.handle(IpcInvokes.getAppVersion, (): IpcResult<string> => {
     return { ok: true, data: app.getVersion() }
+  })
+
+  ipcMain.handle(IpcInvokes.authGetSession, () => {
+    return getAuthSession(db())
+  })
+
+  ipcMain.handle(IpcInvokes.authLogin, (_evt, input: AuthLoginInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return login(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.authLogout, () => {
+    return logout(db())
+  })
+
+  ipcMain.handle(IpcInvokes.usersList, () => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    return listUsers(db())
+  })
+
+  ipcMain.handle(IpcInvokes.usersCreate, (_evt, input: CreateUserInput) => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return createUser(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.usersUpdate, (_evt, id: string, input: UpdateUserInput) => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return updateUser(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.usersSetPermissions, (_evt, id: string, input: SetUserPermissionsInput) => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return setUserPermissions(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.usersResetCredentials, (_evt, id: string, input: ResetUserCredentialsInput) => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    if (typeof id !== 'string' || input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return resetUserCredentials(db(), id, input)
+  })
+
+  ipcMain.handle(IpcInvokes.usersDelete, (_evt, id: string) => {
+    const g = guard('employees')
+    if (!g.ok) return g
+    if (typeof id !== 'string') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return deleteUser(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.getActivationStatus, () => {
@@ -115,85 +203,129 @@ export function registerIpc(): void {
   ipcMain.handle(
     IpcInvokes.listProducts,
     (_evt, q: string, filterCategoryId: string | null | undefined) => {
+      const g = guard('products')
+      if (!g.ok) return g
       return listProducts(db(), q ?? '', filterCategoryId ?? null)
     },
   )
 
   ipcMain.handle(IpcInvokes.createProduct, (_evt, input: CreateProductInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return createProduct(db(), input)
   })
 
   ipcMain.handle(IpcInvokes.updateProduct, (_evt, id: string, input: UpdateProductInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return updateProduct(db(), id, input)
   })
 
   ipcMain.handle(IpcInvokes.deleteProduct, (_evt, id: string) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return deleteProduct(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.findProductByCode, (_evt, code: string) => {
+    const g = guard('pos')
+    if (!g.ok) return g
     return findProductByCode(db(), code ?? '')
   })
 
   ipcMain.handle(IpcInvokes.listCategories, () => {
+    const g = guard('products')
+    if (!g.ok) return g
     return listCategories(db())
   })
 
   ipcMain.handle(IpcInvokes.createCategory, (_evt, input: CreateCategoryInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return createCategory(db(), input)
   })
 
   ipcMain.handle(IpcInvokes.updateCategory, (_evt, id: string, input: UpdateCategoryInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return updateCategory(db(), id, input)
   })
 
   ipcMain.handle(IpcInvokes.deleteCategory, (_evt, id: string) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return deleteCategory(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.listCategorySizes, () => {
+    const g = guard('products')
+    if (!g.ok) return g
     return listCategorySizes(db())
   })
   ipcMain.handle(IpcInvokes.createCategorySize, (_evt, input: CreateCategorySizeInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return createCategorySize(db(), input)
   })
   ipcMain.handle(IpcInvokes.updateCategorySize, (_evt, id: string, input: UpdateCategorySizeInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return updateCategorySize(db(), id, input)
   })
   ipcMain.handle(IpcInvokes.deleteCategorySize, (_evt, id: string) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return deleteCategorySize(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.listCategoryFlavors, () => {
+    const g = guard('products')
+    if (!g.ok) return g
     return listCategoryFlavors(db())
   })
   ipcMain.handle(IpcInvokes.createCategoryFlavor, (_evt, input: CreateCategoryFlavorInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return createCategoryFlavor(db(), input)
   })
   ipcMain.handle(IpcInvokes.updateCategoryFlavor, (_evt, id: string, input: UpdateCategoryFlavorInput) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return updateCategoryFlavor(db(), id, input)
   })
   ipcMain.handle(IpcInvokes.deleteCategoryFlavor, (_evt, id: string) => {
+    const g = guard('products')
+    if (!g.ok) return g
     return deleteCategoryFlavor(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.completeCashSale, (_evt, lines: PosSaleLineInput[]) => {
+    const g = guard('pos')
+    if (!g.ok) return g
     return completeCashSale(db(), Array.isArray(lines) ? lines : [])
   })
 
   ipcMain.handle(IpcInvokes.listCustomers, () => {
+    const g = guard('debts')
+    if (!g.ok) return g
     return listCustomers(db())
   })
 
   ipcMain.handle(IpcInvokes.listCustomerBalances, () => {
+    const g = guard('debts')
+    if (!g.ok) return g
     return listCustomerBalances(db())
   })
 
   ipcMain.handle(IpcInvokes.getCustomerLedger, (_evt, customerId: string) => {
+    const g = guard('debts')
+    if (!g.ok) return g
     return getCustomerLedger(db(), typeof customerId === 'string' ? customerId : '')
   })
 
   ipcMain.handle(IpcInvokes.recordDebtPayment, (_evt, input: RecordDebtPaymentInput) => {
+    const g = guard('debts')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object' || typeof input.customerId !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -201,10 +333,14 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createCustomer, (_evt, input: CreateCustomerInput) => {
+    const g = guard('debts')
+    if (!g.ok) return g
     return createCustomer(db(), input)
   })
 
   ipcMain.handle(IpcInvokes.completeDebtSale, (_evt, input: CompleteDebtSaleInput) => {
+    const g = guard('debts')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object' || !Array.isArray((input as CompleteDebtSaleInput).lines)) {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -214,6 +350,8 @@ export function registerIpc(): void {
   ipcMain.handle(
     IpcInvokes.getDebtSaleLines,
     (_evt, customerId: string, saleId: string) => {
+      const g = guard('debts')
+      if (!g.ok) return g
       if (typeof customerId !== 'string' || typeof saleId !== 'string') {
         return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
       }
@@ -222,6 +360,8 @@ export function registerIpc(): void {
   )
 
   ipcMain.handle(IpcInvokes.getSalesReport, (_evt, r: SalesReportInput) => {
+    const g = guard('reports')
+    if (!g.ok) return g
     if (r == null || typeof r !== 'object' || typeof r.fromDate !== 'string' || typeof r.toDate !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -229,10 +369,14 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.getAppSettings, () => {
+    const g = guard('settings')
+    if (!g.ok) return g
     return getAppSettings(db())
   })
 
   ipcMain.handle(IpcInvokes.setAppSettings, (_evt, input: UpdateAppSettingsInput) => {
+    const g = guard('settings')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -244,6 +388,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.getDashboardSnapshot, (_evt, input: DashboardSnapshotInput | undefined) => {
+    const g = guard('dashboard')
+    if (!g.ok) return g
     if (
       input != null &&
       (typeof input !== 'object' || !['today', '7d', '30d'].includes(String(input.range)))
@@ -254,10 +400,14 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listSupplierBalances, () => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     return listSupplierBalances(db())
   })
 
   ipcMain.handle(IpcInvokes.createSupplier, (_evt, input: CreateSupplierInput) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -265,6 +415,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.updateSupplier, (_evt, id: string, input: UpdateSupplierInput) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (typeof id !== 'string' || input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -272,6 +424,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.deleteSupplier, (_evt, id: string) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (typeof id !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -279,6 +433,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listSupplierInvoices, (_evt, supplierId: string) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (typeof supplierId !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -286,6 +442,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listSupplierPayments, (_evt, supplierId: string) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (typeof supplierId !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -293,6 +451,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createSupplierInvoice, (_evt, input: CreateSupplierInvoiceInput) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -300,6 +460,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createSupplierPayment, (_evt, input: CreateSupplierPaymentInput) => {
+    const g = guard('suppliers')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -307,10 +469,14 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listExpenseCategories, () => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     return listExpenseCategories(db())
   })
 
   ipcMain.handle(IpcInvokes.createExpenseCategory, (_evt, input: CreateExpenseCategoryInput) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -320,6 +486,8 @@ export function registerIpc(): void {
   ipcMain.handle(
     IpcInvokes.updateExpenseCategory,
     (_evt, id: string, input: UpdateExpenseCategoryInput) => {
+      const g = guard('expenses')
+      if (!g.ok) return g
       if (typeof id !== 'string' || input == null || typeof input !== 'object') {
         return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
       }
@@ -328,6 +496,8 @@ export function registerIpc(): void {
   )
 
   ipcMain.handle(IpcInvokes.deleteExpenseCategory, (_evt, id: string) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (typeof id !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -335,6 +505,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listExpensesInRange, (_evt, input: ListExpensesInRangeInput) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -342,6 +514,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.getExpenseTotalInRange, (_evt, input: ListExpensesInRangeInput) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -349,6 +523,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.createExpense, (_evt, input: CreateExpenseInput) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -356,6 +532,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.updateExpense, (_evt, id: string, input: UpdateExpenseInput) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (typeof id !== 'string' || input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -363,6 +541,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.deleteExpense, (_evt, id: string) => {
+    const g = guard('expenses')
+    if (!g.ok) return g
     if (typeof id !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -370,6 +550,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listRecentCashflow, (_evt, input: ListRecentCashflowInput) => {
+    const g = guard('cashflow')
+    if (!g.ok) return g
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
@@ -378,6 +560,8 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.voidCashSale, (_evt, saleId: string) => {
+    const g = guard('cashflow')
+    if (!g.ok) return g
     if (typeof saleId !== 'string') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }

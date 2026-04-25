@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
   AppSettingsDto,
+  AuthLoginInput,
+  AuthSessionDto,
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
@@ -19,6 +21,7 @@ import type {
   CreateSupplierInput,
   CreateSupplierInvoiceInput,
   CreateSupplierPaymentInput,
+  CreateUserInput,
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
@@ -37,6 +40,7 @@ import type {
   RecordDebtPaymentResult,
   SalesReportDto,
   SalesReportInput,
+  SetUserPermissionsInput,
   SupplierBalanceRow,
   SupplierInvoiceDto,
   SupplierPaymentDto,
@@ -49,7 +53,10 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  UpdateUserInput,
   VerifyActivationInput,
+  ResetUserCredentialsInput,
+  UserWithPermissionsDto,
 } from '../shared/ipc/types'
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
@@ -59,6 +66,43 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 contextBridge.exposeInMainWorld('deken', {
   getAppVersion: (): Promise<IpcResult<string>> => {
     return invoke(IpcInvokes.getAppVersion)
+  },
+  auth: {
+    getSession: (): Promise<IpcResult<AuthSessionDto | null>> => {
+      return invoke(IpcInvokes.authGetSession)
+    },
+    login: (input: AuthLoginInput): Promise<IpcResult<AuthSessionDto>> => {
+      return invoke(IpcInvokes.authLogin, input)
+    },
+    logout: (): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.authLogout)
+    },
+  },
+  users: {
+    list: (): Promise<IpcResult<UserWithPermissionsDto[]>> => {
+      return invoke(IpcInvokes.usersList)
+    },
+    create: (input: CreateUserInput): Promise<IpcResult<UserWithPermissionsDto>> => {
+      return invoke(IpcInvokes.usersCreate, input)
+    },
+    update: (id: string, input: UpdateUserInput): Promise<IpcResult<UserWithPermissionsDto>> => {
+      return invoke(IpcInvokes.usersUpdate, id, input)
+    },
+    setPermissions: (
+      id: string,
+      input: SetUserPermissionsInput,
+    ): Promise<IpcResult<UserWithPermissionsDto>> => {
+      return invoke(IpcInvokes.usersSetPermissions, id, input)
+    },
+    resetCredentials: (
+      id: string,
+      input: ResetUserCredentialsInput,
+    ): Promise<IpcResult<UserWithPermissionsDto>> => {
+      return invoke(IpcInvokes.usersResetCredentials, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.usersDelete, id)
+    },
   },
   activation: {
     status: (): Promise<IpcResult<ActivationStatusDto>> => {
