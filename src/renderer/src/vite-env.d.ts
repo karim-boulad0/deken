@@ -10,6 +10,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -50,6 +51,9 @@ type DekenPreload = {
   settings: {
     get: () => Promise<IpcResult<AppSettingsDto>>
     set: (input: UpdateAppSettingsInput) => Promise<IpcResult<AppSettingsDto>>
+  }
+  dashboard: {
+    getSnapshot: () => Promise<IpcResult<DashboardSnapshotDto>>
   }
 }
 

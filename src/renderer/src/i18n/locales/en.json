@@ -23,21 +23,22 @@
   },
   "dashboard": {
     "pageTitle": "Dashboard",
-    "intro": "Overview of today's activity. Numbers below are placeholders until live sales data is connected.",
+    "intro": "Today's snapshot from the local database: all recorded sales in your device's local day (from midnight to midnight), cash and on-account. USD amounts are approximate, using the LBP/USD rate in Settings.",
+    "dateLine": "Calendar day: {{date}}",
+    "loadError": "Could not load dashboard data.",
+    "retry": "Retry",
     "sections": {
       "summary": "Today at a glance",
       "shortcuts": "Quick actions",
       "alerts": "Stock & reminders"
     },
     "summary": {
-      "salesLabel": "Today's sales",
+      "salesLabel": "Today's sales (approx. USD)",
       "invoicesLabel": "Invoices",
-      "itemsLabel": "Items sold",
-      "salesMock": "$1,240",
-      "invoicesMock": "18",
-      "itemsMock": "96",
-      "mockAriaSales": "Sample value: one thousand two hundred forty dollars",
-      "footnote": "Figures shown are sample data for layout only."
+      "itemsLabel": "Items sold (units)",
+      "salesAria": "Approximate US dollars: {{usd}}. Total in Lebanese pounds: {{lbp}}",
+      "loading": "Loading…",
+      "footnote": "The summary uses the device's local time zone. Approximate US dollars = total LBP ÷ the rate in Settings. Expiry dates are not part of the catalog yet; alerts are stock-only."
     },
     "shortcuts": {
       "newSale": "New sale",
@@ -48,8 +49,14 @@
       "reportsDesc": "Sales history and charts"
     },
     "alerts": {
-      "emptyTitle": "No alerts yet",
-      "emptyBody": "Low stock and expiry reminders will appear here after inventory is connected."
+      "emptyTitle": "Stock looks good",
+      "emptyBody": "No products are at or below the low threshold ({{threshold}}) on hand.",
+      "tableHint": "Products with on-hand count at or below {{threshold}} (out of stock first, then low).",
+      "colName": "Product",
+      "colSku": "SKU",
+      "colStock": "On hand",
+      "badgeOut": "Out of stock",
+      "badgeLow": "Low: {{n}}"
     }
   },
   "pos": {

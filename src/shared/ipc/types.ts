@@ -136,6 +136,30 @@ export type SalesReportDto = {
   byDay: SalesReportDay[]
 }
 
+export type DashboardTodayDto = {
+  /** Local calendar day covered (YYYY-MM-DD). */
+  dateYmd: string
+  totalLbp: number
+  /** Number of sale rows in range (cash + debt). */
+  saleCount: number
+  /** Total units from sale line quantities. */
+  itemsSold: number
+}
+
+export type StockAlertRow = {
+  id: string
+  name: string
+  sku: string
+  stock: number
+}
+
+export type DashboardSnapshotDto = {
+  today: DashboardTodayDto
+  lowStock: StockAlertRow[]
+  /** Same value as the query threshold (products with stock at or below this are listed). */
+  lowStockThreshold: number
+}
+
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
   listProducts: 'deken:products:list',
@@ -155,6 +179,7 @@ export const IpcInvokes = {
   getSalesReport: 'deken:reports:salesInRange',
   getAppSettings: 'deken:settings:get',
   setAppSettings: 'deken:settings:set',
+  getDashboardSnapshot: 'deken:dashboard:getSnapshot',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

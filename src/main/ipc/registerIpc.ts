@@ -15,6 +15,7 @@ import {
   updateProduct,
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
+import { getDashboardSnapshot } from '../data/dashboardService'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
@@ -119,5 +120,9 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
     return setAppSettings(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.getDashboardSnapshot, () => {
+    return getDashboardSnapshot(db())
   })
 }

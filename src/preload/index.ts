@@ -10,6 +10,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -91,6 +92,11 @@ contextBridge.exposeInMainWorld('deken', {
     },
     set: (input: UpdateAppSettingsInput): Promise<IpcResult<AppSettingsDto>> => {
       return invoke(IpcInvokes.setAppSettings, input)
+    },
+  },
+  dashboard: {
+    getSnapshot: (): Promise<IpcResult<DashboardSnapshotDto>> => {
+      return invoke(IpcInvokes.getDashboardSnapshot)
     },
   },
 })

@@ -8,6 +8,7 @@ import type {
   CreateProductInput,
   CustomerBalanceRow,
   CustomerDto,
+  DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
   ProductDto,
@@ -122,4 +123,32 @@ export async function setAppSettings(
   input: UpdateAppSettingsInput,
 ): Promise<IpcResult<AppSettingsDto>> {
   return assertDeken().settings.set(input)
+}
+
+function localDateYmd(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function emptyDashboardSnapshot(): DashboardSnapshotDto {
+  return {
+    today: {
+      dateYmd: localDateYmd(),
+      totalLbp: 0,
+      saleCount: 0,
+      itemsSold: 0,
+    },
+    lowStock: [],
+    lowStockThreshold: 10,
+  }
+}
+
+export async function getDashboardSnapshot(): Promise<IpcResult<DashboardSnapshotDto>> {
+  if (!isDeken()) {
+    return { ok: true, data: emptyDashboardSnapshot() }
+  }
+  return assertDeken().dashboard.getSnapshot()
 }
