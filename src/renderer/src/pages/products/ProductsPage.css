@@ -159,6 +159,13 @@
   width: 100%;
 }
 
+.prod-categories__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .prod-categories__col-name {
   width: auto;
 }

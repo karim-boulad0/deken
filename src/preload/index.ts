@@ -11,6 +11,7 @@ import type {
   CustomerBalanceRow,
   CustomerDto,
   CustomerLedgerLineDto,
+  SaleLineViewDto,
   DashboardSnapshotDto,
   IpcResult,
   PosSaleLineInput,
@@ -90,6 +91,12 @@ contextBridge.exposeInMainWorld('deken', {
       input: CompleteDebtSaleInput,
     ): Promise<IpcResult<CompleteCashSaleResult>> => {
       return invoke(IpcInvokes.completeDebtSale, input)
+    },
+    getDebtSaleLines: (
+      customerId: string,
+      saleId: string,
+    ): Promise<IpcResult<SaleLineViewDto[]>> => {
+      return invoke(IpcInvokes.getDebtSaleLines, customerId, saleId)
     },
   },
   reports: {

@@ -12,7 +12,7 @@ import {
   listCustomers,
   recordDebtPayment,
 } from '../data/customerService'
-import { completeCashSale, completeDebtSale } from '../data/saleService'
+import { completeCashSale, completeDebtSale, getDebtSaleLines } from '../data/saleService'
 import {
   createProduct,
   deleteProduct,
@@ -122,6 +122,16 @@ export function registerIpc(): void {
     }
     return completeDebtSale(db(), input)
   })
+
+  ipcMain.handle(
+    IpcInvokes.getDebtSaleLines,
+    (_evt, customerId: string, saleId: string) => {
+      if (typeof customerId !== 'string' || typeof saleId !== 'string') {
+        return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+      }
+      return getDebtSaleLines(db(), customerId, saleId)
+    },
+  )
 
   ipcMain.handle(IpcInvokes.getSalesReport, (_evt, r: SalesReportInput) => {
     if (r == null || typeof r !== 'object' || typeof r.fromDate !== 'string' || typeof r.toDate !== 'string') {

@@ -15,6 +15,7 @@ import type {
   ProductDto,
   RecordDebtPaymentInput,
   RecordDebtPaymentResult,
+  SaleLineViewDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
@@ -113,6 +114,16 @@ export async function recordDebtPayment(
   input: RecordDebtPaymentInput,
 ): Promise<IpcResult<RecordDebtPaymentResult>> {
   return assertDeken().debt.recordPayment(input)
+}
+
+export async function getDebtSaleLines(
+  customerId: string,
+  saleId: string,
+): Promise<IpcResult<SaleLineViewDto[]>> {
+  if (!isDeken()) {
+    return { ok: true, data: [] }
+  }
+  return assertDeken().sales.getDebtSaleLines(customerId, saleId)
 }
 
 export async function createCustomer(

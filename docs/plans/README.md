@@ -12,6 +12,7 @@
 | [future-reminders.md](./future-reminders.md)                         | تذكيرات وأفكار لاحقة (ليست خطة تسلسلية رسمية)           |
 | [03-page-content-design.md](./03-page-content-design.md)             | تصميم محتوى كل صفحة + قوائم `[x]` عند الإنجاز لكل مسار  |
 | [04-phase-5-data-and-ipc.md](./04-phase-5-data-and-ipc.md)         | **المرحلة 5** — SQLite، ترحيلات، IPC، وترتيب ربط الميزات  |
+| [05-suppliers-expenses-cashflow.md](./05-suppliers-expenses-cashflow.md) | **توسعة لاحقة** — موردون، مصاريف، حركة الصندوق (حاجات تشغيل المحل) |
 
 ## إضافة خطة جديدة
 

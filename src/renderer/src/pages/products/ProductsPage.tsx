@@ -1,9 +1,10 @@
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Download, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CategoryDto, CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
 import { createProduct, deleteProduct, listCategories, listProducts, updateProduct } from '../../lib/api/dekenClient'
+import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { formatLbp } from '../pos/formatPos'
 import { DeleteProductDialog } from './DeleteProductDialog'
 import { ProductCategoriesPanel } from './ProductCategoriesPanel'
@@ -152,6 +153,33 @@ export function ProductsPage() {
     }
   }
 
+  function runExportCatalog() {
+    if (filtered.length === 0) {
+      toast.warning(t('common.exportEmpty'))
+      return
+    }
+    const h = toCsvLine([
+      t('products.table.sku'),
+      t('products.table.name'),
+      t('products.table.category'),
+      t('products.table.rowBarcode'),
+      'price_lbp',
+      t('products.table.stock'),
+    ])
+    const body = filtered.map((p) =>
+      toCsvLine([
+        p.sku,
+        p.name,
+        p.category?.name ?? '',
+        p.barcode ?? '',
+        p.priceLbp,
+        p.stock,
+      ]),
+    )
+    downloadAsCsvFile(`deken-products-${fileDateStamp()}`, [h, ...body])
+    toast.success(t('common.exportToast'))
+  }
+
   async function executeDelete() {
     if (deleteTarget == null) {
       return
@@ -240,6 +268,17 @@ export function ProductsPage() {
               />
             </div>
             <div className="prod__toolbar-end">
+              <button
+                type="button"
+                className="prod-btn prod-btn--ghost"
+                onClick={runExportCatalog}
+                disabled={loading || rows.length === 0}
+                title={t('common.exportAria')}
+                aria-label={t('common.exportAria')}
+              >
+                <Download size={18} strokeWidth={2} aria-hidden />
+                {t('common.export')}
+              </button>
               <label className="prod__filter">
                 <span className="prod__filter-label">{t('products.toolbar.filterLabel')}</span>
                 <select

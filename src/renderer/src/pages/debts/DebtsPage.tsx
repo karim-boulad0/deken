@@ -1,22 +1,17 @@
-import { ChevronDown, ChevronUp, Search } from 'lucide-react'
-import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
+import { Download, Eye, Search, Wallet } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { getCustomerLedger, listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
+import { listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
+import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { formatLbp, formatUsd } from '../pos/formatPos'
+import { CustomerHistoryDialog } from './CustomerHistoryDialog'
 import { RecordPaymentDialog } from './RecordPaymentDialog'
 import './DebtsPage.css'
-import type { CustomerBalanceRow, CustomerLedgerLineDto } from '../../../../shared/ipc/types'
+import type { CustomerBalanceRow } from '../../../../shared/ipc/types'
 
 type BalanceFilter = 'all' | 'positive' | 'zero'
-
-type LedgerState = {
-  id: string | null
-  loading: boolean
-  error: boolean
-  lines: CustomerLedgerLineDto[]
-}
 
 function mapPayError(m: string): string {
   const s = m.trim()
@@ -40,28 +35,13 @@ export function DebtsPage() {
   const lng = i18n.language
   const [query, setQuery] = useState('')
   const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>('all')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [rows, setRows] = useState<CustomerBalanceRow[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [payTarget, setPayTarget] = useState<CustomerBalanceRow | null>(null)
   const [payBusy, setPayBusy] = useState(false)
-  const [ledger, setLedger] = useState<LedgerState>({
-    id: null,
-    loading: false,
-    error: false,
-    lines: [],
-  })
-
-  const loadLedger = useCallback(async (customerId: string) => {
-    setLedger({ id: customerId, loading: true, error: false, lines: [] })
-    const r = await getCustomerLedger(customerId)
-    if (r.ok) {
-      setLedger({ id: customerId, loading: false, error: false, lines: r.data })
-    } else {
-      setLedger({ id: customerId, loading: false, error: true, lines: [] })
-    }
-  }, [])
+  const [historyTarget, setHistoryTarget] = useState<CustomerBalanceRow | null>(null)
+  const [ledgerRefresh, setLedgerRefresh] = useState(0)
 
   const load = useCallback(async () => {
     setLoadError(false)
@@ -78,14 +58,6 @@ export function DebtsPage() {
   useEffect(() => {
     void load()
   }, [load])
-
-  useEffect(() => {
-    if (expandedId == null) {
-      setLedger({ id: null, loading: false, error: false, lines: [] })
-      return
-    }
-    void loadLedger(expandedId)
-  }, [expandedId, loadLedger])
 
   const filtered = useMemo(() => {
     let list = rows
@@ -115,13 +87,33 @@ export function DebtsPage() {
     query.trim().length === 0 &&
     balanceFilter === 'all'
 
-  function toggleRow(id: string) {
-    setExpandedId((prev) => (prev === id ? null : id))
-  }
-
   function clearFilters() {
     setQuery('')
     setBalanceFilter('all')
+  }
+
+  function runExportBalances() {
+    if (filtered.length === 0) {
+      toast.warning(t('common.exportEmpty'))
+      return
+    }
+    const h = toCsvLine([
+      t('debts.table.customer'),
+      t('debts.table.phone'),
+      'balance_lbp',
+      'approx_usd',
+    ])
+    const body = filtered.map((r) => {
+      const usd = r.balanceLbp / lbpPerUsd
+      return toCsvLine([
+        r.name,
+        r.phone ?? '',
+        r.balanceLbp,
+        usd,
+      ])
+    })
+    downloadAsCsvFile(`deken-debts-${fileDateStamp()}`, [h, ...body])
+    toast.success(t('common.exportToast'))
   }
 
   async function submitPayment(amountLbp: number, note: string) {
@@ -140,8 +132,8 @@ export function DebtsPage() {
       toast.success(t('debts.payDialog.toastSaved', { lbp: formatLbp(amountLbp, lng) }))
       setPayTarget(null)
       void load()
-      if (expandedId === cid) {
-        void loadLedger(cid)
+      if (historyTarget != null && historyTarget.id === cid) {
+        setLedgerRefresh((n) => n + 1)
       }
     } else {
       const k = mapPayError(r.error.message)
@@ -183,19 +175,32 @@ export function DebtsPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <label className="debts__filter">
-          <span className="debts__filter-label">{t('debts.toolbar.balanceFilterLabel')}</span>
-          <select
-            className="debts__filter-select"
-            value={balanceFilter}
-            onChange={(e) => setBalanceFilter(e.target.value as BalanceFilter)}
-            aria-label={t('debts.toolbar.balanceFilterLabel')}
+        <div className="debts__toolbar-end">
+          <label className="debts__filter">
+            <span className="debts__filter-label">{t('debts.toolbar.balanceFilterLabel')}</span>
+            <select
+              className="debts__filter-select"
+              value={balanceFilter}
+              onChange={(e) => setBalanceFilter(e.target.value as BalanceFilter)}
+              aria-label={t('debts.toolbar.balanceFilterLabel')}
+            >
+              <option value="all">{t('debts.toolbar.filterAll')}</option>
+              <option value="positive">{t('debts.toolbar.filterPositive')}</option>
+              <option value="zero">{t('debts.toolbar.filterZero')}</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            className="debts-btn debts-btn--ghost"
+            onClick={runExportBalances}
+            disabled={loading || loadError || filtered.length === 0}
+            title={t('common.exportAria')}
+            aria-label={t('common.exportAria')}
           >
-            <option value="all">{t('debts.toolbar.filterAll')}</option>
-            <option value="positive">{t('debts.toolbar.filterPositive')}</option>
-            <option value="zero">{t('debts.toolbar.filterZero')}</option>
-          </select>
-        </label>
+            <Download size={18} strokeWidth={2} aria-hidden />
+            {t('common.export')}
+          </button>
+        </div>
       </div>
 
       <section className="debts-panel" aria-labelledby="debts-table-title">
@@ -253,8 +258,8 @@ export function DebtsPage() {
                   <th scope="col" className="debts-table__num">
                     {t('debts.table.balanceUsd')}
                   </th>
-                  <th scope="col">
-                    <span className="debts-visually-hidden">{t('debts.table.actions')}</span>
+                  <th scope="col" className="debts-table__th-actions">
+                    {t('debts.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -268,153 +273,77 @@ export function DebtsPage() {
                 ) : null}
                 {!loading
                   ? filtered.map((row) => {
-                  const expanded = expandedId === row.id
-                  const usd = row.balanceLbp / lbpPerUsd
-                  const showLedger = expanded && ledger.id === row.id
-                  return (
-                    <Fragment key={row.id}>
-                      <tr className={expanded ? 'debts-table__row--open' : undefined}>
-                        <td className="debts-table__cell-strong debts-table__cell-truncate">
-                          <span className="debts-table__ellipsis" title={row.name}>
-                            {row.name}
-                          </span>
-                        </td>
-                        <td className="debts-table__cell-muted">
-                          {row.phone && row.phone.trim() !== '' ? row.phone : t('debts.table.noPhone')}
-                        </td>
-                        <td className="debts-table__num debts-table__cell-strong">
-                          {formatLbp(row.balanceLbp, lng)}
-                        </td>
-                        <td className="debts-table__num debts-table__cell-muted">
-                          {formatUsd(usd, lng)}
-                        </td>
-                        <td className="debts-table__actions">
-                          <button
-                            type="button"
-                            className="debts-iconbtn"
-                            onClick={() => toggleRow(row.id)}
-                            aria-expanded={expanded}
-                            aria-controls={`debt-detail-${row.id}`}
-                            id={`debt-expand-${row.id}`}
-                            aria-label={
-                              expanded ? t('debts.actions.collapseDetails') : t('debts.actions.expandDetails')
-                            }
-                          >
-                            {expanded ? (
-                              <ChevronUp size={18} strokeWidth={2} aria-hidden />
-                            ) : (
-                              <ChevronDown size={18} strokeWidth={2} aria-hidden />
-                            )}
-                          </button>
-                        </td>
-                      </tr>
-                      {expanded ? (
-                        <tr className="debts-table__detail-row">
-                          <td colSpan={5}>
-                            <div
-                              className="debts-detail"
-                              id={`debt-detail-${row.id}`}
-                              role="region"
-                              aria-labelledby={`debt-expand-${row.id}`}
-                            >
-                              <h3 className="debts-detail__heading">{t('debts.ledger.title')}</h3>
-                              {showLedger && ledger.loading ? (
-                                <p className="debts-detail__text">{t('debts.ledger.loading')}</p>
-                              ) : null}
-                              {showLedger && ledger.error ? (
-                                <p className="debts-detail__err" role="alert">
-                                  {t('debts.ledger.loadError')}
-                                </p>
-                              ) : null}
-                              {showLedger && !ledger.loading && !ledger.error && ledger.lines.length === 0 ? (
-                                <p className="debts-detail__text">{t('debts.ledger.empty')}</p>
-                              ) : null}
-                              {showLedger && !ledger.loading && !ledger.error && ledger.lines.length > 0 ? (
-                                <div className="debts-ledger-wrap">
-                                  <table className="debts-ledger">
-                                    <thead>
-                                      <tr>
-                                        <th scope="col">{t('debts.ledger.colType')}</th>
-                                        <th scope="col">{t('debts.ledger.colWhen')}</th>
-                                        <th scope="col" className="debts-ledger__num">
-                                          {t('debts.ledger.colAmount')}
-                                        </th>
-                                        <th scope="col">{t('debts.ledger.colNote')}</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {ledger.lines.map((line) => {
-                                        const when = new Date(line.at).toLocaleString(
-                                          lng.startsWith('ar') ? 'ar-LB' : 'en-US',
-                                        )
-                                        const isDebt = line.kind === 'debt_sale'
-                                        return (
-                                          <tr key={`${line.kind}-${line.id}`}>
-                                            <td
-                                              className={
-                                                isDebt
-                                                  ? 'debts-ledger__type debts-ledger__type--debt'
-                                                  : 'debts-ledger__type debts-ledger__type--pay'
-                                              }
-                                            >
-                                              {isDebt
-                                                ? t('debts.ledger.typeDebt')
-                                                : t('debts.ledger.typePayment')}
-                                            </td>
-                                            <td className="debts-ledger__when">{when}</td>
-                                            <td className="debts-ledger__num debts-ledger__amount">
-                                              {isDebt
-                                                ? t('debts.ledger.amountCharge', {
-                                                    n: formatLbp(line.amountLbp, lng),
-                                                  })
-                                                : t('debts.ledger.amountPayment', {
-                                                    n: formatLbp(line.amountLbp, lng),
-                                                  })}
-                                            </td>
-                                            <td className="debts-ledger__note">
-                                              {line.note != null && line.note.trim() !== ''
-                                                ? line.note
-                                                : t('debts.ledger.noNote')}
-                                            </td>
-                                          </tr>
-                                        )
-                                      })}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              ) : null}
+                      const usd = row.balanceLbp / lbpPerUsd
+                      return (
+                        <tr key={row.id}>
+                          <td className="debts-table__cell-strong debts-table__cell-truncate">
+                            <span className="debts-table__ellipsis" title={row.name}>
+                              {row.name}
+                            </span>
+                          </td>
+                          <td className="debts-table__cell-muted">
+                            {row.phone && row.phone.trim() !== '' ? row.phone : t('debts.table.noPhone')}
+                          </td>
+                          <td className="debts-table__num debts-table__cell-strong">
+                            {formatLbp(row.balanceLbp, lng)}
+                          </td>
+                          <td className="debts-table__num debts-table__cell-muted">
+                            {formatUsd(usd, lng)}
+                          </td>
+                          <td className="debts-table__actions">
+                            <div className="debts-table__action-group">
                               <button
                                 type="button"
-                                className="debts-btn debts-btn--primary"
+                                className="debts-iconbtn debts-iconbtn--pay"
+                                onClick={() => {
+                                  if (row.balanceLbp > 0 && window.deken != null) {
+                                    setPayTarget(row)
+                                  }
+                                }}
                                 disabled={row.balanceLbp <= 0 || window.deken == null}
                                 title={
                                   row.balanceLbp <= 0
                                     ? t('debts.actions.recordPayZeroTitle')
                                     : window.deken == null
                                       ? t('debts.actions.recordPayNoBridgeTitle')
-                                      : undefined
+                                      : t('debts.actions.recordPay')
                                 }
-                                onClick={() => {
-                                  if (row.balanceLbp > 0 && window.deken != null) {
-                                    setPayTarget(row)
-                                  }
-                                }}
+                                aria-label={t('debts.actions.ariaRecordPay', { name: row.name })}
                               >
-                                {t('debts.actions.recordPay')}
+                                <Wallet size={18} strokeWidth={2} aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                className="debts-iconbtn debts-iconbtn--history"
+                                onClick={() => {
+                                  setHistoryTarget(row)
+                                }}
+                                title={t('debts.actions.viewHistory')}
+                                aria-label={t('debts.actions.ariaViewHistory', { name: row.name })}
+                              >
+                                <Eye size={18} strokeWidth={2} aria-hidden />
                               </button>
                             </div>
                           </td>
                         </tr>
-                      ) : null}
-                    </Fragment>
-                  )
-                })
+                      )
+                    })
                   : null}
               </tbody>
             </table>
           </div>
         )}
       </section>
+
+      {historyTarget != null ? (
+        <CustomerHistoryDialog
+          row={historyTarget}
+          refreshTrigger={ledgerRefresh}
+          onClose={() => {
+            setHistoryTarget(null)
+          }}
+        />
+      ) : null}
 
       {payTarget != null ? (
         <RecordPaymentDialog

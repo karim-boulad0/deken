@@ -5,6 +5,7 @@ import type {
   IpcErrorShape,
   IpcResult,
   PosSaleLineInput,
+  SaleLineViewDto,
 } from '../../shared/ipc/types'
 import type { Database } from 'better-sqlite3'
 import { getCustomerById, insertCustomerRow } from './customerService'
@@ -225,4 +226,59 @@ export function completeDebtSale(
 
     return { saleId, totalLbp, createdAt: now }
   })
+}
+
+/**
+ * Lines for one on-account sale, scoped to the customer (so IDs cannot be probed across customers).
+ */
+export function getDebtSaleLines(
+  db: Database,
+  customerId: string,
+  saleId: string,
+): IpcResult<SaleLineViewDto[]> {
+  const c = (customerId ?? '').trim()
+  const s = (saleId ?? '').trim()
+  if (c.length === 0 || s.length === 0) {
+    return { ok: false, error: makeError('validation', 'invalid_input') }
+  }
+  const header = db
+    .prepare(
+      `SELECT id FROM sales WHERE id = ? AND customer_id = ? AND payment_type = 'debt'`,
+    )
+    .get(s, c) as { id: string } | undefined
+  if (!header) {
+    return { ok: false, error: makeError('validation', 'sale_not_found') }
+  }
+  const rows = db
+    .prepare(
+      `SELECT
+         id,
+         product_id,
+         product_name,
+         quantity,
+         unit_price_lbp,
+         line_total_lbp
+       FROM sale_lines
+       WHERE sale_id = ?
+       ORDER BY id`,
+    )
+    .all(s) as {
+    id: string
+    product_id: string
+    product_name: string
+    quantity: number
+    unit_price_lbp: number
+    line_total_lbp: number
+  }[]
+  return {
+    ok: true,
+    data: rows.map((r) => ({
+      id: r.id,
+      productId: r.product_id,
+      productName: r.product_name,
+      quantity: r.quantity,
+      unitPriceLbp: r.unit_price_lbp,
+      lineTotalLbp: r.line_total_lbp,
+    })),
+  }
 }

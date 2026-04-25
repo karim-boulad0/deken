@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { useToast } from '../../components/toast'
 import { setAppSettings } from '../../lib/api/dekenClient'
+import type { AppNavLayout } from '../../../../shared/ipc/types'
 import './SettingsPage.css'
 
 const MAX_SHOP = 200
 
 function mapSettingsErrorKey(message: string): string {
   const m = message.trim()
-  if (m === 'lbp_per_usd_invalid' || m === 'shop_name_too_long') {
+  if (m === 'lbp_per_usd_invalid' || m === 'shop_name_too_long' || m === 'nav_layout_invalid') {
     return m
   }
   return 'save_failed'
@@ -24,6 +25,7 @@ export function SettingsPage() {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
   const [classicBusy, setClassicBusy] = useState(false)
+  const [navLayoutBusy, setNavLayoutBusy] = useState(false)
 
   useEffect(() => {
     if (!loaded) {
@@ -93,6 +95,27 @@ export function SettingsPage() {
     }
   }, [loaded, settings.showClassicMenu, refresh, t, toast])
 
+  const onSetNavLayout = useCallback(
+    async (next: AppNavLayout) => {
+      if (!loaded || window.deken == null || next === settings.navLayout) {
+        return
+      }
+      setNavLayoutBusy(true)
+      const r = await setAppSettings({ navLayout: next })
+      setNavLayoutBusy(false)
+      if (r.ok) {
+        await refresh()
+        toast.success(t('settings.toast.navLayoutUpdated'))
+      } else {
+        const k = mapSettingsErrorKey(r.error.message)
+        toast.error(
+          k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+        )
+      }
+    },
+    [loaded, settings.navLayout, refresh, t, toast],
+  )
+
   return (
     <div className="set">
       <header className="set__header">
@@ -107,7 +130,7 @@ export function SettingsPage() {
           <h2 className="set-group__title" id="set-general-title">
             {t('settings.groups.general')}
           </h2>
-          <div className="set-group__body">
+          <div className="set-group__body set-group__body--grid-general">
             <label className="set-field">
               <span className="set-field__label">{t('settings.general.shopName')}</span>
               <input
@@ -142,11 +165,11 @@ export function SettingsPage() {
               />
               <span className="set-field__hint">{t('settings.general.lbpPerUsdHint')}</span>
             </label>
-            <label className="set-field">
+            <label className="set-field set-field--full">
               <span className="set-field__label">{t('settings.general.currency')}</span>
               <p className="set-field__static">{t('settings.general.currencyValue')}</p>
             </label>
-            <div className="set__actions">
+            <div className="set__actions set__actions--full">
               <button
                 type="button"
                 className="set-btn set-btn--primary"
@@ -187,6 +210,62 @@ export function SettingsPage() {
               </button>
             </div>
             <p className="set-field__hint">{t('settings.interface.classicMenuHint')}</p>
+
+            <fieldset
+              className="set-nav-layout"
+              disabled={!loaded || navLayoutBusy || window.deken == null}
+            >
+              <legend className="set-nav-layout__legend">
+                {t('settings.interface.navLayoutLabel')}
+              </legend>
+              <p className="set-group__interface-intro set-nav-layout__intro">
+                {t('settings.interface.navLayoutIntro')}
+              </p>
+              <div
+                className="set-nav-layout__options"
+                role="radiogroup"
+                aria-label={t('settings.interface.navLayoutLabel')}
+              >
+                <label className="set-nav-layout__opt">
+                  <input
+                    type="radio"
+                    className="set-nav-layout__radio"
+                    name="deken-nav-layout"
+                    value="sidebar"
+                    checked={settings.navLayout === 'sidebar'}
+                    onChange={() => void onSetNavLayout('sidebar')}
+                    disabled={!loaded || navLayoutBusy || window.deken == null}
+                  />
+                  <span className="set-nav-layout__opt-body">
+                    <span className="set-nav-layout__opt-title">
+                      {t('settings.interface.navLayoutSidebar')}
+                    </span>
+                    <span className="set-nav-layout__opt-hint">
+                      {t('settings.interface.navLayoutSidebarHint')}
+                    </span>
+                  </span>
+                </label>
+                <label className="set-nav-layout__opt">
+                  <input
+                    type="radio"
+                    className="set-nav-layout__radio"
+                    name="deken-nav-layout"
+                    value="top"
+                    checked={settings.navLayout === 'top'}
+                    onChange={() => void onSetNavLayout('top')}
+                    disabled={!loaded || navLayoutBusy || window.deken == null}
+                  />
+                  <span className="set-nav-layout__opt-body">
+                    <span className="set-nav-layout__opt-title">
+                      {t('settings.interface.navLayoutTop')}
+                    </span>
+                    <span className="set-nav-layout__opt-hint">
+                      {t('settings.interface.navLayoutTopHint')}
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
           </div>
         </section>
 

@@ -10,7 +10,12 @@ import {
 import { getAppSettings } from '../lib/api/dekenClient'
 import type { AppSettingsDto } from '../../../shared/ipc/types'
 
-const DEFAULT: AppSettingsDto = { shopName: '', lbpPerUsd: 89_500, showClassicMenu: false }
+const DEFAULT: AppSettingsDto = {
+  shopName: '',
+  lbpPerUsd: 89_500,
+  showClassicMenu: false,
+  navLayout: 'sidebar',
+}
 
 type Ctx = {
   settings: AppSettingsDto

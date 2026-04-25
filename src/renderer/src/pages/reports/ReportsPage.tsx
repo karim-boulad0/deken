@@ -1,14 +1,22 @@
+import { Download } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { getSalesReport } from '../../lib/api/dekenClient'
-import { rangeForPreset, type PeriodPreset } from '../../lib/reportDateRange'
+import { downloadAsCsvFile, toCsvLine } from '../../lib/csvExport'
+import {
+  mergeByDayToFullRange,
+  rangeForPreset,
+  type PeriodPreset,
+} from '../../lib/reportDateRange'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import type { SalesReportDto } from '../../../../shared/ipc/types'
 import './ReportsPage.css'
 
 export function ReportsPage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const { settings } = useAppSettings()
   const lbpPerUsd = settings.lbpPerUsd
   const lng = i18n.language
@@ -53,14 +61,81 @@ export function ReportsPage() {
     void load(fromDate, toDate)
   }
 
-  const maxBar = useMemo(() => {
-    if (!report?.byDay.length) {
-      return 1
+  const loc = lng.startsWith('ar') ? 'ar-LB' : 'en-US'
+
+  const chartByDay = useMemo(() => {
+    if (!report) {
+      return []
     }
-    return Math.max(1, ...report.byDay.map((d) => d.totalLbp))
+    return mergeByDayToFullRange(report.fromDate, report.toDate, report.byDay)
   }, [report])
 
-  const loc = lng.startsWith('ar') ? 'ar-LB' : 'en-US'
+  const maxBarLbp = useMemo(() => {
+    if (chartByDay.length === 0) {
+      return 1
+    }
+    return Math.max(1, ...chartByDay.map((d) => d.totalLbp))
+  }, [chartByDay])
+
+  /**
+   * Y-axis: unique values from high → low (top → bottom of bar track), aligned with
+   * bar height % = `totalLbp / maxBarLbp`.
+   */
+  const yAxisTickValues = useMemo(() => {
+    const m = maxBarLbp
+    if (m <= 0) {
+      return [0]
+    }
+    const slots = 5
+    const asc = Array.from({ length: slots }, (_, i) => Math.round((i * m) / (slots - 1)))
+    return [...new Set(asc)].sort((a, b) => b - a)
+  }, [maxBarLbp])
+
+  function formatAxisTickLbp(n: number): string {
+    const abs = Math.abs(n)
+    if (abs >= 1_000_000) {
+      return (n / 1_000_000).toFixed(1) + 'M'
+    }
+    if (abs >= 10_000) {
+      return (n / 1_000).toFixed(1) + 'k'
+    }
+    return n.toLocaleString(loc, { maximumFractionDigits: 0, useGrouping: true })
+  }
+
+  const chartHasMultipleMonths = useMemo(() => {
+    if (!report) {
+      return false
+    }
+    return report.fromDate.slice(0, 7) !== report.toDate.slice(0, 7)
+  }, [report])
+
+  function runExportReport() {
+    if (report == null) {
+      return
+    }
+    const lines: string[] = []
+    lines.push(toCsvLine([t('reports.filters.fromLabel'), report.fromDate]))
+    lines.push(toCsvLine([t('reports.filters.toLabel'), report.toDate]))
+    lines.push('')
+    lines.push(toCsvLine([t('reports.summary.totalLbp'), report.totalLbp]))
+    lines.push(toCsvLine([t('reports.summary.cashLbp'), report.totalCashLbp]))
+    lines.push(toCsvLine([t('reports.summary.debtLbp'), report.totalDebtLbp]))
+    lines.push(toCsvLine([t('reports.summary.saleCount'), report.saleCount]))
+    lines.push('')
+    lines.push(
+      toCsvLine([
+        'day', // YYYY-MM-DD
+        t('reports.table.colInvoices'),
+        'total_lbp',
+      ]),
+    )
+    for (const d of chartByDay) {
+      lines.push(toCsvLine([d.day, d.count, d.totalLbp]))
+    }
+    const fname = `deken-report-${report.fromDate}_to_${report.toDate}`.replace(/[:/\\?*[\]]/g, '_')
+    downloadAsCsvFile(fname, lines)
+    toast.success(t('common.exportToast'))
+  }
 
   return (
     <div className="rep">
@@ -117,6 +192,17 @@ export function ReportsPage() {
             disabled={loading}
           >
             {t('reports.filters.apply')}
+          </button>
+          <button
+            type="button"
+            className="rep-btn rep-btn--ghost"
+            onClick={runExportReport}
+            disabled={loading || loadError || report == null}
+            title={t('common.exportAria')}
+            aria-label={t('common.exportAria')}
+          >
+            <Download size={16} strokeWidth={2} aria-hidden />
+            {t('common.export')}
           </button>
         </div>
       </section>
@@ -175,23 +261,84 @@ export function ReportsPage() {
             <p className="rep-preview__hint">
               {t('reports.chart.hint', { usd: formatUsd(report.totalLbp / lbpPerUsd, lng) })}
             </p>
+            <p className="rep-chart__y-caption">{t('reports.chart.yCaption')}</p>
             <div
               className="rep-chart"
               role="img"
-              aria-label={t('reports.chart.aria', { n: String(report.byDay.length) })}
+              aria-label={t('reports.chart.aria', { n: String(chartByDay.length) })}
             >
-              <div className="rep-chart__bars">
-                {report.byDay.map((d) => (
+              <div className="rep-chart__plot" dir="ltr" lang={lng}>
+                <div className="rep-chart__y-col" aria-hidden>
+                  <div className="rep-chart__y-head" />
+                  <div className="rep-chart__y-ticks">
+                    {yAxisTickValues.map((tick, i) => (
+                      <div key={`y-${i}-${tick}`} className="rep-chart__y-tick">
+                        {formatAxisTickLbp(tick)}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rep-chart__y-foot" />
+                </div>
+                <div className="rep-chart__scroller">
                   <div
-                    key={d.day}
-                    className="rep-chart__bar"
+                    className="rep-chart__grid"
                     style={{
-                      height: `${Math.max(4, (d.totalLbp / maxBar) * 100)}%`,
-                      opacity: d.totalLbp > 0 ? 0.85 : 0.2,
+                      gridTemplateColumns: `repeat(${Math.max(1, chartByDay.length)}, minmax(0, 1fr))`,
+                      minWidth: `max(100%, ${(Math.max(1, chartByDay.length) * 0.55).toFixed(2)}rem)`,
                     }}
-                    title={`${d.day}: ${formatLbp(d.totalLbp, lng)} (${d.count})`}
-                  />
-                ))}
+                  >
+                    {chartByDay.map((d) => {
+                      const pct = maxBarLbp > 0 ? (d.totalLbp / maxBarLbp) * 100 : 0
+                      const tDay = new Date(d.day + 'T12:00:00')
+                      return (
+                        <div key={d.day} className="rep-chart__col">
+                          <div
+                            className={
+                              d.totalLbp > 0
+                                ? 'rep-chart__value'
+                                : 'rep-chart__value rep-chart__value--empty'
+                            }
+                            title={`${d.day} · ${formatLbp(d.totalLbp, lng)} · ${
+                              d.count
+                            } ${t('reports.table.colInvoices')}`}
+                          >
+                            {d.totalLbp > 0
+                              ? formatLbp(d.totalLbp, lng)
+                              : t('reports.chart.barEmptyValue')}
+                          </div>
+                          <div
+                            className="rep-chart__bartrack"
+                            title={`${d.day} · ${formatLbp(d.totalLbp, lng)} · ${
+                              d.count
+                            } ${t('reports.table.colInvoices')}`}
+                          >
+                            <div
+                              className={
+                                d.totalLbp > 0
+                                  ? 'rep-chart__fill'
+                                  : 'rep-chart__fill rep-chart__fill--empty'
+                              }
+                              style={{ height: `${d.totalLbp > 0 ? Math.max(2, pct) : 0}%` }}
+                              aria-hidden
+                            />
+                          </div>
+                          <div className="rep-chart__x">
+                            <span className="rep-chart__x-day">
+                              {tDay.toLocaleDateString(loc, { weekday: 'short' })}
+                            </span>
+                            {chartHasMultipleMonths ? (
+                              <span className="rep-chart__x-sub">
+                                {tDay.toLocaleDateString(loc, { month: 'short', day: 'numeric' })}
+                              </span>
+                            ) : (
+                              <span className="rep-chart__x-sub">{tDay.getDate()}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           </section>

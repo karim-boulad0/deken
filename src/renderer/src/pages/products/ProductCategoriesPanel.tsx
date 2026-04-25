@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from 'lucide-react'
+import { Download, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CategoryDto } from '../../../../shared/ipc/types'
@@ -9,6 +9,7 @@ import {
   listCategories,
   updateCategory,
 } from '../../lib/api/dekenClient'
+import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { CategoryFormDialog } from './CategoryFormDialog'
 import { DeleteCategoryDialog } from './DeleteCategoryDialog'
 import './ProductsPage.css'
@@ -123,6 +124,22 @@ export function ProductCategoriesPanel({ onCategoriesChanged }: Props) {
 
   const showEmpty = !loading && rows.length === 0
 
+  function runExportCategories() {
+    if (rows.length === 0) {
+      toast.warning(t('common.exportEmpty'))
+      return
+    }
+    const h = toCsvLine([
+      'id',
+      t('productCategories.table.name'),
+      'createdAt',
+      'updatedAt',
+    ])
+    const body = rows.map((c) => toCsvLine([c.id, c.name, c.createdAt, c.updatedAt]))
+    downloadAsCsvFile(`deken-categories-${fileDateStamp()}`, [h, ...body])
+    toast.success(t('common.exportToast'))
+  }
+
   return (
     <section
       className="prod-panel"
@@ -132,17 +149,30 @@ export function ProductCategoriesPanel({ onCategoriesChanged }: Props) {
         <h2 className="prod-panel__title" id="prod-categories-title">
           {t('productCategories.sectionTitle')}
         </h2>
-        <button
-          type="button"
-          className="prod-btn prod-btn--primary"
-          onClick={() => {
-            setFormError(null)
-            setFormMode({ type: 'create' })
-          }}
-        >
-          <Plus size={18} strokeWidth={2} aria-hidden />
-          {t('productCategories.actions.add')}
-        </button>
+        <div className="prod-categories__head-actions">
+          <button
+            type="button"
+            className="prod-btn prod-btn--ghost"
+            onClick={runExportCategories}
+            disabled={loading || rows.length === 0}
+            title={t('common.exportAria')}
+            aria-label={t('common.exportAria')}
+          >
+            <Download size={18} strokeWidth={2} aria-hidden />
+            {t('common.export')}
+          </button>
+          <button
+            type="button"
+            className="prod-btn prod-btn--primary"
+            onClick={() => {
+              setFormError(null)
+              setFormMode({ type: 'create' })
+            }}
+          >
+            <Plus size={18} strokeWidth={2} aria-hidden />
+            {t('productCategories.actions.add')}
+          </button>
+        </div>
       </div>
 
       {loadError ? (

@@ -102,6 +102,16 @@ export type CustomerLedgerLineDto = {
   note: string | null
 }
 
+/** One catalog line on a saved sale (prices and names are snapshots at sale time). */
+export type SaleLineViewDto = {
+  id: string
+  productId: string
+  productName: string
+  quantity: number
+  unitPriceLbp: number
+  lineTotalLbp: number
+}
+
 export type CreateCustomerInput = {
   name: string
   phone?: string
@@ -138,6 +148,8 @@ export type SalesReportDay = {
   count: number
 }
 
+export type AppNavLayout = 'sidebar' | 'top'
+
 export type AppSettingsDto = {
   /** Display name in shell / receipts (optional). */
   shopName: string
@@ -145,12 +157,15 @@ export type AppSettingsDto = {
   lbpPerUsd: number
   /** When true, show a classic File/Edit/View app menu (mainly for support / DevTools on Windows and Linux). */
   showClassicMenu: boolean
+  /** Main navigation: vertical sidebar (default) or horizontal top bar. */
+  navLayout: AppNavLayout
 }
 
 export type UpdateAppSettingsInput = {
   shopName?: string
   lbpPerUsd?: number
   showClassicMenu?: boolean
+  navLayout?: AppNavLayout
 }
 
 export type SalesReportDto = {
@@ -205,6 +220,7 @@ export const IpcInvokes = {
   createCustomer: 'deken:customers:create',
   completeCashSale: 'deken:sales:completeCash',
   completeDebtSale: 'deken:sales:completeDebt',
+  getDebtSaleLines: 'deken:sales:getDebtSaleLines',
   getSalesReport: 'deken:reports:salesInRange',
   getAppSettings: 'deken:settings:get',
   setAppSettings: 'deken:settings:set',

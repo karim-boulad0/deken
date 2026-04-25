@@ -19,11 +19,20 @@ const routes: readonly { to: string; labelKey: string; Icon: LucideIcon }[] = [
   { to: '/settings', labelKey: 'nav.settings', Icon: Settings },
 ]
 
-export function SidebarNav() {
+export type SidebarNavLayout = 'sidebar' | 'top'
+
+type Props = {
+  /** When `top`, links render in a horizontal row (used with top app bar). Default: sidebar. */
+  layout?: SidebarNavLayout
+}
+
+export function SidebarNav({ layout = 'sidebar' }: Props) {
   const { t } = useTranslation()
+  const isTop = layout === 'top'
+  const rootClass = isTop ? 'sidebar-nav sidebar-nav--top' : 'sidebar-nav'
 
   return (
-    <nav className="sidebar-nav" aria-label={t('nav.ariaPrimary')}>
+    <nav className={rootClass} aria-label={t('nav.ariaPrimary')}>
       <ul className="sidebar-nav__list">
         {routes.map(({ to, labelKey, Icon }) => (
           <li key={to} className="sidebar-nav__item">

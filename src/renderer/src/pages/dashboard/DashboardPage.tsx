@@ -1,9 +1,11 @@
-import { BarChart3, Package, ScanBarcode } from 'lucide-react'
+import { BarChart3, Download, Package, ScanBarcode, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { getDashboardSnapshot } from '../../lib/api/dekenClient'
+import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import type { DashboardSnapshotDto } from '../../../../shared/ipc/types'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import './DashboardPage.css'
@@ -26,6 +28,7 @@ function formatInt(n: number, lng: string): string {
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
+  const toast = useToast()
   const { settings } = useAppSettings()
   const lbpPerUsd = settings.lbpPerUsd
   const lng = i18n.language
@@ -56,18 +59,78 @@ export function DashboardPage() {
   const low = snap?.lowStock ?? []
   const th = snap?.lowStockThreshold ?? 10
 
+  function runExportDashboard() {
+    if (snap == null) {
+      toast.warning(t('common.exportEmpty'))
+      return
+    }
+    const tday = snap.today
+    const lines: string[] = []
+    const stamp = tday != null ? tday.dateYmd : fileDateStamp()
+    lines.push(
+      toCsvLine([
+        'section',
+        'key',
+        'value',
+      ]),
+    )
+    if (tday) {
+      lines.push(toCsvLine(['today', 'dateYmd', tday.dateYmd]))
+      lines.push(toCsvLine(['today', 'totalLbp', tday.totalLbp]))
+      lines.push(
+        toCsvLine([
+          'today',
+          'approxUsd',
+          tday.totalLbp / lbpPerUsd,
+        ]),
+      )
+      lines.push(toCsvLine(['today', 'saleCount', tday.saleCount]))
+      lines.push(toCsvLine(['today', 'itemsSold', tday.itemsSold]))
+    }
+    lines.push('')
+    lines.push(toCsvLine([`lowStock_threshold: ${th}`]))
+    lines.push(
+      toCsvLine([
+        t('dashboard.alerts.colName'),
+        t('dashboard.alerts.colSku'),
+        t('dashboard.alerts.colStock'),
+      ]),
+    )
+    for (const r of low) {
+      lines.push(toCsvLine([r.name, r.sku, r.stock]))
+    }
+    downloadAsCsvFile(`deken-dashboard-${stamp}`, lines)
+    toast.success(t('common.exportToast'))
+  }
+
   return (
-    <div className="dash">
+    <div className="dash dash--fill">
       <header className="dash__header">
-        <h1 className="dash__title" id="dash-page-title">
-          {t('dashboard.pageTitle')}
-        </h1>
-        <p className="dash__intro">{t('dashboard.intro')}</p>
-        {day ? (
-          <p className="dash__date">
-            {t('dashboard.dateLine', { date: formatDayLabel(day, lng) })}
-          </p>
-        ) : null}
+        <div className="dash__header-top">
+          <div className="dash__header-text">
+            <h1 className="dash__title" id="dash-page-title">
+              {t('dashboard.pageTitle')}
+            </h1>
+            <p className="dash__intro">{t('dashboard.intro')}</p>
+            {day ? (
+              <p className="dash__date">
+                {t('dashboard.dateLine', { date: formatDayLabel(day, lng) })}
+              </p>
+            ) : null}
+          </div>
+          {!loadError && snap != null && !loading ? (
+            <button
+              type="button"
+              className="dash-btn dash-btn--export"
+              onClick={runExportDashboard}
+              title={t('common.exportAria')}
+              aria-label={t('common.exportAria')}
+            >
+              <Download size={18} strokeWidth={2} aria-hidden />
+              {t('common.export')}
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <div className="dash__grid">
@@ -83,7 +146,7 @@ export function DashboardPage() {
               </button>
             </div>
           ) : (
-            <ul className="dash-statlist">
+            <ul className="dash-statlist dash-statlist--summary">
               <li className="dash-statlist__row">
                 <span className="dash-statlist__label">{t('dashboard.summary.salesLabel')}</span>
                 <div className="dash-statlist__valuecol">
@@ -156,6 +219,19 @@ export function DashboardPage() {
               </Link>
             </li>
             <li>
+              <Link className="dash-shortcuts__link" to="/debts">
+                <span className="dash-shortcuts__icon" aria-hidden>
+                  <Wallet size={20} strokeWidth={2} />
+                </span>
+                <span className="dash-shortcuts__text">
+                  <span className="dash-shortcuts__name">{t('dashboard.shortcuts.debts')}</span>
+                  <span className="dash-shortcuts__desc">
+                    {t('dashboard.shortcuts.debtsDesc')}
+                  </span>
+                </span>
+              </Link>
+            </li>
+            <li>
               <Link className="dash-shortcuts__link" to="/reports">
                 <span className="dash-shortcuts__icon" aria-hidden>
                   <BarChart3 size={20} strokeWidth={2} />
@@ -171,7 +247,7 @@ export function DashboardPage() {
           </ul>
         </section>
 
-        <section className="dash-card dash-card--wide" aria-labelledby="dash-alerts-title">
+        <section className="dash-card dash-card--wide dash-card--alerts" aria-labelledby="dash-alerts-title">
           <h2 className="dash-card__title" id="dash-alerts-title">
             {t('dashboard.sections.alerts')}
           </h2>

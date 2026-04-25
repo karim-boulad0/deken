@@ -15,6 +15,7 @@ import type {
   IpcResult,
   RecordDebtPaymentInput,
   RecordDebtPaymentResult,
+  SaleLineViewDto,
   PosSaleLineInput,
   ProductDto,
   UpdateAppSettingsInput,
@@ -51,6 +52,7 @@ type DekenPreload = {
   sales: {
     completeCash: (lines: PosSaleLineInput[]) => Promise<IpcResult<CompleteCashSaleResult>>
     completeDebt: (input: CompleteDebtSaleInput) => Promise<IpcResult<CompleteCashSaleResult>>
+    getDebtSaleLines: (customerId: string, saleId: string) => Promise<IpcResult<SaleLineViewDto[]>>
   }
   reports: {
     getSales: (r: SalesReportInput) => Promise<IpcResult<SalesReportDto>>

@@ -19,7 +19,11 @@
     "en": "English"
   },
   "common": {
-    "emDash": "—"
+    "emDash": "—",
+    "export": "Export",
+    "exportToast": "CSV file downloaded",
+    "exportEmpty": "Nothing to export for the current view",
+    "exportAria": "Download current data as a CSV file"
   },
   "dashboard": {
     "pageTitle": "Dashboard",
@@ -45,6 +49,8 @@
       "newSaleDesc": "Open the POS screen",
       "products": "Products",
       "productsDesc": "Catalog and stock",
+      "debts": "Debts",
+      "debtsDesc": "Customer balances and payments",
       "reports": "Reports",
       "reportsDesc": "Sales history and charts"
     },
@@ -290,7 +296,7 @@
     "loading": "Loading…",
     "loadError": "Could not load customer balances. Check the database, then try again.",
     "retryLoad": "Retry",
-    "intro": "Each row’s balance = all on-account sales (charges) minus all recorded payments. Expand a customer to see full history: every charge and payment, with the note saved for each (POS/memo and payment).",
+    "intro": "Each row’s balance = all on-account sales (charges) minus all recorded payments. Use the wallet action to record a payment, and the eye action to open full history in a pop-up: every charge and payment, with the note saved for each.",
     "toolbar": {
       "searchPlaceholder": "Search by customer name or phone…",
       "searchAria": "Search debtors",
@@ -305,15 +311,33 @@
       "phone": "Phone",
       "balanceLbp": "Balance (LBP)",
       "balanceUsd": "Approx. (USD)",
-      "actions": "Details",
+      "actions": "Actions",
       "noPhone": "—"
     },
     "actions": {
-      "expandDetails": "Show last activity",
-      "collapseDetails": "Hide details",
       "recordPay": "Record payment",
       "recordPayZeroTitle": "No balance to pay down.",
-      "recordPayNoBridgeTitle": "Run inside the Deken app to record a payment."
+      "recordPayNoBridgeTitle": "Run inside the Deken app to record a payment.",
+      "viewHistory": "View account history (charges and payments)",
+      "ariaRecordPay": "Record payment for {{name}}",
+      "ariaViewHistory": "View history for {{name}}"
+    },
+    "historyDialog": {
+      "subtitle": "Customer: {{name}}",
+      "close": "Close"
+    },
+    "saleItems": {
+      "title": "Items in this on-account sale",
+      "subWhen": "{{when}}",
+      "subTotal": "Total (this sale): {{n}}",
+      "loading": "Loading line items…",
+      "loadError": "Could not load items for this sale. Try again.",
+      "empty": "No line items on file for this sale.",
+      "close": "Back",
+      "colProduct": "Item",
+      "colQty": "Qty",
+      "colUnit": "Unit (LBP)",
+      "colLine": "Line (LBP)"
     },
     "detail": {
       "activityLabel": "Last on-account sale",
@@ -326,6 +350,7 @@
       "loading": "Loading history…",
       "loadError": "Could not load this customer’s history. Try again.",
       "empty": "No charges or payments recorded yet for this customer.",
+      "debtRowHint": "Click this row to see the items in this on-account sale",
       "colType": "Type",
       "colWhen": "Date & time",
       "colAmount": "Amount (LBP)",
@@ -406,7 +431,9 @@
     "chart": {
       "title": "Sales by day (LBP)",
       "hint": "Approx. USD: {{usd}} (using the LBP/USD rate from Settings, not a live market rate).",
-      "aria": "Bar chart: {{n}} day columns from the database (UTC day bucket)."
+      "yCaption": "The vertical scale uses Lebanese pounds; numbers match the “Daily detail” table for each day.",
+      "barEmptyValue": "—",
+      "aria": "Bar chart: {{n}} calendar day columns; left axis is LBP scale, bar height and labels are total LBP for that day."
     },
     "table": {
       "sectionTitle": "Daily detail",
@@ -430,7 +457,13 @@
       "classicMenuIntro": "By default the app hides the full desktop menu bar (File / Edit / View) for a cleaner POS. Turn the option on if you need reload, DevTools, or the usual edit shortcuts (for support and advanced users).",
       "classicMenuLabel": "Show classic application menu",
       "classicMenuTitle": "Toggle the File/Edit/View menu bar (Windows and Linux: press Alt when the bar is auto-hidden and the menu is on).",
-      "classicMenuHint": "Takes effect immediately. On Windows and Linux the menu may stay hidden until you press Alt or turn this on. On macOS a small app menu remains in the menu bar when this is off."
+      "classicMenuHint": "Takes effect immediately. On Windows and Linux the menu may stay hidden until you press Alt or turn this on. On macOS a small app menu remains in the menu bar when this is off.",
+      "navLayoutLabel": "Main navigation",
+      "navLayoutIntro": "Show primary links in a left sidebar (default) or a single row under the shop name. Top bar mode gives the page the full width below, including the area the sidebar used to occupy.",
+      "navLayoutSidebar": "Sidebar (default)",
+      "navLayoutSidebarHint": "Navigation on the left; main content in the rest of the window.",
+      "navLayoutTop": "Top bar",
+      "navLayoutTopHint": "Horizontal links under the header; the main work area uses the full width of the content column."
     },
     "general": {
       "shopName": "Shop name",
@@ -446,12 +479,14 @@
     },
     "toast": {
       "saved": "Settings saved.",
-      "menuUpdated": "Menu bar setting updated."
+      "menuUpdated": "Menu bar setting updated.",
+      "navLayoutUpdated": "Navigation layout updated."
     },
     "errors": {
       "lbp_per_usd_invalid": "Enter a whole number between 1 and 100,000,000 for LBP per dollar.",
       "lbp_invalid_client": "Enter a valid whole number for the rate.",
       "shop_name_too_long": "Shop name is too long (max 200 characters).",
+      "nav_layout_invalid": "Invalid navigation layout.",
       "save_failed": "Could not save settings ({{message}})."
     },
     "printing": {

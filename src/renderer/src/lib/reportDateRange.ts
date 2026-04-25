@@ -51,3 +51,37 @@ export function ymdToDate(s: string): Date | null {
   }
   return new Date(p[0]!, p[1]! - 1, p[2]!)
 }
+
+/**
+ * One row per **calendar day** in [fromYmd, toYmd] (inclusive, local), filling
+ * missing days with zeros. Matches chart UX to the selected range (sparser API
+ * rows only have days with sales).
+ */
+export function mergeByDayToFullRange(
+  fromYmd: string,
+  toYmd: string,
+  rows: { day: string; totalLbp: number; count: number }[],
+): { day: string; totalLbp: number; count: number }[] {
+  const m = new Map(
+    rows.map((r) => [r.day, { totalLbp: r.totalLbp, count: r.count }]),
+  )
+  const a = ymdToDate(fromYmd)
+  const b = ymdToDate(toYmd)
+  if (!a || !b || a > b) {
+    return []
+  }
+  const out: { day: string; totalLbp: number; count: number }[] = []
+  const cur = new Date(a.getTime())
+  const end = new Date(b.getTime())
+  while (cur.getTime() <= end.getTime()) {
+    const key = toLocalYmd(cur)
+    const ex = m.get(key)
+    out.push({
+      day: key,
+      totalLbp: ex?.totalLbp ?? 0,
+      count: ex?.count ?? 0,
+    })
+    cur.setDate(cur.getDate() + 1)
+  }
+  return out
+}
