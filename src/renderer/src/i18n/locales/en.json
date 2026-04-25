@@ -148,8 +148,16 @@
       "title": "Scan or search",
       "hint": "Focus stays here for fast entry. Press Enter or tap Add to put a line on the ticket.",
       "fieldLabel": "Barcode or SKU",
+      "idLabel": "ID",
+      "barcodeLabel": "Barcode",
       "placeholder": "Type or scan the full code, then Enter…",
       "add": "Add",
+      "searchLoading": "Searching products…",
+      "searchNoResults": "No matching products.",
+      "searchResultsCount": "{{count}} matching product(s)",
+      "searchStock": "Stock: {{stock}}",
+      "searchOutOfStock": "Out of stock",
+      "searchFailed": "Could not load search results.",
       "demoCodes": "Only products from Products & stock. Enter the full SKU or full barcode (exact, not partial). Unknown values show an error. Quantity cannot exceed on-hand stock.",
       "exactCodeOnly": "Match must be the full SKU or the full stored barcode, character-for-character (after spaces are trimmed). The Code column on the ticket shows the value you used. No partial match."
     },
@@ -279,7 +287,9 @@
     "tabs": {
       "aria": "Products area",
       "catalog": "Catalog",
-      "categories": "Product categories"
+      "categories": "Product categories",
+      "sizes": "Sizes",
+      "flavors": "Flavors"
     },
     "toolbar": {
       "searchPlaceholder": "Search by name, category, SKU, or barcode…",
@@ -304,13 +314,17 @@
     "table": {
       "sectionTitle": "Catalog",
       "loadingRow": "Loading…",
+      "idColumn": "ID",
       "sku": "SKU",
       "codeColumn": "Code (SKU & optional barcode)",
       "rowBarcode": "Barcode",
       "name": "Name",
       "category": "Category",
+      "size": "Size",
+      "flavor": "Flavor",
       "stock": "Stock",
-      "price": "Price (LBP)",
+      "basePrice": "Base price (LBP)",
+      "price": "Selling price (LBP)",
       "actions": "Actions"
     },
     "form": {
@@ -322,7 +336,12 @@
       "category": "Category",
       "categoryNone": "None",
       "barcode": "Barcode (optional)",
-      "priceLbp": "Price (LBP)",
+      "size": "Size (optional)",
+      "sizeNone": "None",
+      "flavor": "Flavor (optional)",
+      "flavorNone": "None",
+      "basePriceLbp": "Base price (LBP)",
+      "priceLbp": "Selling price (LBP)",
       "stock": "Stock quantity",
       "cancel": "Cancel",
       "save": "Save",
@@ -334,7 +353,13 @@
       "name_required": "Enter a name.",
       "id_required": "Product not found. Refresh the list and try again.",
       "category_not_found": "That category no longer exists. Choose another or refresh the list.",
-      "price_invalid": "Price must be a non‑negative whole number.",
+      "category_required_for_variant": "Select a category first before assigning size or flavor.",
+      "size_not_found": "Selected size no longer exists.",
+      "flavor_not_found": "Selected flavor no longer exists.",
+      "size_category_mismatch": "Selected size is not linked to this category.",
+      "flavor_category_mismatch": "Selected flavor is not linked to this category.",
+      "base_price_invalid": "Base price must be a non‑negative whole number.",
+      "price_invalid": "Selling price must be a non‑negative whole number.",
       "stock_invalid": "Stock must be a non‑negative whole number.",
       "sku_taken": "This SKU (or a duplicate barcode) is already in use. Choose another code."
     },
@@ -376,6 +401,62 @@
       "id_required": "Category not found. Refresh and try again.",
       "name_taken": "A category with that name already exists.",
       "category_in_use": "This category is used by at least one product. Change or remove the category on those products first."
+    }
+  },
+  "productSizes": {
+    "sectionTitle": "Product sizes",
+    "loadError": "Could not load sizes: {{message}}",
+    "actions": { "add": "Add size" },
+    "table": { "name": "Size name" },
+    "form": {
+      "titleCreate": "New size",
+      "titleEdit": "Edit size",
+      "name": "Size name",
+      "categoryPlaceholder": "Select category",
+      "add": "Add"
+    },
+    "delete": {
+      "title": "Delete this size?",
+      "confirm": "Remove “{{name}}”? Products using this size must be changed first."
+    },
+    "emptyBody": "No sizes yet. Add sizes and map each one to a category.",
+    "toast": { "added": "Size added.", "updated": "Size updated.", "deleted": "Size deleted." },
+    "errors": {
+      "generic": "Could not save: {{message}}",
+      "name_required": "Enter a size name.",
+      "id_required": "Size not found. Refresh and try again.",
+      "category_required": "Select a category.",
+      "category_not_found": "Selected category no longer exists.",
+      "name_taken": "This size already exists for that category.",
+      "size_in_use": "This size is used by products. Update those products first."
+    }
+  },
+  "productFlavors": {
+    "sectionTitle": "Product flavors",
+    "loadError": "Could not load flavors: {{message}}",
+    "actions": { "add": "Add flavor" },
+    "table": { "name": "Flavor name" },
+    "form": {
+      "titleCreate": "New flavor",
+      "titleEdit": "Edit flavor",
+      "name": "Flavor name",
+      "categoryPlaceholder": "Select category",
+      "add": "Add"
+    },
+    "delete": {
+      "title": "Delete this flavor?",
+      "confirm": "Remove “{{name}}”? Products using this flavor must be changed first."
+    },
+    "emptyBody": "No flavors yet. Add flavors and map each one to a category.",
+    "toast": { "added": "Flavor added.", "updated": "Flavor updated.", "deleted": "Flavor deleted." },
+    "errors": {
+      "generic": "Could not save: {{message}}",
+      "name_required": "Enter a flavor name.",
+      "id_required": "Flavor not found. Refresh and try again.",
+      "category_required": "Select a category.",
+      "category_not_found": "Selected category no longer exists.",
+      "name_taken": "This flavor already exists for that category.",
+      "flavor_in_use": "This flavor is used by products. Update those products first."
     }
   },
   "debts": {
@@ -528,6 +609,9 @@
     },
     "ledger": {
       "title": "History (invoices and payments)",
+      "detailTitle": "Selected row details",
+      "attachment": "Attachment",
+      "noAttachment": "No attachment for this row.",
       "loading": "Loading history…",
       "loadError": "Could not load this supplier’s history. Try again.",
       "empty": "No invoices or payments recorded yet for this supplier.",
@@ -557,6 +641,12 @@
       "amount": "Amount (LBP)",
       "reference": "Reference / document no. (optional)",
       "note": "Note (optional)",
+      "image": "Invoice image (optional)",
+      "imageHint": "Attach a clear photo/screenshot of the invoice.",
+      "imageAttached": "Image attached",
+      "imageProcessing": "Preparing image… wait a moment before saving.",
+      "imagePreviewAlt": "Invoice attachment preview",
+      "imageRemove": "Remove image",
       "submit": "Save invoice"
     },
     "payment": {
@@ -585,6 +675,8 @@
       "name_too_long": "Name is too long.",
       "note_too_long": "Note is too long.",
       "reference_too_long": "Reference is too long.",
+      "invoice_image_too_large": "Attached image is too large. Please use a smaller file.",
+      "invoice_image_invalid": "Invalid image file. Please select a valid image.",
       "generic": "Could not save: {{message}}"
     }
   },

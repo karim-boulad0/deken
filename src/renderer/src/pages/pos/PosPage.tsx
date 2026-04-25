@@ -1,9 +1,10 @@
 import { Minus, Plus, ScanBarcode, Trash2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { ProductDto } from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { completeCashSale, completeDebtSale, findProductByCode } from '../../lib/api/dekenClient'
+import { completeCashSale, completeDebtSale, findProductByCode, listProducts } from '../../lib/api/dekenClient'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
 import { productMatchesLookupCode } from './posLookup'
@@ -55,8 +56,13 @@ export function PosPage() {
   const toast = useToast()
   const lng = i18n.language
   const searchRef = useRef<HTMLInputElement>(null)
+  const scannerBufferRef = useRef('')
+  const scannerTimerRef = useRef<number | null>(null)
   const cartRegionId = useId()
   const [query, setQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<ProductDto[]>([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const [cart, setCart] = useState<CartLine[]>([])
   const [loading, setLoading] = useState(true)
   const [payCashBusy, setPayCashBusy] = useState(false)
@@ -198,31 +204,17 @@ export function PosPage() {
     }
   }, [t, toast])
 
-  const addFromQuery = useCallback(() => {
-    /* Prefer the live DOM value so we never add using a stale React `query` (fast paste/scan + Add). */
-    const code = (searchRef.current?.value ?? query).trim()
-    if (!code) {
-      return
+  const resolveMatchCode = useCallback((rawQuery: string, product: ProductDto) => {
+    const q = rawQuery.trim()
+    if (q && productMatchesLookupCode(q, product)) {
+      return q
     }
+    const barcode = product.barcode?.trim()
+    return barcode && barcode.length > 0 ? barcode : product.sku
+  }, [])
 
-    void (async () => {
-      const res = await findProductByCode(code)
-      if (!res.ok) {
-        toast.error(t('pos.toast.lookupFailed', { message: res.error.message }), 5000)
-        requestAnimationFrame(() => searchRef.current?.focus())
-        return
-      }
-      if (!res.data) {
-        toast.error(t('pos.toast.unknownCode', { code }), 5000)
-        requestAnimationFrame(() => searchRef.current?.focus())
-        return
-      }
-      const p = res.data
-      if (!productMatchesLookupCode(code, p)) {
-        toast.error(t('pos.toast.unknownCode', { code }), 5000)
-        requestAnimationFrame(() => searchRef.current?.focus())
-        return
-      }
+  const addCatalogProduct = useCallback(
+    (p: ProductDto, matchCode: string) => {
       if (p.stock <= 0) {
         toast.error(t('pos.toast.addOutOfStock', { name: p.name }), 5000)
         requestAnimationFrame(() => searchRef.current?.focus())
@@ -230,6 +222,8 @@ export function PosPage() {
       }
 
       setQuery('')
+      setSearchResults([])
+      setSearchError(null)
 
       setCart((prev) => {
         const idx = prev.findIndex((l) => l.productId === p.id)
@@ -265,7 +259,7 @@ export function PosPage() {
             productId: p.id,
             maxStock: p.stock,
             sku: p.sku,
-            matchCode: code,
+            matchCode,
             productBarcode: p.barcode ?? null,
             nameKey: 'app.name',
             displayName: p.name,
@@ -275,12 +269,159 @@ export function PosPage() {
         ]
       })
       requestAnimationFrame(() => searchRef.current?.focus())
-    })()
-  }, [query, t, toast])
+    },
+    [t, toast],
+  )
+
+  useEffect(() => {
+    const term = query.trim()
+    if (!term) {
+      setSearchResults([])
+      setSearchError(null)
+      setSearchLoading(false)
+      return
+    }
+
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      setSearchLoading(true)
+      setSearchError(null)
+      void (async () => {
+        const res = await listProducts(term, null)
+        if (cancelled) {
+          return
+        }
+        if (!res.ok) {
+          setSearchResults([])
+          setSearchError(t('pos.entry.searchFailed'))
+          setSearchLoading(false)
+          return
+        }
+        setSearchResults(res.data.slice(0, 8))
+        setSearchLoading(false)
+      })()
+    }, 180)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [query, t])
+
+  const addByLookupCode = useCallback(
+    (rawCode: string) => {
+      const code = rawCode.trim()
+      if (!code) {
+        return
+      }
+
+      void (async () => {
+        const res = await findProductByCode(code)
+        if (!res.ok) {
+          toast.error(t('pos.toast.lookupFailed', { message: res.error.message }), 5000)
+          requestAnimationFrame(() => searchRef.current?.focus())
+          return
+        }
+        if (!res.data) {
+          toast.error(t('pos.toast.unknownCode', { code }), 5000)
+          requestAnimationFrame(() => searchRef.current?.focus())
+          return
+        }
+        const p = res.data
+        if (!productMatchesLookupCode(code, p)) {
+          toast.error(t('pos.toast.unknownCode', { code }), 5000)
+          requestAnimationFrame(() => searchRef.current?.focus())
+          return
+        }
+        addCatalogProduct(p, code)
+      })()
+    },
+    [addCatalogProduct, t, toast],
+  )
+
+  const addFromQuery = useCallback(() => {
+    /* Prefer the live DOM value so we never add using a stale React `query` (fast paste/scan + Add). */
+    const code = (searchRef.current?.value ?? query).trim()
+    if (!code) {
+      return
+    }
+    addByLookupCode(code)
+  }, [addByLookupCode, query])
+
+  useEffect(() => {
+    if (loading) {
+      return
+    }
+
+    const clearScannerBuffer = () => {
+      scannerBufferRef.current = ''
+      if (scannerTimerRef.current != null) {
+        window.clearTimeout(scannerTimerRef.current)
+        scannerTimerRef.current = null
+      }
+    }
+
+    const scheduleBufferClear = () => {
+      if (scannerTimerRef.current != null) {
+        window.clearTimeout(scannerTimerRef.current)
+      }
+      scannerTimerRef.current = window.setTimeout(() => {
+        scannerBufferRef.current = ''
+        scannerTimerRef.current = null
+      }, 140)
+    }
+
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) {
+        return
+      }
+      const target = e.target as HTMLElement | null
+      const isEditableTarget =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable === true
+      if (isEditableTarget && target !== searchRef.current) {
+        return
+      }
+
+      if (e.key === 'Enter') {
+        const buffered = scannerBufferRef.current.trim()
+        if (buffered && document.activeElement !== searchRef.current) {
+          e.preventDefault()
+          setQuery(buffered)
+          addByLookupCode(buffered)
+          clearScannerBuffer()
+        }
+        return
+      }
+
+      if (e.key.length === 1 && !e.repeat) {
+        const next = `${scannerBufferRef.current}${e.key}`
+        scannerBufferRef.current = next
+        if (document.activeElement !== searchRef.current) {
+          e.preventDefault()
+          setQuery(next)
+        }
+        scheduleBufferClear()
+      }
+    }
+
+    window.addEventListener('keydown', onGlobalKeyDown, true)
+    return () => {
+      window.removeEventListener('keydown', onGlobalKeyDown, true)
+      clearScannerBuffer()
+    }
+  }, [addByLookupCode, loading])
 
   function onSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       e.preventDefault()
+      const first = searchResults[0]
+      const raw = (searchRef.current?.value ?? query).trim()
+      if (raw && first) {
+        addCatalogProduct(first, resolveMatchCode(raw, first))
+        return
+      }
       addFromQuery()
     }
   }
@@ -526,7 +667,6 @@ export function PosPage() {
             <h2 className="pos-panel__title" id="pos-entry-title">
               {t('pos.entry.title')}
             </h2>
-            <p className="pos-panel__hint">{t('pos.entry.hint')}</p>
             <div className="pos-search">
               <label className="pos-search__label" htmlFor="pos-barcode-input">
                 {t('pos.entry.fieldLabel')}
@@ -548,18 +688,67 @@ export function PosPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onSearchKeyDown}
-                  aria-describedby="pos-entry-desc pos-entry-exact"
                 />
                 <button type="button" className="pos-btn pos-btn--secondary" onClick={addFromQuery}>
                   {t('pos.entry.add')}
                 </button>
               </div>
-              <p className="pos-search__desc" id="pos-entry-desc">
-                {t('pos.entry.demoCodes')}
-              </p>
-              <p className="pos-search__desc pos-search__desc--exact" id="pos-entry-exact">
-                {t('pos.entry.exactCodeOnly')}
-              </p>
+              {query.trim() ? (
+                <div className="pos-search-results" role="status" aria-live="polite">
+                  {searchLoading ? (
+                    <p className="pos-search-results__state">{t('pos.entry.searchLoading')}</p>
+                  ) : searchError ? (
+                    <p className="pos-search-results__state pos-search-results__state--error">{searchError}</p>
+                  ) : searchResults.length === 0 ? (
+                    <p className="pos-search-results__state">{t('pos.entry.searchNoResults')}</p>
+                  ) : (
+                    <>
+                      <p className="pos-search-results__count">
+                        {t('pos.entry.searchResultsCount', { count: searchResults.length })}
+                      </p>
+                      <ul className="pos-search-results__list">
+                        {searchResults.map((product) => {
+                          const inStock = product.stock > 0
+                          const attrs = [product.category?.name, product.size?.name, product.flavor?.name]
+                            .filter((v): v is string => Boolean(v && v.trim()))
+                            .join(' • ')
+                          return (
+                            <li key={product.id}>
+                              <button
+                                type="button"
+                                className="pos-search-result"
+                                disabled={!inStock}
+                                onClick={() =>
+                                  addCatalogProduct(product, resolveMatchCode(query, product))
+                                }
+                              >
+                                <span className="pos-search-result__head">
+                                  <span className="pos-search-result__main">{product.name}</span>
+                                  <span className="pos-search-result__id">
+                                    {t('pos.entry.idLabel')}: {product.sku}
+                                  </span>
+                                </span>
+                                <span className="pos-search-result__meta">
+                                  {product.barcode ? `${t('pos.entry.barcodeLabel')}: ${product.barcode}` : ''}
+                                  {attrs ? ` • ${attrs}` : ''}
+                                </span>
+                                <span className="pos-search-result__stats">
+                                  <span>
+                                    {inStock
+                                      ? t('pos.entry.searchStock', { stock: product.stock })
+                                      : t('pos.entry.searchOutOfStock')}
+                                  </span>
+                                  <strong>{formatLbp(product.priceLbp, lng)}</strong>
+                                </span>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              ) : null}
             </div>
           </section>
 

@@ -5,9 +5,13 @@ import type {
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
+  CategoryFlavorDto,
+  CategorySizeDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCategoryFlavorInput,
+  CreateCategorySizeInput,
   CreateCustomerInput,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
@@ -39,6 +43,8 @@ import type {
   SupplierDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateCategoryFlavorInput,
+  UpdateCategorySizeInput,
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
   UpdateProductInput,
@@ -91,6 +97,34 @@ contextBridge.exposeInMainWorld('deken', {
     },
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteCategory, id)
+    },
+  },
+  categorySizes: {
+    list: (): Promise<IpcResult<CategorySizeDto[]>> => {
+      return invoke(IpcInvokes.listCategorySizes)
+    },
+    create: (input: CreateCategorySizeInput): Promise<IpcResult<CategorySizeDto>> => {
+      return invoke(IpcInvokes.createCategorySize, input)
+    },
+    update: (id: string, input: UpdateCategorySizeInput): Promise<IpcResult<CategorySizeDto>> => {
+      return invoke(IpcInvokes.updateCategorySize, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteCategorySize, id)
+    },
+  },
+  categoryFlavors: {
+    list: (): Promise<IpcResult<CategoryFlavorDto[]>> => {
+      return invoke(IpcInvokes.listCategoryFlavors)
+    },
+    create: (input: CreateCategoryFlavorInput): Promise<IpcResult<CategoryFlavorDto>> => {
+      return invoke(IpcInvokes.createCategoryFlavor, input)
+    },
+    update: (id: string, input: UpdateCategoryFlavorInput): Promise<IpcResult<CategoryFlavorDto>> => {
+      return invoke(IpcInvokes.updateCategoryFlavor, id, input)
+    },
+    delete: (id: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.deleteCategoryFlavor, id)
     },
   },
   customers: {

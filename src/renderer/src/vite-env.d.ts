@@ -5,9 +5,13 @@ import type {
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
+  CategoryFlavorDto,
+  CategorySizeDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCategoryFlavorInput,
+  CreateCategorySizeInput,
   CreateCustomerInput,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
@@ -37,6 +41,8 @@ import type {
   SupplierPaymentDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateCategoryFlavorInput,
+  UpdateCategorySizeInput,
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
   UpdateProductInput,
@@ -63,6 +69,18 @@ type DekenPreload = {
     list: () => Promise<IpcResult<CategoryDto[]>>
     create: (input: CreateCategoryInput) => Promise<IpcResult<CategoryDto>>
     update: (id: string, input: UpdateCategoryInput) => Promise<IpcResult<CategoryDto>>
+    delete: (id: string) => Promise<IpcResult<null>>
+  }
+  categorySizes: {
+    list: () => Promise<IpcResult<CategorySizeDto[]>>
+    create: (input: CreateCategorySizeInput) => Promise<IpcResult<CategorySizeDto>>
+    update: (id: string, input: UpdateCategorySizeInput) => Promise<IpcResult<CategorySizeDto>>
+    delete: (id: string) => Promise<IpcResult<null>>
+  }
+  categoryFlavors: {
+    list: () => Promise<IpcResult<CategoryFlavorDto[]>>
+    create: (input: CreateCategoryFlavorInput) => Promise<IpcResult<CategoryFlavorDto>>
+    update: (id: string, input: UpdateCategoryFlavorInput) => Promise<IpcResult<CategoryFlavorDto>>
     delete: (id: string) => Promise<IpcResult<null>>
   }
   customers: {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { LanguageSwitcher } from '../../components/LanguageSwitcher'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { useToast } from '../../components/toast'
 import { setAppSettings } from '../../lib/api/dekenClient'
@@ -320,6 +321,9 @@ export function SettingsPage() {
             {t('settings.groups.language')}
           </h2>
           <p className="set-group__note">{t('settings.language.note')}</p>
+          <div className="set-lang-switch">
+            <LanguageSwitcher />
+          </div>
         </section>
 
         <section className="set-group" aria-labelledby="set-print-title">

@@ -1,18 +1,40 @@
-import { Download, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { Download, Pencil, Search, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { CategoryDto, CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
+import type {
+  CategoryDto,
+  CategoryFlavorDto,
+  CategorySizeDto,
+  CreateProductInput,
+  ProductDto,
+  UpdateProductInput,
+} from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
-import { createProduct, deleteProduct, listCategories, listProducts, updateProduct } from '../../lib/api/dekenClient'
+import {
+  createCategoryFlavor,
+  createCategorySize,
+  createProduct,
+  deleteCategoryFlavor,
+  deleteCategorySize,
+  deleteProduct,
+  listCategories,
+  listCategoryFlavors,
+  listCategorySizes,
+  listProducts,
+  updateCategoryFlavor,
+  updateCategorySize,
+  updateProduct,
+} from '../../lib/api/dekenClient'
 import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { formatLbp } from '../pos/formatPos'
+import { CategoryLinkedOptionsPanel } from './CategoryLinkedOptionsPanel'
 import { DeleteProductDialog } from './DeleteProductDialog'
 import { ProductCategoriesPanel } from './ProductCategoriesPanel'
 import { ProductFormDialog } from './ProductFormDialog'
 import './ProductsPage.css'
 
-type FormMode = { type: 'closed' } | { type: 'create' } | { type: 'edit'; product: ProductDto }
-type PageSection = 'catalog' | 'categories'
+type FormMode = { type: 'create' } | { type: 'edit'; product: ProductDto }
+type PageSection = 'catalog' | 'categories' | 'sizes' | 'flavors'
 
 function mapIpcErrorKey(message: string): string {
   const m = message.trim()
@@ -24,7 +46,7 @@ function mapIpcErrorKey(message: string): string {
   ) {
     return m
   }
-  if (m === 'price_invalid' || m === 'stock_invalid') {
+  if (m === 'base_price_invalid' || m === 'price_invalid' || m === 'stock_invalid') {
     return m
   }
   if (m.toLowerCase().includes('unique') || m.includes('UNIQUE')) {
@@ -44,12 +66,14 @@ export function ProductsPage() {
   const [rows, setRows] = useState<ProductDto[]>([])
   const [loading, setLoading] = useState(true)
   const [formBusy, setFormBusy] = useState(false)
-  const [formMode, setFormMode] = useState<FormMode>({ type: 'closed' })
+  const [formMode, setFormMode] = useState<FormMode>({ type: 'create' })
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ProductDto | null>(null)
   const [categoryOptions, setCategoryOptions] = useState<CategoryDto[]>([])
+  const [sizeOptions, setSizeOptions] = useState<CategorySizeDto[]>([])
+  const [flavorOptions, setFlavorOptions] = useState<CategoryFlavorDto[]>([])
 
   const loadCategoryOptions = useCallback(async () => {
     const r = await listCategories()
@@ -57,16 +81,26 @@ export function ProductsPage() {
       setCategoryOptions(r.data)
     }
   }, [])
+  const loadSizeOptions = useCallback(async () => {
+    const r = await listCategorySizes()
+    if (r.ok) setSizeOptions(r.data)
+  }, [])
+  const loadFlavorOptions = useCallback(async () => {
+    const r = await listCategoryFlavors()
+    if (r.ok) setFlavorOptions(r.data)
+  }, [])
 
   useEffect(() => {
     void loadCategoryOptions()
-  }, [loadCategoryOptions])
+    void loadSizeOptions()
+    void loadFlavorOptions()
+  }, [loadCategoryOptions, loadFlavorOptions, loadSizeOptions])
 
   useEffect(() => {
-    if (formMode.type !== 'closed') {
-      void loadCategoryOptions()
-    }
-  }, [formMode, loadCategoryOptions])
+    void loadCategoryOptions()
+    void loadSizeOptions()
+    void loadFlavorOptions()
+  }, [formMode, loadCategoryOptions, loadFlavorOptions, loadSizeOptions])
 
   useEffect(() => {
     const tmr = window.setTimeout(() => setSearchDebounced(query), 200)
@@ -109,7 +143,9 @@ export function ProductsPage() {
 
   const onCategoriesChanged = useCallback(() => {
     void loadCategoryOptions()
-  }, [loadCategoryOptions])
+    void loadSizeOptions()
+    void loadFlavorOptions()
+  }, [loadCategoryOptions, loadFlavorOptions, loadSizeOptions])
 
   async function onFormSave(
     payload: { create: CreateProductInput } | { id: string; input: UpdateProductInput },
@@ -120,7 +156,7 @@ export function ProductsPage() {
       if ('create' in payload) {
         const r = await createProduct(payload.create)
         if (r.ok) {
-          setFormMode({ type: 'closed' })
+          setFormMode({ type: 'create' })
           await refresh()
           setFormError(null)
           toast.success(t('products.toast.added'))
@@ -135,7 +171,7 @@ export function ProductsPage() {
       } else {
         const r = await updateProduct(payload.id, payload.input)
         if (r.ok) {
-          setFormMode({ type: 'closed' })
+          setFormMode({ type: 'create' })
           await refresh()
           setFormError(null)
           toast.success(t('products.toast.updated'))
@@ -159,19 +195,25 @@ export function ProductsPage() {
       return
     }
     const h = toCsvLine([
-      t('products.table.sku'),
+      'id',
       t('products.table.name'),
       t('products.table.category'),
+      t('products.table.size'),
+      t('products.table.flavor'),
       t('products.table.rowBarcode'),
+      'base_price_lbp',
       'price_lbp',
       t('products.table.stock'),
     ])
     const body = filtered.map((p) =>
       toCsvLine([
-        p.sku,
+        p.id,
         p.name,
         p.category?.name ?? '',
+        p.size?.name ?? '',
+        p.flavor?.name ?? '',
         p.barcode ?? '',
+        p.basePriceLbp,
         p.priceLbp,
         p.stock,
       ]),
@@ -192,7 +234,7 @@ export function ProductsPage() {
     setDeleteTarget(null)
     if (r.ok) {
       if (formMode.type === 'edit' && formMode.product.id === row.id) {
-        setFormMode({ type: 'closed' })
+        setFormMode({ type: 'create' })
       }
       await refresh()
       setFormError(null)
@@ -214,7 +256,6 @@ export function ProductsPage() {
           <h1 className="prod__title" id="prod-page-title">
             {t('products.pageTitle')}
           </h1>
-          <p className="prod__intro">{t('products.intro')}</p>
         </div>
       </header>
 
@@ -237,6 +278,24 @@ export function ProductsPage() {
         >
           {t('products.tabs.categories')}
         </button>
+        <button
+          type="button"
+          className={`prod__tab${section === 'sizes' ? ' prod__tab--active' : ''}`}
+          role="tab"
+          aria-selected={section === 'sizes'}
+          onClick={() => setSection('sizes')}
+        >
+          {t('products.tabs.sizes')}
+        </button>
+        <button
+          type="button"
+          className={`prod__tab${section === 'flavors' ? ' prod__tab--active' : ''}`}
+          role="tab"
+          aria-selected={section === 'flavors'}
+          onClick={() => setSection('flavors')}
+        >
+          {t('products.tabs.flavors')}
+        </button>
       </div>
 
       {loadError && section === 'catalog' ? (
@@ -248,9 +307,49 @@ export function ProductsPage() {
       {section === 'categories' ? (
         <ProductCategoriesPanel onCategoriesChanged={onCategoriesChanged} />
       ) : null}
+      {section === 'sizes' ? (
+        <CategoryLinkedOptionsPanel
+          kind="sizes"
+          categories={categoryOptions}
+          onChanged={onCategoriesChanged}
+          listRows={listCategorySizes}
+          createRow={createCategorySize}
+          updateRow={updateCategorySize}
+          deleteRow={deleteCategorySize}
+        />
+      ) : null}
+      {section === 'flavors' ? (
+        <CategoryLinkedOptionsPanel
+          kind="flavors"
+          categories={categoryOptions}
+          onChanged={onCategoriesChanged}
+          listRows={listCategoryFlavors}
+          createRow={createCategoryFlavor}
+          updateRow={updateCategoryFlavor}
+          deleteRow={deleteCategoryFlavor}
+        />
+      ) : null}
 
       {section === 'catalog' ? (
         <>
+          <ProductFormDialog
+            mode={formMode}
+            variant="inline"
+            categoryOptions={categoryOptions}
+            sizeOptions={sizeOptions}
+            flavorOptions={flavorOptions}
+            onOpenChange={(o) => {
+              if (!o) {
+                setFormError(null)
+                setFormMode({ type: 'create' })
+              }
+            }}
+            onSave={(p) => {
+              void onFormSave(p)
+            }}
+            busy={formBusy}
+          />
+
           <div className="prod__toolbar" role="search">
             <div className="prod__search">
               <span className="prod__search-icon" aria-hidden>
@@ -296,18 +395,6 @@ export function ProductsPage() {
                   ))}
                 </select>
               </label>
-              <button
-                type="button"
-                className="prod-btn prod-btn--primary"
-                onClick={() => {
-                  setFormError(null)
-                  setFormMode({ type: 'create' })
-                }}
-                title={t('products.actions.add')}
-              >
-                <Plus size={18} strokeWidth={2} aria-hidden />
-                {t('products.actions.add')}
-              </button>
             </div>
           </div>
 
@@ -368,17 +455,25 @@ export function ProductsPage() {
                     <col className="prod-table__col-sku" />
                     <col className="prod-table__col-name" />
                     <col className="prod-table__col-cat" />
+                    <col className="prod-table__col-cat" />
+                    <col className="prod-table__col-cat" />
                     <col className="prod-table__col-stock" />
+                    <col className="prod-table__col-price" />
                     <col className="prod-table__col-price" />
                     <col className="prod-table__col-actions" />
                   </colgroup>
                   <thead>
                     <tr>
-                      <th scope="col">{t('products.table.codeColumn')}</th>
+                      <th scope="col">{t('products.table.idColumn')}</th>
                       <th scope="col">{t('products.table.name')}</th>
                       <th scope="col">{t('products.table.category')}</th>
+                      <th scope="col">{t('products.table.size')}</th>
+                      <th scope="col">{t('products.table.flavor')}</th>
                       <th scope="col" className="prod-table__num">
                         {t('products.table.stock')}
+                      </th>
+                      <th scope="col" className="prod-table__num">
+                        {t('products.table.basePrice')}
                       </th>
                       <th scope="col" className="prod-table__num">
                         {t('products.table.price')}
@@ -391,32 +486,15 @@ export function ProductsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={6} className="prod-table__cell-muted">
+                        <td colSpan={9} className="prod-table__cell-muted">
                           {t('products.table.loadingRow')}
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((row) => (
+                      filtered.map((row, idx) => (
                         <tr key={row.id}>
                           <td>
-                            <div className="prod-codes">
-                              <code className="prod-code" title={t('products.table.sku')}>
-                                {row.sku}
-                              </code>
-                              {row.barcode != null && row.barcode.trim() !== '' ? (
-                                <div className="prod-codes__sub">
-                                  <span className="prod-codes__label">
-                                    {t('products.table.rowBarcode')}
-                                  </span>
-                                  <code
-                                    className="prod-code prod-code--bar"
-                                    title={t('products.form.barcode')}
-                                  >
-                                    {row.barcode}
-                                  </code>
-                                </div>
-                              ) : null}
-                            </div>
+                            <code className="prod-code">{idx + 1}</code>
                           </td>
                           <td className="prod-table__cell-truncate">
                             <span className="prod-table__ellipsis" title={row.name}>
@@ -433,6 +511,16 @@ export function ProductsPage() {
                                 : t('common.emDash')}
                             </span>
                           </td>
+                          <td className="prod-table__cell-muted prod-table__cell-truncate">
+                            <span className="prod-table__ellipsis" title={row.size?.name}>
+                              {row.size?.name ? row.size.name : t('common.emDash')}
+                            </span>
+                          </td>
+                          <td className="prod-table__cell-muted prod-table__cell-truncate">
+                            <span className="prod-table__ellipsis" title={row.flavor?.name}>
+                              {row.flavor?.name ? row.flavor.name : t('common.emDash')}
+                            </span>
+                          </td>
                           <td className="prod-table__num">
                             <span
                               className={
@@ -443,6 +531,9 @@ export function ProductsPage() {
                                 lng.startsWith('ar') ? 'ar-LB' : 'en-US',
                               )}
                             </span>
+                          </td>
+                          <td className="prod-table__num prod-table__strong">
+                            {formatLbp(row.basePriceLbp, lng)}
                           </td>
                           <td className="prod-table__num prod-table__strong">
                             {formatLbp(row.priceLbp, lng)}
@@ -492,24 +583,6 @@ export function ProductsPage() {
         <p className="prod-banner prod-banner--error prod-banner--after-section" role="alert">
           {formError}
         </p>
-      ) : null}
-
-      {formMode.type === 'create' || formMode.type === 'edit' ? (
-        <ProductFormDialog
-          open
-          mode={formMode}
-          categoryOptions={categoryOptions}
-          onOpenChange={(o) => {
-            if (!o) {
-              setFormError(null)
-              setFormMode({ type: 'closed' })
-            }
-          }}
-          onSave={(p) => {
-            void onFormSave(p)
-          }}
-          busy={formBusy}
-        />
       ) : null}
 
       {deleteTarget ? (

@@ -1,34 +1,61 @@
 import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { CategoryDto, CreateProductInput, ProductDto, UpdateProductInput } from '../../../../shared/ipc/types'
+import type {
+  CategoryDto,
+  CategoryFlavorDto,
+  CategorySizeDto,
+  CreateProductInput,
+  ProductDto,
+  UpdateProductInput,
+} from '../../../../shared/ipc/types'
 import './ProductFormDialog.css'
 
 type Mode = { type: 'create' } | { type: 'edit'; product: ProductDto }
 
 type SavePayload = { create: CreateProductInput } | { id: string; input: UpdateProductInput }
+type FormState = Omit<CreateProductInput, 'basePriceLbp' | 'priceLbp' | 'stock'> & {
+  basePriceLbp: number | null
+  priceLbp: number | null
+  stock: number | null
+}
 
 type Props = {
-  open: boolean
   mode: Mode
   categoryOptions: CategoryDto[]
+  sizeOptions: CategorySizeDto[]
+  flavorOptions: CategoryFlavorDto[]
   onOpenChange: (open: boolean) => void
   onSave: (payload: SavePayload) => void
   busy?: boolean
+  variant?: 'modal' | 'inline'
 }
 
-const empty: CreateProductInput = {
+const empty: FormState = {
   sku: '',
   name: '',
   barcode: '',
   categoryId: null,
-  priceLbp: 0,
-  stock: 0,
+  categorySizeId: null,
+  categoryFlavorId: null,
+  basePriceLbp: null,
+  priceLbp: null,
+  stock: null,
 }
 
-export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, onSave, busy }: Props) {
+export function ProductFormDialog({
+  mode,
+  categoryOptions,
+  sizeOptions,
+  flavorOptions,
+  onOpenChange,
+  onSave,
+  busy,
+  variant = 'modal',
+}: Props) {
   const { t } = useTranslation()
   const titleId = useId()
-  const [form, setForm] = useState<CreateProductInput>(empty)
+  const [form, setForm] = useState<FormState>(empty)
+  const open = true
 
   useEffect(() => {
     if (!open) {
@@ -41,17 +68,16 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
         name: p.name,
         barcode: p.barcode ?? '',
         categoryId: p.category?.id ?? null,
-        priceLbp: p.priceLbp,
-        stock: p.stock,
+        categorySizeId: p.size?.id ?? null,
+        categoryFlavorId: p.flavor?.id ?? null,
+        basePriceLbp: Number.isFinite(p.basePriceLbp) ? p.basePriceLbp : null,
+        priceLbp: Number.isFinite(p.priceLbp) ? p.priceLbp : null,
+        stock: Number.isFinite(p.stock) ? p.stock : null,
       })
     } else {
       setForm(empty)
     }
   }, [open, mode])
-
-  if (!open) {
-    return null
-  }
 
   const isEdit = mode.type === 'edit'
 
@@ -59,7 +85,7 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
     onOpenChange(false)
   }
 
-  function set<K extends keyof CreateProductInput>(key: K, v: CreateProductInput[K]) {
+  function set<K extends keyof FormState>(key: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [key]: v }))
   }
 
@@ -69,10 +95,12 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
    * We move focus to the next field so scanning feels like a line-of-business flow.
    */
   const nextFieldId: Record<string, string> = {
-    'pf-sku': 'pf-name',
     'pf-name': 'pf-cat',
     'pf-cat': 'pf-barcode',
-    'pf-barcode': 'pf-price',
+    'pf-barcode': 'pf-size',
+    'pf-size': 'pf-flavor',
+    'pf-flavor': 'pf-base-price',
+    'pf-base-price': 'pf-price',
     'pf-price': 'pf-stock',
   }
 
@@ -111,74 +139,194 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const categoryId = form.categoryId && String(form.categoryId).trim() ? String(form.categoryId) : null
+    const categorySizeId =
+      form.categorySizeId && String(form.categorySizeId).trim() ? String(form.categorySizeId) : null
+    const categoryFlavorId =
+      form.categoryFlavorId && String(form.categoryFlavorId).trim() ? String(form.categoryFlavorId) : null
+    const basePriceLbp = form.basePriceLbp ?? 0
+    const priceLbp = form.priceLbp ?? 0
+    const stock = form.stock ?? 0
     if (isEdit) {
       onSave({
         id: mode.product.id,
         input: {
-          sku: form.sku,
           name: form.name,
           categoryId,
+          categorySizeId,
+          categoryFlavorId,
           barcode: form.barcode?.trim() ? form.barcode : null,
-          priceLbp: form.priceLbp,
-          stock: form.stock,
+          basePriceLbp,
+          priceLbp,
+          stock,
         },
       })
     } else {
       onSave({
         create: {
-          sku: form.sku,
+          sku: '',
           name: form.name,
           categoryId: categoryId ?? undefined,
+          categorySizeId: categorySizeId ?? undefined,
+          categoryFlavorId: categoryFlavorId ?? undefined,
           barcode: form.barcode,
-          priceLbp: form.priceLbp,
-          stock: form.stock,
+          basePriceLbp,
+          priceLbp,
+          stock,
         },
       })
     }
   }
 
   function onBackdropClick(e: React.MouseEvent) {
+    if (variant !== 'modal') {
+      return
+    }
     if (e.target === e.currentTarget) {
       onClose()
     }
   }
 
   const selectCategoryValue = form.categoryId ?? ''
+  const selectSizeValue = form.categorySizeId ?? ''
+  const selectFlavorValue = form.categoryFlavorId ?? ''
+  const filteredSizes = form.categoryId
+    ? sizeOptions.filter((s) => s.categoryId === form.categoryId)
+    : []
+  const filteredFlavors = form.categoryId
+    ? flavorOptions.filter((f) => f.categoryId === form.categoryId)
+    : []
+
+  if (variant === 'inline') {
+    return (
+      <section className="pf-inline" aria-labelledby={titleId}>
+        <div className="pf-dialog pf-dialog--inline">
+          <h2 className="pf-dialog__title" id={titleId}>
+            {isEdit ? t('products.form.titleEdit') : t('products.form.titleCreate')}
+          </h2>
+          <form className="pf-form" onKeyDown={onFormKeyDown} onSubmit={handleSubmit}>
+            <div className="pf-field">
+              <label htmlFor="pf-name">{t('products.form.name')}</label>
+              <input id="pf-name" className="pf-input" name="product-name" value={form.name} onChange={(e) => set('name', e.target.value)} required autoComplete="off" autoCorrect="off" spellCheck={false} />
+            </div>
+            <div className="pf-field">
+              <label htmlFor="pf-cat">{t('products.form.category')}</label>
+              <select
+                id="pf-cat"
+                className="pf-input pf-input--select"
+                value={selectCategoryValue}
+                onChange={(e) => {
+                  const v = e.target.value
+                  const next = v === '' ? null : v
+                  setForm((f) => ({ ...f, categoryId: next, categorySizeId: null, categoryFlavorId: null }))
+                }}
+                aria-label={t('products.form.category')}
+              >
+                <option value="">{t('products.form.categoryNone')}</option>
+                {categoryOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="pf-field">
+              <label htmlFor="pf-barcode">{t('products.form.barcode')}</label>
+              <input id="pf-barcode" className="pf-input" name="product-barcode" value={form.barcode} onChange={(e) => set('barcode', e.target.value)} autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="text" />
+            </div>
+            <div className="pf-row">
+              <div className="pf-field">
+                <label htmlFor="pf-size">{t('products.form.size')}</label>
+                <select id="pf-size" className="pf-input pf-input--select" value={selectSizeValue} onChange={(e) => set('categorySizeId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
+                  <option value="">{t('products.form.sizeNone')}</option>
+                  {filteredSizes.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="pf-field">
+                <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
+                <select id="pf-flavor" className="pf-input pf-input--select" value={selectFlavorValue} onChange={(e) => set('categoryFlavorId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
+                  <option value="">{t('products.form.flavorNone')}</option>
+                  {filteredFlavors.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="pf-row">
+              <div className="pf-field">
+                <label htmlFor="pf-base-price">{t('products.form.basePriceLbp')}</label>
+                <input
+                  id="pf-base-price"
+                  className="pf-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.basePriceLbp ?? ''}
+                  onChange={(e) =>
+                    set('basePriceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                  }
+                  required
+                />
+              </div>
+              <div className="pf-field">
+                <label htmlFor="pf-price">{t('products.form.priceLbp')}</label>
+                <input
+                  id="pf-price"
+                  className="pf-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.priceLbp ?? ''}
+                  onChange={(e) =>
+                    set('priceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                  }
+                  required
+                />
+              </div>
+              <div className="pf-field">
+                <label htmlFor="pf-stock">{t('products.form.stock')}</label>
+                <input
+                  id="pf-stock"
+                  className="pf-input"
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={form.stock ?? ''}
+                  onChange={(e) =>
+                    set('stock', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <div className="pf-actions">
+              {isEdit ? (
+                <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>
+                  {t('products.form.cancel')}
+                </button>
+              ) : null}
+              <button type="submit" className="pf-btn pf-btn--primary" disabled={busy}>
+                {isEdit ? t('products.form.save') : t('products.form.add')}
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    )
+  }
 
   return (
-    <div
-      className="pf-dim"
-      role="presentation"
-      onClick={onBackdropClick}
-    >
-      <div
-        className="pf-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="pf-dim" role="presentation" onClick={onBackdropClick}>
+      <div className="pf-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}>
         <h2 className="pf-dialog__title" id={titleId}>
           {isEdit ? t('products.form.titleEdit') : t('products.form.titleCreate')}
         </h2>
-        <p className="pf-hint" id="pf-scanner-hint">
-          {t('products.form.scannerHint')}
-        </p>
         <form className="pf-form" onKeyDown={onFormKeyDown} onSubmit={handleSubmit}>
-          <div className="pf-field">
-            <label htmlFor="pf-sku">{t('products.form.sku')}</label>
-            <input
-              id="pf-sku"
-              className="pf-input"
-              name="product-sku"
-              value={form.sku}
-              onChange={(e) => set('sku', e.target.value)}
-              required
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </div>
           <div className="pf-field">
             <label htmlFor="pf-name">{t('products.form.name')}</label>
             <input
@@ -201,7 +349,13 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
               value={selectCategoryValue}
               onChange={(e) => {
                 const v = e.target.value
-                set('categoryId', v === '' ? null : v)
+                const next = v === '' ? null : v
+                setForm((f) => ({
+                  ...f,
+                  categoryId: next,
+                  categorySizeId: null,
+                  categoryFlavorId: null,
+                }))
               }}
               aria-label={t('products.form.category')}
             >
@@ -229,6 +383,63 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
           </div>
           <div className="pf-row">
             <div className="pf-field">
+              <label htmlFor="pf-size">{t('products.form.size')}</label>
+              <select
+                id="pf-size"
+                className="pf-input pf-input--select"
+                value={selectSizeValue}
+                onChange={(e) => {
+                  const v = e.target.value
+                  set('categorySizeId', v === '' ? null : v)
+                }}
+                disabled={!form.categoryId}
+              >
+                <option value="">{t('products.form.sizeNone')}</option>
+                {filteredSizes.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="pf-field">
+              <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
+              <select
+                id="pf-flavor"
+                className="pf-input pf-input--select"
+                value={selectFlavorValue}
+                onChange={(e) => {
+                  const v = e.target.value
+                  set('categoryFlavorId', v === '' ? null : v)
+                }}
+                disabled={!form.categoryId}
+              >
+                <option value="">{t('products.form.flavorNone')}</option>
+                {filteredFlavors.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="pf-row">
+            <div className="pf-field">
+              <label htmlFor="pf-base-price">{t('products.form.basePriceLbp')}</label>
+              <input
+                id="pf-base-price"
+                className="pf-input"
+                type="number"
+                min={0}
+                step={1}
+                value={form.basePriceLbp ?? ''}
+                onChange={(e) =>
+                  set('basePriceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                }
+                required
+              />
+            </div>
+            <div className="pf-field">
               <label htmlFor="pf-price">{t('products.form.priceLbp')}</label>
               <input
                 id="pf-price"
@@ -236,8 +447,10 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
                 type="number"
                 min={0}
                 step={1}
-                value={form.priceLbp}
-                onChange={(e) => set('priceLbp', Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                value={form.priceLbp ?? ''}
+                onChange={(e) =>
+                  set('priceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                }
                 required
               />
             </div>
@@ -249,8 +462,10 @@ export function ProductFormDialog({ open, mode, categoryOptions, onOpenChange, o
                 type="number"
                 min={0}
                 step={1}
-                value={form.stock}
-                onChange={(e) => set('stock', Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                value={form.stock ?? ''}
+                onChange={(e) =>
+                  set('stock', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
+                }
                 required
               />
             </div>

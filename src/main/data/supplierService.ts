@@ -16,6 +16,7 @@ import type { Database } from 'better-sqlite3'
 const MAX_NAME = 200
 const MAX_NOTE = 500
 const MAX_REF = 120
+const MAX_IMAGE_DATA_URL = 2_500_000
 
 function makeError(code: string, message: string, details?: string): IpcErrorShape {
   return { code, message, details }
@@ -33,7 +34,9 @@ function asResult<T>(fn: () => T): IpcResult<T> {
       m === 'invalid_date' ||
       m === 'name_too_long' ||
       m === 'note_too_long' ||
-      m === 'reference_too_long'
+      m === 'reference_too_long' ||
+      m === 'invoice_image_too_large' ||
+      m === 'invoice_image_invalid'
     ) {
       return { ok: false, error: makeError('validation', m) }
     }
@@ -204,7 +207,7 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
     }
     const rows = db
       .prepare(
-        `SELECT id, supplier_id, invoice_date, amount_lbp, reference, note, created_at
+        `SELECT id, supplier_id, invoice_date, amount_lbp, reference, note, image_data_url, created_at
          FROM supplier_invoices WHERE supplier_id = ?
          ORDER BY invoice_date DESC, created_at DESC`,
       )
@@ -215,6 +218,7 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
       amount_lbp: number
       reference: string | null
       note: string | null
+      image_data_url: string | null
       created_at: string
     }[]
     return rows.map((r) => ({
@@ -224,6 +228,7 @@ export function listSupplierInvoices(db: Database, supplierId: string): IpcResul
       amountLbp: r.amount_lbp,
       reference: r.reference,
       note: r.note,
+      imageDataUrl: r.image_data_url,
       createdAt: r.created_at,
     }))
   })
@@ -290,12 +295,22 @@ export function createSupplierInvoice(
     if (note != null && note.length > MAX_NOTE) {
       throw new Error('note_too_long')
     }
+    const imageRaw = (input.imageDataUrl ?? '').trim()
+    const imageDataUrl = imageRaw.length === 0 ? null : imageRaw
+    if (imageDataUrl != null) {
+      if (imageDataUrl.length > MAX_IMAGE_DATA_URL) {
+        throw new Error('invoice_image_too_large')
+      }
+      if (!/^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+$/.test(imageDataUrl)) {
+        throw new Error('invoice_image_invalid')
+      }
+    }
     const now = new Date().toISOString()
     const id = randomUUID()
     db.prepare(
-      `INSERT INTO supplier_invoices (id, supplier_id, invoice_date, amount_lbp, reference, note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(id, supplierId, invoiceDate, amount, reference, note, now)
+      `INSERT INTO supplier_invoices (id, supplier_id, invoice_date, amount_lbp, reference, note, image_data_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(id, supplierId, invoiceDate, amount, reference, note, imageDataUrl, now)
     return {
       id,
       supplierId,
@@ -303,6 +318,7 @@ export function createSupplierInvoice(
       amountLbp: amount,
       reference,
       note,
+      imageDataUrl,
       createdAt: now,
     }
   })

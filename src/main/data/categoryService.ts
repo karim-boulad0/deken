@@ -104,6 +104,18 @@ export function deleteCategory(db: Database, id: string): IpcResult<null> {
     if (n) {
       throw new Error('category_in_use')
     }
+    const hasSizes = db
+      .prepare('SELECT 1 as x FROM product_sizes WHERE category_id = ? LIMIT 1')
+      .get(id) as { x: number } | undefined
+    if (hasSizes) {
+      throw new Error('category_in_use')
+    }
+    const hasFlavors = db
+      .prepare('SELECT 1 as x FROM product_flavors WHERE category_id = ? LIMIT 1')
+      .get(id) as { x: number } | undefined
+    if (hasFlavors) {
+      throw new Error('category_in_use')
+    }
     const del = db.prepare('DELETE FROM categories WHERE id = ?').run(id)
     if (del.changes === 0) {
       throw new Error('not_found')

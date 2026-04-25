@@ -12,12 +12,31 @@ export type ProductCategoryRef = {
   name: string
 }
 
+export type CategorySizeDto = {
+  id: string
+  categoryId: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CategoryFlavorDto = {
+  id: string
+  categoryId: string
+  name: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type ProductDto = {
   id: string
   sku: string
   barcode: string | null
   name: string
   category: ProductCategoryRef | null
+  size: ProductCategoryRef | null
+  flavor: ProductCategoryRef | null
+  basePriceLbp: number
   priceLbp: number
   stock: number
   createdAt: string
@@ -30,6 +49,9 @@ export type CreateProductInput = {
   name: string
   /** If omitted or null, the product is uncategorized. */
   categoryId?: string | null
+  categorySizeId?: string | null
+  categoryFlavorId?: string | null
+  basePriceLbp: number
   priceLbp: number
   stock: number
 }
@@ -40,8 +62,31 @@ export type UpdateProductInput = {
   name?: string
   /** Set to null to clear category. Omitted = leave unchanged. */
   categoryId?: string | null
+  categorySizeId?: string | null
+  categoryFlavorId?: string | null
+  basePriceLbp?: number
   priceLbp?: number
   stock?: number
+}
+
+export type CreateCategorySizeInput = {
+  categoryId: string
+  name: string
+}
+
+export type UpdateCategorySizeInput = {
+  categoryId?: string
+  name?: string
+}
+
+export type CreateCategoryFlavorInput = {
+  categoryId: string
+  name: string
+}
+
+export type UpdateCategoryFlavorInput = {
+  categoryId?: string
+  name?: string
 }
 
 export type CategoryDto = {
@@ -318,6 +363,7 @@ export type SupplierInvoiceDto = {
   amountLbp: number
   reference: string | null
   note: string | null
+  imageDataUrl: string | null
   createdAt: string
 }
 
@@ -327,6 +373,7 @@ export type CreateSupplierInvoiceInput = {
   amountLbp: number
   reference?: string
   note?: string
+  imageDataUrl?: string
 }
 
 export type SupplierPaymentDto = {
@@ -442,6 +489,14 @@ export const IpcInvokes = {
   createCategory: 'deken:categories:create',
   updateCategory: 'deken:categories:update',
   deleteCategory: 'deken:categories:delete',
+  listCategorySizes: 'deken:categorySizes:list',
+  createCategorySize: 'deken:categorySizes:create',
+  updateCategorySize: 'deken:categorySizes:update',
+  deleteCategorySize: 'deken:categorySizes:delete',
+  listCategoryFlavors: 'deken:categoryFlavors:list',
+  createCategoryFlavor: 'deken:categoryFlavors:create',
+  updateCategoryFlavor: 'deken:categoryFlavors:update',
+  deleteCategoryFlavor: 'deken:categoryFlavors:delete',
   listCustomers: 'deken:customers:list',
   listCustomerBalances: 'deken:customers:listBalances',
   getCustomerLedger: 'deken:customers:getLedger',

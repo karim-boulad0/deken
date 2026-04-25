@@ -36,6 +36,8 @@ function mapErr(m: string): string {
     'name_too_long',
     'note_too_long',
     'reference_too_long',
+    'invoice_image_too_large',
+    'invoice_image_invalid',
   ]
   if (keys.includes(s)) {
     return s
@@ -71,6 +73,9 @@ export function SuppliersPage() {
   const [invAmount, setInvAmount] = useState('')
   const [invRef, setInvRef] = useState('')
   const [invNote, setInvNote] = useState('')
+  const [invImageDataUrl, setInvImageDataUrl] = useState<string | null>(null)
+  const [invImageName, setInvImageName] = useState('')
+  const [invImageBusy, setInvImageBusy] = useState(false)
   const [payAmount, setPayAmount] = useState('')
   const [payNote, setPayNote] = useState('')
   const [busy, setBusy] = useState(false)
@@ -136,7 +141,40 @@ export function SuppliersPage() {
     setInvAmount('')
     setInvRef('')
     setInvNote('')
+    setInvImageDataUrl(null)
+    setInvImageName('')
+    setInvImageBusy(false)
     setModal({ type: 'invoice', row })
+  }
+
+  async function onInvoiceImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.currentTarget.files?.[0]
+    if (!file) {
+      setInvImageDataUrl(null)
+      setInvImageName('')
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setFormErr(t('suppliers.errors.invoice_image_invalid'))
+      return
+    }
+    try {
+      setInvImageBusy(true)
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result ?? ''))
+        reader.onerror = () => reject(new Error('read_failed'))
+        reader.readAsDataURL(file)
+      })
+      setInvImageDataUrl(dataUrl)
+      setInvImageName(file.name)
+      setFormErr(null)
+    } catch {
+      setFormErr(t('suppliers.errors.invoice_image_invalid'))
+    } finally {
+      setInvImageBusy(false)
+      e.currentTarget.value = ''
+    }
   }
 
   function openPayment(row: SupplierBalanceRow) {
@@ -195,6 +233,10 @@ export function SuppliersPage() {
     if (modal.type !== 'invoice' || window.deken == null) {
       return
     }
+    if (invImageBusy) {
+      setFormErr(t('suppliers.invoice.imageProcessing'))
+      return
+    }
     setBusy(true)
     setFormErr(null)
     const n = Math.floor(Number(invAmount))
@@ -209,6 +251,7 @@ export function SuppliersPage() {
       amountLbp: n,
       reference: invRef.trim() || undefined,
       note: invNote.trim() || undefined,
+      imageDataUrl: invImageDataUrl ?? undefined,
     })
     setBusy(false)
     if (r.ok) {
@@ -553,11 +596,45 @@ export function SuppliersPage() {
                     disabled={busy}
                   />
                 </label>
+                <label className="sup-field">
+                  <span className="sup-field__label">{t('suppliers.invoice.image')}</span>
+                  <input
+                    className="sup-field__input"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => void onInvoiceImageChange(e)}
+                    disabled={busy}
+                  />
+                  {invImageBusy ? (
+                    <span className="sup-field__help">{t('suppliers.invoice.imageProcessing')}</span>
+                  ) : null}
+                  {invImageDataUrl ? (
+                    <div className="sup-image">
+                      <img src={invImageDataUrl} alt={t('suppliers.invoice.imagePreviewAlt')} className="sup-image__preview" />
+                      <div className="sup-image__meta">
+                        <span>{invImageName || t('suppliers.invoice.imageAttached')}</span>
+                        <button
+                          type="button"
+                          className="sup-btn sup-btn--ghost"
+                          onClick={() => {
+                            setInvImageDataUrl(null)
+                            setInvImageName('')
+                          }}
+                          disabled={busy || invImageBusy}
+                        >
+                          {t('suppliers.invoice.imageRemove')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="sup-field__help">{t('suppliers.invoice.imageHint')}</span>
+                  )}
+                </label>
                 <div className="sup-dialog__actions">
                   <button type="button" className="sup-btn sup-btn--ghost" onClick={() => setModal({ type: 'closed' })} disabled={busy}>
                     {t('suppliers.form.cancel')}
                   </button>
-                  <button type="button" className="sup-btn sup-btn--primary" onClick={() => void saveInvoice()} disabled={busy}>
+                  <button type="button" className="sup-btn sup-btn--primary" onClick={() => void saveInvoice()} disabled={busy || invImageBusy}>
                     {busy ? t('suppliers.form.saving') : t('suppliers.invoice.submit')}
                   </button>
                 </div>

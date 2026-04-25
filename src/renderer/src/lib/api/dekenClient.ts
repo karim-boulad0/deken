@@ -3,9 +3,13 @@ import type {
   ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
+  CategoryFlavorDto,
+  CategorySizeDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
   CreateCategoryInput,
+  CreateCategoryFlavorInput,
+  CreateCategorySizeInput,
   CreateCustomerInput,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
@@ -35,6 +39,8 @@ import type {
   SupplierPaymentDto,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateCategoryFlavorInput,
+  UpdateCategorySizeInput,
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
   UpdateProductInput,
@@ -117,6 +123,40 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<IpcResult<null>> {
   return assertDeken().categories.delete(id)
+}
+
+export async function listCategorySizes(): Promise<IpcResult<CategorySizeDto[]>> {
+  return assertDeken().categorySizes.list()
+}
+export async function createCategorySize(input: CreateCategorySizeInput): Promise<IpcResult<CategorySizeDto>> {
+  return assertDeken().categorySizes.create(input)
+}
+export async function updateCategorySize(
+  id: string,
+  input: UpdateCategorySizeInput,
+): Promise<IpcResult<CategorySizeDto>> {
+  return assertDeken().categorySizes.update(id, input)
+}
+export async function deleteCategorySize(id: string): Promise<IpcResult<null>> {
+  return assertDeken().categorySizes.delete(id)
+}
+
+export async function listCategoryFlavors(): Promise<IpcResult<CategoryFlavorDto[]>> {
+  return assertDeken().categoryFlavors.list()
+}
+export async function createCategoryFlavor(
+  input: CreateCategoryFlavorInput,
+): Promise<IpcResult<CategoryFlavorDto>> {
+  return assertDeken().categoryFlavors.create(input)
+}
+export async function updateCategoryFlavor(
+  id: string,
+  input: UpdateCategoryFlavorInput,
+): Promise<IpcResult<CategoryFlavorDto>> {
+  return assertDeken().categoryFlavors.update(id, input)
+}
+export async function deleteCategoryFlavor(id: string): Promise<IpcResult<null>> {
+  return assertDeken().categoryFlavors.delete(id)
 }
 
 export async function completeCashSale(

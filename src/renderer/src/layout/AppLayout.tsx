@@ -55,14 +55,12 @@ export function AppLayout() {
             </div>
           </div>
           <SidebarNav layout="sidebar" />
+          <div className="app-shell__sidebar-tools" dir="auto">
+            <LanguageSwitcher />
+          </div>
         </aside>
       )}
       <div className="app-shell__column">
-        {!isTopNav ? (
-          <header className="app-shell__header">
-            <LanguageSwitcher />
-          </header>
-        ) : null}
         <main className={`app-shell__content${isPosRoute ? ' app-shell__content--pos' : ''}`}>
           <div
             className={`app-shell__page${isPosRoute ? ' app-shell__page--pos' : ''}${

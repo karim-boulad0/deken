@@ -6,6 +6,16 @@ import {
   updateCategory,
 } from '../data/categoryService'
 import {
+  createCategoryFlavor,
+  createCategorySize,
+  deleteCategoryFlavor,
+  deleteCategorySize,
+  listCategoryFlavors,
+  listCategorySizes,
+  updateCategoryFlavor,
+  updateCategorySize,
+} from '../data/productAttributeService'
+import {
   createCustomer,
   getCustomerLedger,
   listCustomerBalances,
@@ -56,6 +66,8 @@ import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
   CreateCategoryInput,
+  CreateCategoryFlavorInput,
+  CreateCategorySizeInput,
   CreateCustomerInput,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
@@ -73,6 +85,8 @@ import type {
   SalesReportInput,
   UpdateAppSettingsInput,
   UpdateCategoryInput,
+  UpdateCategoryFlavorInput,
+  UpdateCategorySizeInput,
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
   UpdateProductInput,
@@ -135,6 +149,32 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.deleteCategory, (_evt, id: string) => {
     return deleteCategory(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.listCategorySizes, () => {
+    return listCategorySizes(db())
+  })
+  ipcMain.handle(IpcInvokes.createCategorySize, (_evt, input: CreateCategorySizeInput) => {
+    return createCategorySize(db(), input)
+  })
+  ipcMain.handle(IpcInvokes.updateCategorySize, (_evt, id: string, input: UpdateCategorySizeInput) => {
+    return updateCategorySize(db(), id, input)
+  })
+  ipcMain.handle(IpcInvokes.deleteCategorySize, (_evt, id: string) => {
+    return deleteCategorySize(db(), id)
+  })
+
+  ipcMain.handle(IpcInvokes.listCategoryFlavors, () => {
+    return listCategoryFlavors(db())
+  })
+  ipcMain.handle(IpcInvokes.createCategoryFlavor, (_evt, input: CreateCategoryFlavorInput) => {
+    return createCategoryFlavor(db(), input)
+  })
+  ipcMain.handle(IpcInvokes.updateCategoryFlavor, (_evt, id: string, input: UpdateCategoryFlavorInput) => {
+    return updateCategoryFlavor(db(), id, input)
+  })
+  ipcMain.handle(IpcInvokes.deleteCategoryFlavor, (_evt, id: string) => {
+    return deleteCategoryFlavor(db(), id)
   })
 
   ipcMain.handle(IpcInvokes.completeCashSale, (_evt, lines: PosSaleLineInput[]) => {

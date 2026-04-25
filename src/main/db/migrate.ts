@@ -12,7 +12,16 @@ const thisDir = path.dirname(fileURLToPath(import.meta.url))
  */
 export function getMigrationsDirectory(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'db', 'migrations')
+    const externalResourcesDir = path.join(process.resourcesPath, 'db', 'migrations')
+    if (existsSync(externalResourcesDir)) {
+      return externalResourcesDir
+    }
+    // electron-packager keeps project files under resources/app by default.
+    const bundledAppDir = path.join(process.resourcesPath, 'app', 'db', 'migrations')
+    if (existsSync(bundledAppDir)) {
+      return bundledAppDir
+    }
+    return externalResourcesDir
   }
   // Bundled as `out/main/index.js` → two levels up = repo root (sibling to `out/`).
   return path.join(thisDir, '..', '..', 'db', 'migrations')

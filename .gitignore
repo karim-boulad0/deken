@@ -9,3 +9,6 @@ npm-debug.log*
 pnpm-debug.log*
 .env
 .env.*.local
+
+# Local build/release artifacts (large binaries)
+release/
