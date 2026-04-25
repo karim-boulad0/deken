@@ -36,6 +36,12 @@ type ReceiptLine = {
   unitPriceLbp: number
 }
 
+type PosTicket = {
+  id: string
+  label: string
+  cart: CartLine[]
+}
+
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
 }
@@ -63,7 +69,10 @@ export function PosPage() {
   const [searchResults, setSearchResults] = useState<ProductDto[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
-  const [cart, setCart] = useState<CartLine[]>([])
+  const [tickets, setTickets] = useState<PosTicket[]>(() => [
+    { id: newId(), label: '1', cart: [] },
+  ])
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [payCashBusy, setPayCashBusy] = useState(false)
   const [payDebtBusy, setPayDebtBusy] = useState(false)
@@ -81,6 +90,38 @@ export function PosPage() {
       searchRef.current?.focus()
     }
   }, [loading])
+
+  useEffect(() => {
+    if (activeTicketId == null && tickets.length > 0) {
+      setActiveTicketId(tickets[0].id)
+    }
+  }, [activeTicketId, tickets])
+
+  const activeTicket = useMemo(() => {
+    if (tickets.length === 0) {
+      return null
+    }
+    if (activeTicketId == null) {
+      return tickets[0]
+    }
+    return tickets.find((t) => t.id === activeTicketId) ?? tickets[0]
+  }, [activeTicketId, tickets])
+
+  const cart = activeTicket?.cart ?? []
+
+  const updateActiveCart = useCallback(
+    (updater: (prev: CartLine[]) => CartLine[]) => {
+      if (!activeTicket) {
+        return
+      }
+      setTickets((prev) =>
+        prev.map((ticket) =>
+          ticket.id === activeTicket.id ? { ...ticket, cart: updater(ticket.cart) } : ticket,
+        ),
+      )
+    },
+    [activeTicket],
+  )
 
   const totals = useMemo(() => {
     const subLbp = cart.reduce((s, l) => s + l.qty * l.unitPriceLbp, 0)
@@ -225,7 +266,7 @@ export function PosPage() {
       setSearchResults([])
       setSearchError(null)
 
-      setCart((prev) => {
+      updateActiveCart((prev) => {
         const idx = prev.findIndex((l) => l.productId === p.id)
         if (idx >= 0) {
           const line = prev[idx]
@@ -270,7 +311,7 @@ export function PosPage() {
       })
       requestAnimationFrame(() => searchRef.current?.focus())
     },
-    [t, toast],
+    [t, toast, updateActiveCart],
   )
 
   useEffect(() => {
@@ -431,7 +472,7 @@ export function PosPage() {
       if (delta === 0) {
         return
       }
-      setCart((prev) =>
+      updateActiveCart((prev) =>
         prev
           .map((l) => {
             if (l.id !== id) {
@@ -461,15 +502,15 @@ export function PosPage() {
           .filter((l) => l.qty > 0),
       )
     },
-    [t, toast],
+    [t, toast, updateActiveCart],
   )
 
   function removeLine(id: string) {
-    setCart((prev) => prev.filter((l) => l.id !== id))
+    updateActiveCart((prev) => prev.filter((l) => l.id !== id))
   }
 
   function clearCart() {
-    setCart([])
+    updateActiveCart(() => [])
   }
 
   const cartHasUnlinkedLines = useMemo(
@@ -495,7 +536,7 @@ export function PosPage() {
   }
 
   function handlePayCash() {
-    if (cart.length === 0 || cartHasUnlinkedLines || payCashBusy) {
+    if (cart.length === 0 || cartHasUnlinkedLines || payCashBusy || !activeTicket) {
       return
     }
     const lines: { productId: string; quantity: number }[] = []
@@ -523,7 +564,9 @@ export function PosPage() {
           qty: l.qty,
           unitPriceLbp: l.unitPriceLbp,
         }))
-        clearCart()
+        setTickets((prev) =>
+          prev.map((ticket) => (ticket.id === activeTicket.id ? { ...ticket, cart: [] } : ticket)),
+        )
         toast.success(
           t('pos.toast.paidCashRecorded', {
             total: formatLbp(r.data.totalLbp, lng),
@@ -545,7 +588,7 @@ export function PosPage() {
 
   const handleDebtConfirm = useCallback(
     (payload: DebtRecordPayload) => {
-      if (cart.length === 0 || cartHasUnlinkedLines || payDebtBusy) {
+      if (cart.length === 0 || cartHasUnlinkedLines || payDebtBusy || !activeTicket) {
         return false
       }
       const byProduct = new Map<string, number>()
@@ -589,7 +632,9 @@ export function PosPage() {
             qty: l.qty,
             unitPriceLbp: l.unitPriceLbp,
           }))
-          setCart([])
+          setTickets((prev) =>
+            prev.map((ticket) => (ticket.id === activeTicket.id ? { ...ticket, cart: [] } : ticket)),
+          )
           const noteT = payload.note.trim()
           toast.success(
             noteT
@@ -633,7 +678,59 @@ export function PosPage() {
         return false
       })() as Promise<boolean>
     },
-    [cart, cartHasUnlinkedLines, lng, openSaleReceiptPreview, payDebtBusy, settings.printReceiptAfterSale, t, toast],
+    [
+      activeTicket,
+      cart,
+      cartHasUnlinkedLines,
+      lng,
+      openSaleReceiptPreview,
+      payDebtBusy,
+      settings.printReceiptAfterSale,
+      t,
+      toast,
+    ],
+  )
+
+  const createNewTicket = useCallback(() => {
+    setTickets((prev) => {
+      const nextNumber = prev.length + 1
+      const newTicket: PosTicket = { id: newId(), label: String(nextNumber), cart: [] }
+      setActiveTicketId(newTicket.id)
+      return [...prev, newTicket]
+    })
+    setQuery('')
+    setSearchResults([])
+    setSearchError(null)
+  }, [])
+
+  useEffect(() => {
+    if (!activeTicket && tickets.length > 0) {
+      setActiveTicketId(tickets[0].id)
+      return
+    }
+    if (tickets.length > 0 && activeTicketId != null && !tickets.some((t) => t.id === activeTicketId)) {
+      setActiveTicketId(tickets[0].id)
+    }
+  }, [activeTicket, activeTicketId, tickets])
+
+  const closeTicket = useCallback(
+    (ticketId: string) => {
+      if (tickets.length <= 1) {
+        return
+      }
+      setTickets((prev) => prev.filter((t) => t.id !== ticketId))
+      if (activeTicketId === ticketId) {
+        const idx = tickets.findIndex((t) => t.id === ticketId)
+        const fallback = tickets[idx - 1] ?? tickets[idx + 1] ?? tickets[0]
+        if (fallback) {
+          setActiveTicketId(fallback.id)
+        }
+      }
+      setQuery('')
+      setSearchResults([])
+      setSearchError(null)
+    },
+    [activeTicketId, tickets],
   )
 
   const cartActionsDisabled = cart.length === 0
@@ -667,6 +764,37 @@ export function PosPage() {
             <h2 className="pos-panel__title" id="pos-entry-title">
               {t('pos.entry.title')}
             </h2>
+            <div className="pos-ticket-tabs" aria-label={t('pos.tickets.aria')}>
+              {tickets.map((ticket) => (
+                <button
+                  key={ticket.id}
+                  type="button"
+                  className={`pos-ticket-tab${activeTicket?.id === ticket.id ? ' pos-ticket-tab--active' : ''}`}
+                  onClick={() => {
+                    setActiveTicketId(ticket.id)
+                    requestAnimationFrame(() => searchRef.current?.focus())
+                  }}
+                >
+                  <span>{t('pos.tickets.ticketLabel', { n: ticket.label })}</span>
+                  {tickets.length > 1 ? (
+                    <span
+                      className="pos-ticket-tab__close"
+                      role="button"
+                      aria-label={t('pos.tickets.close')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        closeTicket(ticket.id)
+                      }}
+                    >
+                      ×
+                    </span>
+                  ) : null}
+                </button>
+              ))}
+              <button type="button" className="pos-ticket-tab pos-ticket-tab--new" onClick={createNewTicket}>
+                + {t('pos.tickets.new')}
+              </button>
+            </div>
             <div className="pos-search">
               <label className="pos-search__label" htmlFor="pos-barcode-input">
                 {t('pos.entry.fieldLabel')}

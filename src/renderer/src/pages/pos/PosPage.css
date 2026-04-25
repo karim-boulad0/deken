@@ -112,6 +112,48 @@
   color: var(--color-muted);
 }
 
+.pos-ticket-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pos-ticket-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pos-ticket-tab--active {
+  background: var(--color-accent-muted);
+  color: var(--color-accent);
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+}
+
+.pos-ticket-tab--new {
+  background: var(--color-surface-muted);
+}
+
+.pos-ticket-tab__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: rgb(15 18 25 / 0.08);
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
 .pos-panel__hint {
   margin: 0;
   font-size: 0.85rem;

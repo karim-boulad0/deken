@@ -138,6 +138,12 @@
   },
   "pos": {
     "pageTitle": "Point of sale",
+    "tickets": {
+      "aria": "Open POS tickets",
+      "ticketLabel": "Ticket {{n}}",
+      "new": "New",
+      "close": "Close ticket"
+    },
     "toolbar": {
       "rateLabel": "Reference: 1 USD = {{rate}} LBP (from Settings, not a live market rate)"
     },
