@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Deken",
+    "name": "Business Suite",
+    "defaultBusinessName": "My business",
     "tagline": "Desktop POS for shops and retail — sales, stock, and debts, for almost any storefront"
   },
   "nav": {
@@ -20,6 +21,21 @@
     "toggleAria": "Switch interface language between Arabic and English",
     "ar": "العربية",
     "en": "English"
+  },
+  "activation": {
+    "title": "Activation required",
+    "intro": "Enter your activation code to unlock this installation.",
+    "loading": "Checking activation…",
+    "machineCode": "Machine code",
+    "codeLabel": "Activation code",
+    "codePlaceholder": "DEKEN-XXXXXXXXXXXX-XXXXXX",
+    "verifyButton": "Activate",
+    "verifying": "Verifying…",
+    "errors": {
+      "activation_invalid_code": "Invalid activation code.",
+      "invalid_input": "Invalid request.",
+      "internal_error": "Could not verify activation."
+    }
   },
   "common": {
     "emDash": "—",
@@ -232,7 +248,23 @@
       "recordedDebtDetail": "Debt saved for {{name}} (demo — not persisted).",
       "recordedDebtDetailNote": "Debt saved for {{name}} — note: «{{note}}» (demo — not persisted).",
       "paidDebtRecorded": "On-account sale saved: {{total}} for {{name}}. Stock was updated in the catalog.",
-      "paidDebtRecordedNote": "On-account sale saved: {{total}} for {{name}}. Note: «{{note}}». Stock was updated."
+      "paidDebtRecordedNote": "On-account sale saved: {{total}} for {{name}}. Note: «{{note}}». Stock was updated.",
+      "printOpenFailed": "Could not open receipt print dialog."
+    },
+    "receipt": {
+      "title": "Sales receipt",
+      "previewTitle": "Receipt preview",
+      "closePreview": "Close",
+      "printNow": "Print",
+      "saleTypeCash": "Cash sale",
+      "saleTypeDebt": "On-account sale",
+      "when": "Date: {{when}}",
+      "customer": "Customer: {{name}}",
+      "colItem": "Item",
+      "colQty": "Qty",
+      "colUnit": "Unit",
+      "colLine": "Line",
+      "total": "Total: {{total}}"
     },
     "mockItems": {
       "water": "Water 0.5L",
@@ -701,7 +733,7 @@
   },
   "settings": {
     "pageTitle": "Settings",
-    "intro": "Shop-wide preferences. General options and the optional classic menu are saved in the local database. Printing options are not wired yet.",
+    "intro": "Shop-wide preferences. General, interface, and printing choices are saved in the local database.",
     "save": "Save",
     "saving": "Saving…",
     "groups": {
@@ -723,8 +755,8 @@
       "navLayoutTopHint": "Horizontal links under the header; the main work area uses the full width of the content column."
     },
     "general": {
-      "shopName": "Shop name",
-      "shopNamePlaceholder": "My shop",
+      "shopName": "Business name",
+      "shopNamePlaceholder": "My business",
       "lbpPerUsd": "LBP per 1 USD (display & approximations)",
       "lbpPerUsdPlaceholder": "89500",
       "lbpPerUsdHint": "Used to show approximate US dollar amounts alongside Lebanese pounds (POS, debts, reports). This is a shop reference rate, not a live exchange feed.",
@@ -737,20 +769,22 @@
     "toast": {
       "saved": "Settings saved.",
       "menuUpdated": "Menu bar setting updated.",
-      "navLayoutUpdated": "Navigation layout updated."
+      "navLayoutUpdated": "Navigation layout updated.",
+      "printUpdated": "Printing preferences updated."
     },
     "errors": {
       "lbp_per_usd_invalid": "Enter a whole number between 1 and 100,000,000 for LBP per dollar.",
       "lbp_invalid_client": "Enter a valid whole number for the rate.",
       "shop_name_too_long": "Shop name is too long (max 200 characters).",
       "nav_layout_invalid": "Invalid navigation layout.",
+      "receipt_paper_invalid": "Invalid receipt paper option.",
       "save_failed": "Could not save settings ({{message}})."
     },
     "printing": {
       "receiptToggle": "Print receipt after sale",
-      "receiptDisabledTitle": "Printer pairing will enable this toggle.",
+      "receiptTitle": "Enable or disable receipt printing flow after sale.",
       "paperLabel": "Receipt paper",
-      "paperDisabledTitle": "Paper presets will map to drivers later.",
+      "paperTitle": "Preferred paper preset for printed receipt.",
       "paperA4": "A4 (invoice)",
       "paper80": "80 mm thermal"
     }

@@ -2,6 +2,7 @@
 
 import type {
   AppSettingsDto,
+  ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
@@ -40,12 +41,17 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  VerifyActivationInput,
   SalesReportDto,
   SalesReportInput,
 } from '../../shared/ipc/types'
 
 type DekenPreload = {
   getAppVersion: () => Promise<IpcResult<string>>
+  activation: {
+    status: () => Promise<IpcResult<ActivationStatusDto>>
+    verify: (input: VerifyActivationInput) => Promise<IpcResult<ActivationStatusDto>>
+  }
   products: {
     list: (q: string, filterCategoryId?: string | null) => Promise<IpcResult<ProductDto[]>>
     create: (input: CreateProductInput) => Promise<IpcResult<ProductDto>>

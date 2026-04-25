@@ -12,7 +12,7 @@ export function AppLayout() {
   const { pathname } = useLocation()
   const isPosRoute = pathname === '/pos'
   const isDashboard = pathname === '/dashboard' || pathname === '/'
-  const brand = settings.shopName.trim() || t('app.name')
+  const brand = settings.shopName.trim() || t('app.defaultBusinessName')
   const isTopNav = settings.navLayout === 'top'
 
   return (

@@ -6,6 +6,7 @@ import { closeDatabase, getDatabase } from './db/connection'
 import { registerIpc } from './ipc/registerIpc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const APP_NAME = 'Business Suite'
 
 function createWindow(): void {
   const autoHideMenuBar = getAutoHideMenuBarForNewWindow(getDatabase())
@@ -38,7 +39,7 @@ app.whenReady().then(() => {
     getDatabase()
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    void dialog.showErrorBox('Deken', msg)
+    void dialog.showErrorBox(APP_NAME, msg)
     app.exit(1)
     return
   }

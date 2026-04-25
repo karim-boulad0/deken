@@ -3,14 +3,19 @@ import { useTranslation } from 'react-i18next'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { useToast } from '../../components/toast'
 import { setAppSettings } from '../../lib/api/dekenClient'
-import type { AppNavLayout } from '../../../../shared/ipc/types'
+import type { AppNavLayout, ReceiptPaper } from '../../../../shared/ipc/types'
 import './SettingsPage.css'
 
 const MAX_SHOP = 200
 
 function mapSettingsErrorKey(message: string): string {
   const m = message.trim()
-  if (m === 'lbp_per_usd_invalid' || m === 'shop_name_too_long' || m === 'nav_layout_invalid') {
+  if (
+    m === 'lbp_per_usd_invalid' ||
+    m === 'shop_name_too_long' ||
+    m === 'nav_layout_invalid' ||
+    m === 'receipt_paper_invalid'
+  ) {
     return m
   }
   return 'save_failed'
@@ -26,6 +31,7 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [classicBusy, setClassicBusy] = useState(false)
   const [navLayoutBusy, setNavLayoutBusy] = useState(false)
+  const [printBusy, setPrintBusy] = useState(false)
 
   useEffect(() => {
     if (!loaded) {
@@ -114,6 +120,46 @@ export function SettingsPage() {
       }
     },
     [loaded, settings.navLayout, refresh, t, toast],
+  )
+
+  const onTogglePrintReceipt = useCallback(async () => {
+    if (!loaded || window.deken == null) {
+      return
+    }
+    const next = !settings.printReceiptAfterSale
+    setPrintBusy(true)
+    const r = await setAppSettings({ printReceiptAfterSale: next })
+    setPrintBusy(false)
+    if (r.ok) {
+      await refresh()
+      toast.success(t('settings.toast.printUpdated'))
+    } else {
+      const k = mapSettingsErrorKey(r.error.message)
+      toast.error(
+        k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+      )
+    }
+  }, [loaded, settings.printReceiptAfterSale, refresh, t, toast])
+
+  const onSetReceiptPaper = useCallback(
+    async (next: ReceiptPaper) => {
+      if (!loaded || window.deken == null || next === settings.receiptPaper) {
+        return
+      }
+      setPrintBusy(true)
+      const r = await setAppSettings({ receiptPaper: next })
+      setPrintBusy(false)
+      if (r.ok) {
+        await refresh()
+        toast.success(t('settings.toast.printUpdated'))
+      } else {
+        const k = mapSettingsErrorKey(r.error.message)
+        toast.error(
+          k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+        )
+      }
+    },
+    [loaded, settings.receiptPaper, refresh, t, toast],
   )
 
   return (
@@ -287,12 +333,13 @@ export function SettingsPage() {
               </span>
               <button
                 type="button"
-                className="set-switch"
+                className={settings.printReceiptAfterSale ? 'set-switch set-switch--on' : 'set-switch'}
                 role="switch"
-                aria-checked={false}
+                aria-checked={settings.printReceiptAfterSale}
                 aria-labelledby="set-print-receipt-label"
-                disabled
-                title={t('settings.printing.receiptDisabledTitle')}
+                disabled={!loaded || printBusy || window.deken == null}
+                title={t('settings.printing.receiptTitle')}
+                onClick={() => void onTogglePrintReceipt()}
               >
                 <span className="set-switch__thumb" />
               </button>
@@ -301,9 +348,10 @@ export function SettingsPage() {
               <span className="set-field__label">{t('settings.printing.paperLabel')}</span>
               <select
                 className="set-field__select"
-                disabled
-                title={t('settings.printing.paperDisabledTitle')}
-                defaultValue="a4"
+                disabled={!loaded || printBusy || window.deken == null}
+                title={t('settings.printing.paperTitle')}
+                value={settings.receiptPaper}
+                onChange={(e) => void onSetReceiptPaper((e.target.value as ReceiptPaper) || 'a4')}
               >
                 <option value="a4">{t('settings.printing.paperA4')}</option>
                 <option value="80">{t('settings.printing.paper80')}</option>

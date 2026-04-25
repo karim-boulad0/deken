@@ -1,5 +1,6 @@
 import type {
   AppNavLayout,
+  ReceiptPaper,
   AppSettingsDto,
   IpcErrorShape,
   IpcResult,
@@ -16,7 +17,12 @@ function asResult<T>(fn: () => T): IpcResult<T> {
     return { ok: true, data: fn() }
   } catch (e) {
     const m = e instanceof Error ? e.message : String(e)
-    if (m === 'lbp_per_usd_invalid' || m === 'shop_name_too_long' || m === 'nav_layout_invalid') {
+    if (
+      m === 'lbp_per_usd_invalid' ||
+      m === 'shop_name_too_long' ||
+      m === 'nav_layout_invalid' ||
+      m === 'receipt_paper_invalid'
+    ) {
       return { ok: false, error: makeError('validation', m) }
     }
     return { ok: false, error: makeError('internal_error', m) }
@@ -27,6 +33,8 @@ const KEY_LBP = 'lbp_per_usd'
 const KEY_SHOP = 'shop_name'
 const KEY_CLASSIC = 'show_classic_menu'
 const KEY_NAV_LAYOUT = 'nav_layout'
+const KEY_PRINT_RECEIPT = 'print_receipt_after_sale'
+const KEY_RECEIPT_PAPER = 'receipt_paper'
 const MAX_SHOP = 200
 
 const DEFAULT_LBP = 89_500
@@ -46,11 +54,16 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
     const rawClassic = readRowValue(st, KEY_CLASSIC, '0').trim()
     const showClassicMenu = rawClassic === '1' || rawClassic === 'true'
     const navLayout: AppNavLayout = parseNavLayout(readRowValue(st, KEY_NAV_LAYOUT, 'sidebar'))
+    const rawPrint = readRowValue(st, KEY_PRINT_RECEIPT, '0').trim()
+    const printReceiptAfterSale = rawPrint === '1' || rawPrint === 'true'
+    const receiptPaper: ReceiptPaper = parseReceiptPaper(readRowValue(st, KEY_RECEIPT_PAPER, 'a4'))
     return {
       shopName: shopName.length > MAX_SHOP ? shopName.slice(0, MAX_SHOP) : shopName,
       lbpPerUsd,
       showClassicMenu,
       navLayout,
+      printReceiptAfterSale,
+      receiptPaper,
     }
   })
 }
@@ -63,12 +76,22 @@ function parseNavLayout(s: string): AppNavLayout {
   return 'sidebar'
 }
 
+function parseReceiptPaper(s: string): ReceiptPaper {
+  const t = s.trim().toLowerCase()
+  if (t === '80') {
+    return '80'
+  }
+  return 'a4'
+}
+
 export function setAppSettings(db: Database, input: UpdateAppSettingsInput): IpcResult<AppSettingsDto> {
   if (
     input.shopName === undefined &&
     input.lbpPerUsd === undefined &&
     input.showClassicMenu === undefined &&
-    input.navLayout === undefined
+    input.navLayout === undefined &&
+    input.printReceiptAfterSale === undefined &&
+    input.receiptPaper === undefined
   ) {
     return getAppSettings(db)
   }
@@ -86,6 +109,9 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
   if (input.navLayout !== undefined && input.navLayout !== 'sidebar' && input.navLayout !== 'top') {
     return { ok: false, error: makeError('validation', 'nav_layout_invalid') }
   }
+  if (input.receiptPaper !== undefined && input.receiptPaper !== 'a4' && input.receiptPaper !== '80') {
+    return { ok: false, error: makeError('validation', 'receipt_paper_invalid') }
+  }
   return asResult(() => {
     const stUpsert = db.prepare(
       `INSERT INTO app_settings (key, value) VALUES (@k, @v)
@@ -102,6 +128,12 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     }
     if (input.navLayout !== undefined) {
       stUpsert.run({ k: KEY_NAV_LAYOUT, v: input.navLayout })
+    }
+    if (input.printReceiptAfterSale !== undefined) {
+      stUpsert.run({ k: KEY_PRINT_RECEIPT, v: input.printReceiptAfterSale ? '1' : '0' })
+    }
+    if (input.receiptPaper !== undefined) {
+      stUpsert.run({ k: KEY_RECEIPT_PAPER, v: input.receiptPaper })
     }
     const g = getAppSettings(db)
     if (!g.ok) {

@@ -11,6 +11,7 @@
     "build": "electron-vite build",
     "start:built": "electron .",
     "bundle:customer": "powershell -ExecutionPolicy Bypass -File scripts/prepare-customer-bundle.ps1",
+    "license:generate": "powershell -ExecutionPolicy Bypass -File scripts/generate-activation-code.ps1",
     "preview": "electron-vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."

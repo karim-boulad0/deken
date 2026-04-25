@@ -29,8 +29,23 @@ type CartLine = {
   unitPriceLbp: number
 }
 
+type ReceiptLine = {
+  name: string
+  qty: number
+  unitPriceLbp: number
+}
+
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 export function PosPage() {
@@ -47,6 +62,8 @@ export function PosPage() {
   const [payCashBusy, setPayCashBusy] = useState(false)
   const [payDebtBusy, setPayDebtBusy] = useState(false)
   const [debtOpen, setDebtOpen] = useState(false)
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
+  const receiptFrameRef = useRef<HTMLIFrameElement | null>(null)
 
   useEffect(() => {
     const tmr = window.setTimeout(() => setLoading(false), 380)
@@ -90,6 +107,96 @@ export function PosPage() {
     },
     [t],
   )
+
+  const openSaleReceiptPreview = useCallback(
+    (args: {
+      lines: ReceiptLine[]
+      totalLbp: number
+      saleType: 'cash' | 'debt'
+      customerName?: string
+    }) => {
+      const { lines, totalLbp, saleType, customerName } = args
+      const now = new Date()
+      const when = now.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US')
+      const paper80 = settings.receiptPaper === '80'
+      const widthCss = paper80 ? '80mm' : '210mm'
+      const baseFont = paper80 ? '12px' : '13px'
+      const shop = settings.shopName.trim() || t('app.defaultBusinessName')
+      const lineRows = lines
+        .map((l) => {
+          const lineTotal = l.qty * l.unitPriceLbp
+          return `<tr>
+            <td>${escapeHtml(l.name)}</td>
+            <td class="n">${l.qty}</td>
+            <td class="n">${escapeHtml(formatLbp(l.unitPriceLbp, lng))}</td>
+            <td class="n">${escapeHtml(formatLbp(lineTotal, lng))}</td>
+          </tr>`
+        })
+        .join('')
+      const html = `<!doctype html>
+<html lang="${lng.startsWith('ar') ? 'ar' : 'en'}" dir="${lng.startsWith('ar') ? 'rtl' : 'ltr'}">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(t('pos.receipt.title'))}</title>
+  <style>
+    @page { margin: 8mm; size: ${paper80 ? '80mm auto' : 'A4'}; }
+    body { margin: 0; font-family: Arial, sans-serif; font-size: ${baseFont}; color: #111; }
+    .r { width: ${widthCss}; max-width: 100%; margin: 0 auto; }
+    .h { text-align: center; margin-bottom: 8px; }
+    .shop { font-size: 1.15em; font-weight: 700; }
+    .meta { margin-top: 4px; color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 4px; text-align: start; vertical-align: top; }
+    th { font-size: 0.92em; color: #444; }
+    .n { text-align: end; white-space: nowrap; }
+    .total { margin-top: 10px; font-weight: 700; text-align: end; font-size: 1.05em; }
+  </style>
+</head>
+<body>
+  <div class="r">
+    <div class="h">
+      <div class="shop">${escapeHtml(shop)}</div>
+      <div class="meta">${escapeHtml(t('pos.receipt.when', { when }))}</div>
+      <div class="meta">${escapeHtml(t(saleType === 'cash' ? 'pos.receipt.saleTypeCash' : 'pos.receipt.saleTypeDebt'))}</div>
+      ${
+        saleType === 'debt' && customerName
+          ? `<div class="meta">${escapeHtml(t('pos.receipt.customer', { name: customerName }))}</div>`
+          : ''
+      }
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t('pos.receipt.colItem'))}</th>
+          <th class="n">${escapeHtml(t('pos.receipt.colQty'))}</th>
+          <th class="n">${escapeHtml(t('pos.receipt.colUnit'))}</th>
+          <th class="n">${escapeHtml(t('pos.receipt.colLine'))}</th>
+        </tr>
+      </thead>
+      <tbody>${lineRows}</tbody>
+    </table>
+    <div class="total">${escapeHtml(t('pos.receipt.total', { total: formatLbp(totalLbp, lng) }))}</div>
+  </div>
+</body>
+</html>`
+
+      setReceiptPreview(html)
+    },
+    [lng, settings.receiptPaper, settings.shopName, t],
+  )
+
+  const runPrintFromPreview = useCallback(() => {
+    try {
+      const w = receiptFrameRef.current?.contentWindow
+      if (!w) {
+        return
+      }
+      w.focus()
+      w.print()
+    } catch {
+      toast.error(t('pos.toast.printOpenFailed'), 5000)
+    }
+  }, [t, toast])
 
   const addFromQuery = useCallback(() => {
     /* Prefer the live DOM value so we never add using a stale React `query` (fast paste/scan + Add). */
@@ -270,6 +377,11 @@ export function PosPage() {
       const r = await completeCashSale(lines)
       setPayCashBusy(false)
       if (r.ok) {
+        const receiptLines: ReceiptLine[] = cart.map((l) => ({
+          name: l.displayName ?? (l.nameParams ? t(l.nameKey, l.nameParams) : t(l.nameKey)),
+          qty: l.qty,
+          unitPriceLbp: l.unitPriceLbp,
+        }))
         clearCart()
         toast.success(
           t('pos.toast.paidCashRecorded', {
@@ -277,6 +389,13 @@ export function PosPage() {
           }),
           5000,
         )
+        if (settings.printReceiptAfterSale) {
+          openSaleReceiptPreview({
+            lines: receiptLines,
+            totalLbp: r.data.totalLbp,
+            saleType: 'cash',
+          })
+        }
       } else {
         toast.error(mapCashError(r.error.message), 6000)
       }
@@ -324,6 +443,11 @@ export function PosPage() {
         const r = await completeDebtSale(input)
         setPayDebtBusy(false)
         if (r.ok) {
+          const receiptLines: ReceiptLine[] = cart.map((l) => ({
+            name: l.displayName ?? (l.nameParams ? t(l.nameKey, l.nameParams) : t(l.nameKey)),
+            qty: l.qty,
+            unitPriceLbp: l.unitPriceLbp,
+          }))
           setCart([])
           const noteT = payload.note.trim()
           toast.success(
@@ -339,6 +463,14 @@ export function PosPage() {
                 }),
             6000,
           )
+          if (settings.printReceiptAfterSale) {
+            openSaleReceiptPreview({
+              lines: receiptLines,
+              totalLbp: r.data.totalLbp,
+              saleType: 'debt',
+              customerName: payload.customerName,
+            })
+          }
           return true
         }
         const m = r.error.message.trim()
@@ -360,7 +492,7 @@ export function PosPage() {
         return false
       })() as Promise<boolean>
     },
-    [cart, cartHasUnlinkedLines, lng, payDebtBusy, t, toast],
+    [cart, cartHasUnlinkedLines, lng, openSaleReceiptPreview, payDebtBusy, settings.printReceiptAfterSale, t, toast],
   )
 
   const cartActionsDisabled = cart.length === 0
@@ -610,6 +742,40 @@ export function PosPage() {
         lineCount={cart.length}
         onConfirm={handleDebtConfirm}
       />
+
+      {receiptPreview != null ? (
+        <div
+          className="pos-rprev-dim"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setReceiptPreview(null)
+            }
+          }}
+        >
+          <section className="pos-rprev" role="dialog" aria-modal="true" aria-label={t('pos.receipt.previewTitle')}>
+            <header className="pos-rprev__head">
+              <h3 className="pos-rprev__title">{t('pos.receipt.previewTitle')}</h3>
+            </header>
+            <div className="pos-rprev__frame-wrap">
+              <iframe
+                ref={receiptFrameRef}
+                className="pos-rprev__frame"
+                title={t('pos.receipt.previewTitle')}
+                srcDoc={receiptPreview}
+              />
+            </div>
+            <div className="pos-rprev__actions">
+              <button type="button" className="pos-btn pos-btn--secondary" onClick={() => setReceiptPreview(null)}>
+                {t('pos.receipt.closePreview')}
+              </button>
+              <button type="button" className="pos-btn pos-btn--primary" onClick={runPrintFromPreview}>
+                {t('pos.receipt.printNow')}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
     </div>
   )

@@ -1,5 +1,6 @@
 import type {
   AppSettingsDto,
+  ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
@@ -38,6 +39,7 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  VerifyActivationInput,
   SalesReportDto,
   SalesReportInput,
 } from '../../../../shared/ipc/types'
@@ -83,6 +85,17 @@ export async function deleteProduct(id: string): Promise<IpcResult<null>> {
 
 export async function getAppVersion(): Promise<IpcResult<string>> {
   return assertDeken().getAppVersion()
+}
+
+export async function getActivationStatus(): Promise<IpcResult<ActivationStatusDto>> {
+  if (!isDeken()) {
+    return { ok: true, data: { activated: true, machineCode: 'DEV-MODE' } }
+  }
+  return assertDeken().activation.status()
+}
+
+export async function verifyActivation(input: VerifyActivationInput): Promise<IpcResult<ActivationStatusDto>> {
+  return assertDeken().activation.verify(input)
 }
 
 export async function listCategories(): Promise<IpcResult<CategoryDto[]>> {

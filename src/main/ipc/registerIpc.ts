@@ -49,6 +49,7 @@ import {
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
 import { getDashboardSnapshot } from '../data/dashboardService'
+import { getActivationStatus, verifyActivation } from '../data/activationService'
 import { applyApplicationMenu } from '../appMenu'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
 import { getDatabase } from '../db/connection'
@@ -76,6 +77,7 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  VerifyActivationInput,
 } from '../../shared/ipc/types'
 
 /**
@@ -86,6 +88,14 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.getAppVersion, (): IpcResult<string> => {
     return { ok: true, data: app.getVersion() }
+  })
+
+  ipcMain.handle(IpcInvokes.getActivationStatus, () => {
+    return getActivationStatus(db())
+  })
+
+  ipcMain.handle(IpcInvokes.verifyActivation, (_evt, input: VerifyActivationInput) => {
+    return verifyActivation(db(), input)
   })
 
   ipcMain.handle(

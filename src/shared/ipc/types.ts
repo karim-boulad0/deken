@@ -149,6 +149,7 @@ export type SalesReportDay = {
 }
 
 export type AppNavLayout = 'sidebar' | 'top'
+export type ReceiptPaper = 'a4' | '80'
 
 export type AppSettingsDto = {
   /** Display name in shell / receipts (optional). */
@@ -159,6 +160,10 @@ export type AppSettingsDto = {
   showClassicMenu: boolean
   /** Main navigation: vertical sidebar (default) or horizontal top bar. */
   navLayout: AppNavLayout
+  /** Whether to prompt/print receipt after completing a sale. */
+  printReceiptAfterSale: boolean
+  /** Preferred receipt paper size preset. */
+  receiptPaper: ReceiptPaper
 }
 
 export type UpdateAppSettingsInput = {
@@ -166,6 +171,8 @@ export type UpdateAppSettingsInput = {
   lbpPerUsd?: number
   showClassicMenu?: boolean
   navLayout?: AppNavLayout
+  printReceiptAfterSale?: boolean
+  receiptPaper?: ReceiptPaper
 }
 
 export type SalesReportDto = {
@@ -415,6 +422,15 @@ export type ListRecentCashflowInput = {
   limit: number
 }
 
+export type ActivationStatusDto = {
+  activated: boolean
+  machineCode: string
+}
+
+export type VerifyActivationInput = {
+  code: string
+}
+
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
   listProducts: 'deken:products:list',
@@ -457,6 +473,8 @@ export const IpcInvokes = {
   deleteExpense: 'deken:expenses:delete',
   listRecentCashflow: 'deken:cashflow:listRecent',
   voidCashSale: 'deken:sales:voidCash',
+  getActivationStatus: 'deken:activation:status',
+  verifyActivation: 'deken:activation:verify',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

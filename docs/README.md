@@ -25,6 +25,7 @@
 | [guides/new-shop-deployment-guide.md](./guides/new-shop-deployment-guide.md)     | طريقة تركيب النظام لدكان جديد خطوة بخطوة             |
 | [guides/customer-portable-transfer-guide.md](./guides/customer-portable-transfer-guide.md) | تجهيز نسخة Portable جاهزة للنقل والتشغيل عند الزبون |
 | [guides/customer-quick-start.md](./guides/customer-quick-start.md)                | ملف مختصر جدًا للزبون: المتطلبات وخطوات التشغيل       |
+| [guides/local-activation-guide.md](./guides/local-activation-guide.md)            | تفعيل محلي أول تشغيل بكود مرتبط بالجهاز               |
 
 ## إضافة مستند جديد
 

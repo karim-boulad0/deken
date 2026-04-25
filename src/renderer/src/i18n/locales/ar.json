@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Deken",
+    "name": "منصة الأعمال",
+    "defaultBusinessName": "نشاطي",
     "tagline": "نقطة بيع سطح مكتب للمحلات والمتاجر — مبيعات، مخزون، وديون"
   },
   "nav": {
@@ -20,6 +21,21 @@
     "toggleAria": "تبديل لغة الواجهة بين العربية والإنجليزية",
     "ar": "العربية",
     "en": "English"
+  },
+  "activation": {
+    "title": "التفعيل مطلوب",
+    "intro": "أدخل كود التفعيل لفتح هذه النسخة.",
+    "loading": "جارٍ التحقق من التفعيل…",
+    "machineCode": "رمز الجهاز",
+    "codeLabel": "كود التفعيل",
+    "codePlaceholder": "DEKEN-XXXXXXXXXXXX-XXXXXX",
+    "verifyButton": "تفعيل",
+    "verifying": "جارٍ التحقق…",
+    "errors": {
+      "activation_invalid_code": "كود التفعيل غير صحيح.",
+      "invalid_input": "طلب غير صالح.",
+      "internal_error": "تعذّر التحقق من التفعيل."
+    }
   },
   "common": {
     "emDash": "—",
@@ -232,7 +248,23 @@
       "recordedDebtDetail": "حُفظ الدين باسم {{name}} (تجريبي — غير مخزّن).",
       "recordedDebtDetailNote": "حُفظ الدين باسم {{name}} — ملاحظة: «{{note}}» (تجريبي — غير مخزّن).",
       "paidDebtRecorded": "حُفظ بيع دين: {{total}} باسم {{name}}. تُحدَّث كمية المخزون.",
-      "paidDebtRecordedNote": "حُفظ بيع دين: {{total}} باسم {{name}}. ملاحظة: «{{note}}». تُحدَّث كمية المخزون."
+      "paidDebtRecordedNote": "حُفظ بيع دين: {{total}} باسم {{name}}. ملاحظة: «{{note}}». تُحدَّث كمية المخزون.",
+      "printOpenFailed": "تعذّر فتح نافذة طباعة الإيصال."
+    },
+    "receipt": {
+      "title": "إيصال بيع",
+      "previewTitle": "معاينة الإيصال",
+      "closePreview": "إغلاق",
+      "printNow": "طباعة",
+      "saleTypeCash": "بيع نقدي",
+      "saleTypeDebt": "بيع على الحساب",
+      "when": "التاريخ: {{when}}",
+      "customer": "الزبون: {{name}}",
+      "colItem": "الصنف",
+      "colQty": "الكمية",
+      "colUnit": "سعر الوحدة",
+      "colLine": "السطر",
+      "total": "الإجمالي: {{total}}"
     },
     "mockItems": {
       "water": "ماء 0.5 ل",
@@ -701,7 +733,7 @@
   },
   "settings": {
     "pageTitle": "الإعدادات",
-    "intro": "تفضيلات عامة للمحل. الإعدادات العامة وقائمة التطبيق الاختيارية تُحفظ في قاعدة البيانات المحلية. خيارات الطباعة غير مفعّلة بعد.",
+    "intro": "تفضيلات عامة للمحل. إعدادات العام والواجهة والطباعة تُحفظ في قاعدة البيانات المحلية.",
     "save": "حفظ",
     "saving": "جاري الحفظ…",
     "groups": {
@@ -723,8 +755,8 @@
       "navLayoutTopHint": "روابط أفقية تحت رأس النافذة؛ منطقة العمل تستخدم عرض العمود بالكامل."
     },
     "general": {
-      "shopName": "اسم المحل",
-      "shopNamePlaceholder": "محلي",
+      "shopName": "اسم النشاط",
+      "shopNamePlaceholder": "نشاطي",
       "lbpPerUsd": "ل.ل. لكل 1 دولار (للعرض والتقريب)",
       "lbpPerUsdPlaceholder": "89500",
       "lbpPerUsdHint": "لعرض مبالغ دولار تقريبية بجانب الليرة (نقاط البيع، الديون، التقارير). معدل مرجعي للمحل، وليس سعراً مباشراً من السوق.",
@@ -737,20 +769,22 @@
     "toast": {
       "saved": "تم حفظ الإعدادات.",
       "menuUpdated": "تم تحديث إعداد شريط القوائم.",
-      "navLayoutUpdated": "تم تحديث تخطيط التنقّل."
+      "navLayoutUpdated": "تم تحديث تخطيط التنقّل.",
+      "printUpdated": "تم تحديث تفضيلات الطباعة."
     },
     "errors": {
       "lbp_per_usd_invalid": "أدخل رقماً صحيحاً بين 1 و100,000,000 لعدد ل.ل. لكل دولار.",
       "lbp_invalid_client": "أدخل رقماً صحيحاً صالحاً للمعدل.",
       "shop_name_too_long": "اسم المحل طويل جداً (حد 200 حرف).",
       "nav_layout_invalid": "تخطيط تنقّل غير صالح.",
+      "receipt_paper_invalid": "خيار ورق إيصال غير صالح.",
       "save_failed": "تعذّر حفظ الإعدادات ({{message}})."
     },
     "printing": {
       "receiptToggle": "طباعة إيصال بعد البيع",
-      "receiptDisabledTitle": "ربط الطابعة يُفعّل هذا المفتاح.",
+      "receiptTitle": "تفعيل أو إيقاف مسار طباعة الإيصال بعد البيع.",
       "paperLabel": "ورق الإيصال",
-      "paperDisabledTitle": "أنواع الورق تُربط بالتعريفات لاحقاً.",
+      "paperTitle": "اختيار المقاس المفضل لإيصال الطباعة.",
       "paperA4": "A4 (فاتورة)",
       "paper80": "حراري 80 مم"
     }

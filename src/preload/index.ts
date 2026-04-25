@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
   AppSettingsDto,
+  ActivationStatusDto,
   CashflowLineDto,
   CategoryDto,
   CompleteCashSaleResult,
@@ -42,6 +43,7 @@ import type {
   UpdateExpenseInput,
   UpdateProductInput,
   UpdateSupplierInput,
+  VerifyActivationInput,
 } from '../shared/ipc/types'
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
@@ -51,6 +53,14 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
 contextBridge.exposeInMainWorld('deken', {
   getAppVersion: (): Promise<IpcResult<string>> => {
     return invoke(IpcInvokes.getAppVersion)
+  },
+  activation: {
+    status: (): Promise<IpcResult<ActivationStatusDto>> => {
+      return invoke(IpcInvokes.getActivationStatus)
+    },
+    verify: (input: VerifyActivationInput): Promise<IpcResult<ActivationStatusDto>> => {
+      return invoke(IpcInvokes.verifyActivation, input)
+    },
   },
   products: {
     list: (q: string, filterCategoryId?: string | null): Promise<IpcResult<ProductDto[]>> => {

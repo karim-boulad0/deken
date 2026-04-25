@@ -15,6 +15,8 @@ const DEFAULT: AppSettingsDto = {
   lbpPerUsd: 89_500,
   showClassicMenu: false,
   navLayout: 'sidebar',
+  printReceiptAfterSale: false,
+  receiptPaper: 'a4',
 }
 
 type Ctx = {
