@@ -1,4 +1,5 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AppSettingsProvider } from './contexts/AppSettingsContext'
 import { AppLayout } from './layout/AppLayout'
 import { DashboardPage } from './pages/dashboard/DashboardPage'
 import { PosPage } from './pages/pos/PosPage'
@@ -9,6 +10,7 @@ import { SettingsPage } from './pages/settings/SettingsPage'
 
 export default function App() {
   return (
+    <AppSettingsProvider>
     <HashRouter>
       <Routes>
         <Route path="/" element={<AppLayout />}>
@@ -23,5 +25,6 @@ export default function App() {
         </Route>
       </Routes>
     </HashRouter>
+    </AppSettingsProvider>
   )
 }

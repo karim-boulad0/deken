@@ -114,6 +114,18 @@ export type SalesReportDay = {
   count: number
 }
 
+export type AppSettingsDto = {
+  /** Display name in shell / receipts (optional). */
+  shopName: string
+  /** Lebanese pounds per 1 USD for display approximations. */
+  lbpPerUsd: number
+}
+
+export type UpdateAppSettingsInput = {
+  shopName?: string
+  lbpPerUsd?: number
+}
+
 export type SalesReportDto = {
   fromDate: string
   toDate: string
@@ -141,6 +153,8 @@ export const IpcInvokes = {
   completeCashSale: 'deken:sales:completeCash',
   completeDebtSale: 'deken:sales:completeDebt',
   getSalesReport: 'deken:reports:salesInRange',
+  getAppSettings: 'deken:settings:get',
+  setAppSettings: 'deken:settings:set',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

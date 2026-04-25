@@ -1,4 +1,5 @@
 import type {
+  AppSettingsDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
@@ -10,6 +11,7 @@ import type {
   IpcResult,
   PosSaleLineInput,
   ProductDto,
+  UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
   SalesReportDto,
@@ -110,4 +112,14 @@ export async function getSalesReport(
   r: SalesReportInput,
 ): Promise<IpcResult<SalesReportDto>> {
   return assertDeken().reports.getSales(r)
+}
+
+export async function getAppSettings(): Promise<IpcResult<AppSettingsDto>> {
+  return assertDeken().settings.get()
+}
+
+export async function setAppSettings(
+  input: UpdateAppSettingsInput,
+): Promise<IpcResult<AppSettingsDto>> {
+  return assertDeken().settings.set(input)
 }

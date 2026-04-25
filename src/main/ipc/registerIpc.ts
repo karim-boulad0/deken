@@ -15,6 +15,7 @@ import {
   updateProduct,
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
+import { getAppSettings, setAppSettings } from '../data/settingsService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
@@ -25,6 +26,7 @@ import type {
   IpcResult,
   PosSaleLineInput,
   SalesReportInput,
+  UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
 } from '../../shared/ipc/types'
@@ -106,5 +108,16 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
     return getSalesReport(db(), r.fromDate, r.toDate)
+  })
+
+  ipcMain.handle(IpcInvokes.getAppSettings, () => {
+    return getAppSettings(db())
+  })
+
+  ipcMain.handle(IpcInvokes.setAppSettings, (_evt, input: UpdateAppSettingsInput) => {
+    if (input == null || typeof input !== 'object') {
+      return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
+    }
+    return setAppSettings(db(), input)
   })
 }

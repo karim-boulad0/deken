@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import type {
+  AppSettingsDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
@@ -12,6 +13,7 @@ import type {
   IpcResult,
   PosSaleLineInput,
   ProductDto,
+  UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
   SalesReportDto,
@@ -44,6 +46,10 @@ type DekenPreload = {
   }
   reports: {
     getSales: (r: SalesReportInput) => Promise<IpcResult<SalesReportDto>>
+  }
+  settings: {
+    get: () => Promise<IpcResult<AppSettingsDto>>
+    set: (input: UpdateAppSettingsInput) => Promise<IpcResult<AppSettingsDto>>
   }
 }
 

@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { IpcInvokes } from '../shared/ipc/types'
 import type {
+  AppSettingsDto,
   CategoryDto,
   CompleteCashSaleResult,
   CompleteDebtSaleInput,
@@ -14,6 +15,7 @@ import type {
   ProductDto,
   SalesReportDto,
   SalesReportInput,
+  UpdateAppSettingsInput,
   UpdateCategoryInput,
   UpdateProductInput,
 } from '../shared/ipc/types'
@@ -81,6 +83,14 @@ contextBridge.exposeInMainWorld('deken', {
   reports: {
     getSales: (r: SalesReportInput): Promise<IpcResult<SalesReportDto>> => {
       return invoke(IpcInvokes.getSalesReport, r)
+    },
+  },
+  settings: {
+    get: (): Promise<IpcResult<AppSettingsDto>> => {
+      return invoke(IpcInvokes.getAppSettings)
+    },
+    set: (input: UpdateAppSettingsInput): Promise<IpcResult<AppSettingsDto>> => {
+      return invoke(IpcInvokes.setAppSettings, input)
     },
   },
 })

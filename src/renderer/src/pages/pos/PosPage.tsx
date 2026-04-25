@@ -2,13 +2,12 @@ import { Minus, Plus, ScanBarcode, Trash2, Wallet } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { completeCashSale, completeDebtSale, findProductByCode } from '../../lib/api/dekenClient'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
 import { productMatchesLookupCode } from './posLookup'
 import './PosPage.css'
-
-const MOCK_LBP_PER_USD = 89_500
 
 type CartLine = {
   id: string
@@ -36,6 +35,8 @@ function newId(): string {
 
 export function PosPage() {
   const { t, i18n } = useTranslation()
+  const { settings } = useAppSettings()
+  const lbpPerUsd = settings.lbpPerUsd
   const toast = useToast()
   const lng = i18n.language
   const searchRef = useRef<HTMLInputElement>(null)
@@ -60,9 +61,9 @@ export function PosPage() {
 
   const totals = useMemo(() => {
     const subLbp = cart.reduce((s, l) => s + l.qty * l.unitPriceLbp, 0)
-    const usd = subLbp / MOCK_LBP_PER_USD
+    const usd = subLbp / lbpPerUsd
     return { subLbp, usd }
-  }, [cart])
+  }, [cart, lbpPerUsd])
 
   const formatted = useMemo(
     () => ({
@@ -375,7 +376,7 @@ export function PosPage() {
           <h1 className="pos__title">{t('pos.pageTitle')}</h1>
           <p className="pos__rate" aria-live="polite">
             {t('pos.toolbar.rateLabel', {
-              rate: MOCK_LBP_PER_USD.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US'),
+              rate: lbpPerUsd.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US'),
             })}
           </p>
         </div>

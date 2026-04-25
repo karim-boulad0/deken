@@ -1,17 +1,18 @@
 import { ChevronDown, ChevronUp, Search } from 'lucide-react'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { listCustomerBalances } from '../../lib/api/dekenClient'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import './DebtsPage.css'
 import type { CustomerBalanceRow } from '../../../../shared/ipc/types'
 
-const MOCK_LBP_PER_USD = 89_500
-
 type BalanceFilter = 'all' | 'positive' | 'zero'
 
 export function DebtsPage() {
   const { t, i18n } = useTranslation()
+  const { settings } = useAppSettings()
+  const lbpPerUsd = settings.lbpPerUsd
   const lng = i18n.language
   const [query, setQuery] = useState('')
   const [balanceFilter, setBalanceFilter] = useState<BalanceFilter>('all')
@@ -183,7 +184,7 @@ export function DebtsPage() {
                 {!loading
                   ? filtered.map((row) => {
                   const expanded = expandedId === row.id
-                  const usd = row.balanceLbp / MOCK_LBP_PER_USD
+                  const usd = row.balanceLbp / lbpPerUsd
                   const lastAt =
                     row.lastDebtSaleAt != null
                       ? new Date(row.lastDebtSaleAt).toLocaleString(

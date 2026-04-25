@@ -1,8 +1,77 @@
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
+import { useToast } from '../../components/toast'
+import { setAppSettings } from '../../lib/api/dekenClient'
 import './SettingsPage.css'
+
+const MAX_SHOP = 200
+
+function mapSettingsErrorKey(message: string): string {
+  const m = message.trim()
+  if (m === 'lbp_per_usd_invalid' || m === 'shop_name_too_long') {
+    return m
+  }
+  return 'save_failed'
+}
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const toast = useToast()
+  const { settings, loaded, refresh } = useAppSettings()
+  const [shopName, setShopName] = useState('')
+  const [lbpStr, setLbpStr] = useState('')
+  const [dirty, setDirty] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!loaded) {
+      return
+    }
+    if (!dirty) {
+      setShopName(settings.shopName)
+      setLbpStr(String(settings.lbpPerUsd))
+    }
+  }, [loaded, settings, dirty])
+
+  const onSave = useCallback(async () => {
+    if (!loaded || window.deken == null) {
+      return
+    }
+    const nameTrim = shopName.trim()
+    if (nameTrim.length > MAX_SHOP) {
+      toast.error(t('settings.errors.shop_name_too_long'))
+      return
+    }
+    const n = Math.floor(Number(lbpStr))
+    if (!Number.isInteger(n) || n < 1) {
+      toast.error(t('settings.errors.lbp_invalid_client'))
+      return
+    }
+    if (n > 100_000_000) {
+      toast.error(t('settings.errors.lbp_per_usd_invalid'))
+      return
+    }
+    if (nameTrim === settings.shopName && n === settings.lbpPerUsd) {
+      return
+    }
+    setSaving(true)
+    const r = await setAppSettings({
+      shopName: nameTrim,
+      lbpPerUsd: n,
+    })
+    setSaving(false)
+    if (r.ok) {
+      setDirty(false)
+      await refresh()
+      toast.success(t('settings.toast.saved'))
+    } else {
+      const k = mapSettingsErrorKey(r.error.message)
+      toast.error(
+        k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+      )
+    }
+  }, [loaded, lbpStr, shopName, settings.lbpPerUsd, settings.shopName, refresh, t, toast])
 
   return (
     <div className="set">
@@ -24,16 +93,49 @@ export function SettingsPage() {
               <input
                 className="set-field__input"
                 type="text"
-                defaultValue=""
+                value={shopName}
+                onChange={(e) => {
+                  setDirty(true)
+                  setShopName(e.target.value)
+                }}
                 placeholder={t('settings.general.shopNamePlaceholder')}
-                disabled
-                title={t('settings.general.shopNameDisabledTitle')}
+                maxLength={MAX_SHOP}
+                disabled={!loaded || saving || window.deken == null}
+                aria-invalid={shopName.length > MAX_SHOP}
+                autoComplete="organization"
               />
+            </label>
+            <label className="set-field">
+              <span className="set-field__label">{t('settings.general.lbpPerUsd')}</span>
+              <input
+                className="set-field__input"
+                type="text"
+                inputMode="numeric"
+                value={lbpStr}
+                onChange={(e) => {
+                  setDirty(true)
+                  setLbpStr(e.target.value)
+                }}
+                placeholder={t('settings.general.lbpPerUsdPlaceholder')}
+                disabled={!loaded || saving || window.deken == null}
+                autoComplete="off"
+              />
+              <span className="set-field__hint">{t('settings.general.lbpPerUsdHint')}</span>
             </label>
             <label className="set-field">
               <span className="set-field__label">{t('settings.general.currency')}</span>
               <p className="set-field__static">{t('settings.general.currencyValue')}</p>
             </label>
+            <div className="set__actions">
+              <button
+                type="button"
+                className="set-btn set-btn--primary"
+                onClick={() => void onSave()}
+                disabled={!loaded || saving || window.deken == null}
+              >
+                {saving ? t('settings.saving') : t('settings.save')}
+              </button>
+            </div>
           </div>
         </section>
 

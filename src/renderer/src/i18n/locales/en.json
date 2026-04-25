@@ -55,7 +55,7 @@
   "pos": {
     "pageTitle": "Point of sale",
     "toolbar": {
-      "rateLabel": "Demo rate: 1 USD = {{rate}} LBP (not live data)"
+      "rateLabel": "Reference: 1 USD = {{rate}} LBP (from Settings, not a live market rate)"
     },
     "loading": {
       "aria": "Loading checkout layout"
@@ -359,7 +359,7 @@
     },
     "chart": {
       "title": "Sales by day (LBP)",
-      "hint": "Approx. USD: {{usd}} (demo rate from POS, not a live rate).",
+      "hint": "Approx. USD: {{usd}} (using the LBP/USD rate from Settings, not a live market rate).",
       "aria": "Bar chart: {{n}} day columns from the database (UTC day bucket)."
     },
     "table": {
@@ -371,7 +371,9 @@
   },
   "settings": {
     "pageTitle": "Settings",
-    "intro": "Shop-wide preferences. Controls are placeholders until persistence and devices are integrated.",
+    "intro": "Shop-wide preferences. General settings are saved in the local database. Printing options are not wired yet.",
+    "save": "Save",
+    "saving": "Saving…",
     "groups": {
       "general": "General",
       "language": "Language",
@@ -380,12 +382,23 @@
     "general": {
       "shopName": "Shop name",
       "shopNamePlaceholder": "My shop",
-      "shopNameDisabledTitle": "Shop profile editing arrives with account storage.",
+      "lbpPerUsd": "LBP per 1 USD (display & approximations)",
+      "lbpPerUsdPlaceholder": "89500",
+      "lbpPerUsdHint": "Used to show approximate US dollar amounts alongside Lebanese pounds (POS, debts, reports). This is a shop reference rate, not a live exchange feed.",
       "currency": "Default currency",
-      "currencyValue": "LBP (display only in this build)"
+      "currencyValue": "LBP (primary); USD shown as approximate"
     },
     "language": {
       "note": "Use the language control in the top bar to switch Arabic and English. This section will later hold regional formats."
+    },
+    "toast": {
+      "saved": "Settings saved."
+    },
+    "errors": {
+      "lbp_per_usd_invalid": "Enter a whole number between 1 and 100,000,000 for LBP per dollar.",
+      "lbp_invalid_client": "Enter a valid whole number for the rate.",
+      "shop_name_too_long": "Shop name is too long (max 200 characters).",
+      "save_failed": "Could not save settings ({{message}})."
     },
     "printing": {
       "receiptToggle": "Print receipt after sale",

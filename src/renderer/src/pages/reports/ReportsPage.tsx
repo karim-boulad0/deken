@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { getSalesReport } from '../../lib/api/dekenClient'
 import { rangeForPreset, type PeriodPreset } from '../../lib/reportDateRange'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import type { SalesReportDto } from '../../../../shared/ipc/types'
 import './ReportsPage.css'
 
-const MOCK_LBP_PER_USD = 89_500
-
 export function ReportsPage() {
   const { t, i18n } = useTranslation()
+  const { settings } = useAppSettings()
+  const lbpPerUsd = settings.lbpPerUsd
   const lng = i18n.language
   const periodLabelId = useId()
   const [preset, setPreset] = useState<PeriodPreset>('week')
@@ -172,7 +173,7 @@ export function ReportsPage() {
               {t('reports.chart.title')}
             </h2>
             <p className="rep-preview__hint">
-              {t('reports.chart.hint', { usd: formatUsd(report.totalLbp / MOCK_LBP_PER_USD, lng) })}
+              {t('reports.chart.hint', { usd: formatUsd(report.totalLbp / lbpPerUsd, lng) })}
             </p>
             <div
               className="rep-chart"
