@@ -298,6 +298,8 @@ function emptyDashboardSnapshot(): DashboardSnapshotDto {
       totalLbp: 0,
       saleCount: 0,
       itemsSold: 0,
+      grossProfitLbp: 0,
+      grossMarginPct: null,
     },
     cashflowToday: { cashInLbp: 0, cashOutLbp: 0, netLbp: 0 },
     dayComparison: {

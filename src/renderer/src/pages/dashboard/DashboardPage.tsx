@@ -99,6 +99,8 @@ export function DashboardPage() {
       lines.push(toCsvLine(['today', 'approxUsd', tday.totalLbp / lbpPerUsd]))
       lines.push(toCsvLine(['today', 'saleCount', tday.saleCount]))
       lines.push(toCsvLine(['today', 'itemsSold', tday.itemsSold]))
+      lines.push(toCsvLine(['today', 'grossProfitLbp', tday.grossProfitLbp]))
+      lines.push(toCsvLine(['today', 'grossMarginPct', tday.grossMarginPct ?? '']))
     }
     if (snap.cashflowToday) {
       lines.push(toCsvLine(['cashflow', 'cashInLbp', snap.cashflowToday.cashInLbp]))
@@ -283,6 +285,21 @@ export function DashboardPage() {
                 <span className="dash-statlist__value">
                   {loading || !today ? t('dashboard.summary.loading') : formatInt(today.itemsSold, lng)}
                 </span>
+              </li>
+              <li className="dash-statlist__row">
+                <span className="dash-statlist__label">{t('dashboard.summary.grossMarginLabel')}</span>
+                <div className="dash-statlist__valuecol">
+                  <span className="dash-statlist__value">
+                    {loading || !today
+                      ? t('dashboard.summary.loading')
+                      : today.grossMarginPct == null
+                        ? t('dashboard.compare.noBaseline')
+                        : formatPct(today.grossMarginPct, lng)}
+                  </span>
+                  {today && !loading ? (
+                    <span className="dash-statlist__sublbp">{formatLbp(today.grossProfitLbp, lng)}</span>
+                  ) : null}
+                </div>
               </li>
             </ul>
           )}

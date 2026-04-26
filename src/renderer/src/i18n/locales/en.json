@@ -91,6 +91,7 @@
       "salesLabel": "Sales (approx. USD)",
       "invoicesLabel": "Invoices",
       "itemsLabel": "Items sold (units)",
+      "grossMarginLabel": "Gross margin",
       "salesAria": "Approximate US dollars: {{usd}}. Total in Lebanese pounds: {{lbp}}",
       "loading": "Loading…",
       "footnote": "Values use local device time and selected period. Approximate US dollars = total LBP ÷ rate in Settings."
@@ -355,6 +356,7 @@
       "stock": "Stock",
       "basePrice": "Base price (LBP)",
       "price": "Selling price (LBP)",
+      "profit": "Profit (LBP / %)",
       "actions": "Actions"
     },
     "form": {
@@ -372,6 +374,8 @@
       "flavorNone": "None",
       "basePriceLbp": "Base price (LBP)",
       "priceLbp": "Selling price (LBP)",
+      "profit": "Profit",
+      "profitPct": "Margin: {{pct}}",
       "stock": "Stock quantity",
       "cancel": "Cancel",
       "save": "Save",
@@ -775,6 +779,10 @@
   "cashflow": {
     "pageTitle": "Cashflow",
     "intro": "Latest mixed operations: cash sales, on-account sales, customer payments, supplier payments, and expenses. Void is available only for today’s cash sales.",
+    "loadError": "Could not load cashflow: {{message}}",
+    "fromLabel": "From date",
+    "toLabel": "To date",
+    "applyFilters": "Apply",
     "loading": "Loading…",
     "empty": "No recent operations.",
     "limitLabel": "Rows to show",
@@ -809,7 +817,7 @@
       "not_cash_sale": "Only cash sales can be voided here.",
       "already_voided": "This sale is already voided.",
       "void_not_same_day": "Only sales from today (local date) can be voided.",
-      "invalid_input": "Invalid request.",
+      "invalid_input": "Invalid date range. Make sure From is not after To.",
       "generic": "Could not void: {{message}}"
     }
   },

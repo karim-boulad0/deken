@@ -6,6 +6,14 @@ import { formatLbp } from '../pos/formatPos'
 import type { CashflowLineDto } from '../../../../shared/ipc/types'
 import './CashflowPage.css'
 
+function todayYmd(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 function mapVoidErr(m: string): string {
   const s = m.trim()
   if (
@@ -25,22 +33,27 @@ export function CashflowPage() {
   const toast = useToast()
   const lng = i18n.language
   const loc = lng.startsWith('ar') ? 'ar-LB' : 'en-US'
+  const [fromDate, setFromDate] = useState(() => todayYmd())
+  const [toDate, setToDate] = useState(() => todayYmd())
   const [limit, setLimit] = useState(10)
   const [rows, setRows] = useState<CashflowLineDto[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [voidTarget, setVoidTarget] = useState<CashflowLineDto | null>(null)
   const [voidBusy, setVoidBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const r = await listRecentCashflow({ limit })
+    setLoadError(null)
+    const r = await listRecentCashflow({ limit, fromDate, toDate })
     setLoading(false)
     if (r.ok) {
       setRows(r.data)
     } else {
       setRows([])
+      setLoadError(r.error.message)
     }
-  }, [limit])
+  }, [fromDate, limit, toDate])
 
   useEffect(() => {
     void load()
@@ -76,6 +89,15 @@ export function CashflowPage() {
     return row.primaryLabel?.trim() ? row.primaryLabel : kindLabel(row.kind)
   }
 
+  function onApplyFilters(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (fromDate > toDate) {
+      toast.error(t('cashflow.errors.invalid_input'))
+      return
+    }
+    void load()
+  }
+
   return (
     <div className="cf">
       <header className="cf__header">
@@ -83,7 +105,27 @@ export function CashflowPage() {
         <p className="cf__intro">{t('cashflow.intro')}</p>
       </header>
 
-      <div className="cf__toolbar">
+      <form className="cf__toolbar" onSubmit={onApplyFilters}>
+        <label>
+          <div className="cf-field__label">{t('cashflow.fromLabel')}</div>
+          <input
+            className="cf-field__select"
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            aria-label={t('cashflow.fromLabel')}
+          />
+        </label>
+        <label>
+          <div className="cf-field__label">{t('cashflow.toLabel')}</div>
+          <input
+            className="cf-field__select"
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            aria-label={t('cashflow.toLabel')}
+          />
+        </label>
         <label>
           <div className="cf-field__label">{t('cashflow.limitLabel')}</div>
           <select
@@ -98,9 +140,17 @@ export function CashflowPage() {
             <option value={20}>20</option>
           </select>
         </label>
-      </div>
+        <button type="submit" className="cf-btn">
+          {t('cashflow.applyFilters')}
+        </button>
+      </form>
 
       <section className="cf-panel">
+        {loadError ? (
+          <p className="cf-muted" style={{ marginTop: 0 }}>
+            {t('cashflow.loadError', { message: loadError })}
+          </p>
+        ) : null}
         <div className="cf-table-wrap">
           <table className="cf-table">
             <thead>

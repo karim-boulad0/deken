@@ -8,6 +8,7 @@ import type {
   ProductDto,
   UpdateProductInput,
 } from '../../../../shared/ipc/types'
+import { formatLbp } from '../pos/formatPos'
 import './ProductFormDialog.css'
 
 type Mode = { type: 'create' } | { type: 'edit'; product: ProductDto }
@@ -42,6 +43,16 @@ const empty: FormState = {
   stock: null,
 }
 
+function calcProfit(basePriceLbp: number | null, priceLbp: number | null): { amountLbp: number; marginPct: number | null } {
+  const base = basePriceLbp ?? 0
+  const price = priceLbp ?? 0
+  const amountLbp = price - base
+  if (price <= 0) {
+    return { amountLbp, marginPct: null }
+  }
+  return { amountLbp, marginPct: (amountLbp / price) * 100 }
+}
+
 export function ProductFormDialog({
   mode,
   categoryOptions,
@@ -52,10 +63,16 @@ export function ProductFormDialog({
   busy,
   variant = 'modal',
 }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lng = i18n.language
   const titleId = useId()
   const [form, setForm] = useState<FormState>(empty)
   const open = true
+  const profit = calcProfit(form.basePriceLbp, form.priceLbp)
+  const pctLabel =
+    profit.marginPct == null
+      ? t('common.emDash')
+      : `${profit.marginPct.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US', { maximumFractionDigits: 1 })}%`
 
   useEffect(() => {
     if (!open) {
@@ -304,6 +321,13 @@ export function ProductFormDialog({
                 />
               </div>
             </div>
+            <div className="pf-profit" aria-live="polite">
+              <span className="pf-profit__label">{t('products.form.profit')}</span>
+              <span className={profit.amountLbp < 0 ? 'pf-profit__amount pf-profit__amount--loss' : 'pf-profit__amount'}>
+                {formatLbp(profit.amountLbp, lng)}
+              </span>
+              <span className="pf-profit__pct">{t('products.form.profitPct', { pct: pctLabel })}</span>
+            </div>
             <div className="pf-actions">
               {isEdit ? (
                 <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>
@@ -469,6 +493,13 @@ export function ProductFormDialog({
                 required
               />
             </div>
+          </div>
+          <div className="pf-profit" aria-live="polite">
+            <span className="pf-profit__label">{t('products.form.profit')}</span>
+            <span className={profit.amountLbp < 0 ? 'pf-profit__amount pf-profit__amount--loss' : 'pf-profit__amount'}>
+              {formatLbp(profit.amountLbp, lng)}
+            </span>
+            <span className="pf-profit__pct">{t('products.form.profitPct', { pct: pctLabel })}</span>
           </div>
           <div className="pf-actions">
             <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>

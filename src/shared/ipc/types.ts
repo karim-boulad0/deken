@@ -182,6 +182,8 @@ export type UpdateCategoryInput = {
 export type PosSaleLineInput = {
   productId: string
   quantity: number
+  /** Optional override unit price captured at sale time (LBP). */
+  unitPriceLbp?: number
 }
 
 export type CustomerDto = {
@@ -313,6 +315,10 @@ export type DashboardTodayDto = {
   saleCount: number
   /** Total units from sale line quantities. */
   itemsSold: number
+  /** Sales minus estimated cost for sold items (LBP). */
+  grossProfitLbp: number
+  /** Gross profit / sales * 100; null when sales are zero. */
+  grossMarginPct: number | null
 }
 
 export type StockAlertRow = {
@@ -546,6 +552,10 @@ export type CashflowLineDto = {
 
 export type ListRecentCashflowInput = {
   limit: number
+  /** Optional inclusive local date range start (`YYYY-MM-DD`). */
+  fromDate?: string
+  /** Optional inclusive local date range end (`YYYY-MM-DD`). */
+  toDate?: string
 }
 
 export type ActivationStatusDto = {

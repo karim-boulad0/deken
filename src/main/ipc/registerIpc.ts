@@ -559,8 +559,13 @@ export function registerIpc(): void {
     if (input == null || typeof input !== 'object') {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
-    const lim = Number((input as ListRecentCashflowInput).limit)
-    return listRecentCashflow(db(), { limit: lim })
+    const req = input as ListRecentCashflowInput
+    const lim = Number(req.limit)
+    return listRecentCashflow(db(), {
+      limit: lim,
+      fromDate: typeof req.fromDate === 'string' ? req.fromDate : undefined,
+      toDate: typeof req.toDate === 'string' ? req.toDate : undefined,
+    })
   })
 
   ipcMain.handle(IpcInvokes.voidCashSale, (_evt, saleId: string) => {

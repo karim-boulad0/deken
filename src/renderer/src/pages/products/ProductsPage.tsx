@@ -55,6 +55,14 @@ function mapIpcErrorKey(message: string): string {
   return 'generic'
 }
 
+function calcProfit(basePriceLbp: number, priceLbp: number): { amountLbp: number; marginPct: number | null } {
+  const amountLbp = priceLbp - basePriceLbp
+  if (priceLbp <= 0) {
+    return { amountLbp, marginPct: null }
+  }
+  return { amountLbp, marginPct: (amountLbp / priceLbp) * 100 }
+}
+
 export function ProductsPage() {
   const { t, i18n } = useTranslation()
   const toast = useToast()
@@ -460,6 +468,7 @@ export function ProductsPage() {
                     <col className="prod-table__col-stock" />
                     <col className="prod-table__col-price" />
                     <col className="prod-table__col-price" />
+                    <col className="prod-table__col-profit" />
                     <col className="prod-table__col-actions" />
                   </colgroup>
                   <thead>
@@ -478,6 +487,9 @@ export function ProductsPage() {
                       <th scope="col" className="prod-table__num">
                         {t('products.table.price')}
                       </th>
+                      <th scope="col" className="prod-table__num">
+                        {t('products.table.profit')}
+                      </th>
                       <th scope="col">
                         <span className="prod-visually-hidden">{t('products.table.actions')}</span>
                       </th>
@@ -486,12 +498,20 @@ export function ProductsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={9} className="prod-table__cell-muted">
+                        <td colSpan={10} className="prod-table__cell-muted">
                           {t('products.table.loadingRow')}
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((row, idx) => (
+                      filtered.map((row, idx) => {
+                        const profit = calcProfit(row.basePriceLbp, row.priceLbp)
+                        const pctLabel =
+                          profit.marginPct == null
+                            ? t('common.emDash')
+                            : `${profit.marginPct.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US', {
+                                maximumFractionDigits: 1,
+                              })}%`
+                        return (
                         <tr key={row.id}>
                           <td>
                             <code className="prod-code">{idx + 1}</code>
@@ -538,6 +558,20 @@ export function ProductsPage() {
                           <td className="prod-table__num prod-table__strong">
                             {formatLbp(row.priceLbp, lng)}
                           </td>
+                          <td className="prod-table__num prod-table__strong">
+                            <div className="prod-profit">
+                              <span
+                                className={
+                                  profit.amountLbp < 0
+                                    ? 'prod-profit__amount prod-profit__amount--loss'
+                                    : 'prod-profit__amount'
+                                }
+                              >
+                                {formatLbp(profit.amountLbp, lng)}
+                              </span>
+                              <span className="prod-profit__pct">{pctLabel}</span>
+                            </div>
+                          </td>
                           <td className="prod-table__actions">
                             <div className="prod-table__action-btns">
                               <button
@@ -569,7 +603,8 @@ export function ProductsPage() {
                             </div>
                           </td>
                         </tr>
-                      ))
+                        )
+                      })
                     )}
                   </tbody>
                 </table>

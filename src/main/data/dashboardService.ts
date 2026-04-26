@@ -165,6 +165,20 @@ export function getDashboardSnapshot(
        WHERE s.voided_at IS NULL AND s.created_at >= @s AND s.created_at < @e`,
     )
     const n = (stItems.get({ s: startIso, e: endIso }) as { n: number }).n
+    const stGrossProfit = db.prepare(
+      `SELECT
+         COALESCE(SUM(sl.line_total_lbp), 0) AS sales_total,
+         COALESCE(SUM(p.base_price_lbp * sl.quantity), 0) AS cost_total
+       FROM sale_lines sl
+       INNER JOIN sales s ON s.id = sl.sale_id
+       INNER JOIN products p ON p.id = sl.product_id
+       WHERE s.voided_at IS NULL
+         AND s.created_at >= @s
+         AND s.created_at < @e`,
+    )
+    const gp = stGrossProfit.get({ s: startIso, e: endIso }) as { sales_total: number; cost_total: number }
+    const grossProfitLbp = gp.sales_total - gp.cost_total
+    const grossMarginPct = gp.sales_total > 0 ? (grossProfitLbp / gp.sales_total) * 100 : null
 
     const stCashIn = db.prepare(
       `SELECT COALESCE(SUM(total_lbp), 0) AS t
@@ -381,6 +395,8 @@ export function getDashboardSnapshot(
         totalLbp: r.t,
         saleCount: r.c,
         itemsSold: n,
+        grossProfitLbp,
+        grossMarginPct,
       },
       cashflowToday: {
         cashInLbp,

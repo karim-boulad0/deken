@@ -55,6 +55,14 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
+function parsePositiveNumber(raw: string): number | null {
+  const n = Number(raw.replace(',', '.').trim())
+  if (!Number.isFinite(n) || n <= 0) {
+    return null
+  }
+  return n
+}
+
 export function PosPage() {
   const { t, i18n } = useTranslation()
   const { settings } = useAppSettings()
@@ -69,6 +77,8 @@ export function PosPage() {
   const [searchResults, setSearchResults] = useState<ProductDto[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
+  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({})
   const [tickets, setTickets] = useState<PosTicket[]>(() => [
     { id: newId(), label: '1', cart: [] },
   ])
@@ -505,6 +515,53 @@ export function PosPage() {
     [t, toast, updateActiveCart],
   )
 
+  const setQty = useCallback(
+    (id: string, rawValue: string) => {
+      const parsed = parsePositiveNumber(rawValue)
+      if (parsed == null) {
+        return
+      }
+      updateActiveCart((prev) =>
+        prev
+          .map((l) => {
+            if (l.id !== id) {
+              return l
+            }
+            let nextQty = parsed
+            if (l.productId && l.maxStock != null && nextQty > l.maxStock) {
+              const label = l.displayName ?? l.sku
+              nextQty = l.maxStock
+              window.queueMicrotask(() => {
+                toast.error(
+                  t('pos.toast.cannotExceedStock', {
+                    max: l.maxStock!,
+                    name: label,
+                  }),
+                  5000,
+                )
+              })
+            }
+            return { ...l, qty: nextQty }
+          })
+          .filter((l) => l.qty > 0),
+      )
+    },
+    [t, toast, updateActiveCart],
+  )
+
+  const setUnitPrice = useCallback(
+    (id: string, rawValue: string) => {
+      const parsed = parsePositiveNumber(rawValue)
+      if (parsed == null) {
+        return
+      }
+      updateActiveCart((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, unitPriceLbp: parsed } : l)),
+      )
+    },
+    [updateActiveCart],
+  )
+
   function removeLine(id: string) {
     updateActiveCart((prev) => prev.filter((l) => l.id !== id))
   }
@@ -539,16 +596,16 @@ export function PosPage() {
     if (cart.length === 0 || cartHasUnlinkedLines || payCashBusy || !activeTicket) {
       return
     }
-    const lines: { productId: string; quantity: number }[] = []
-    const byProduct = new Map<string, number>()
+    const lines: { productId: string; quantity: number; unitPriceLbp?: number }[] = []
     for (const l of cart) {
       if (!l.productId) {
         return
       }
-      byProduct.set(l.productId, (byProduct.get(l.productId) ?? 0) + l.qty)
-    }
-    for (const [productId, quantity] of byProduct) {
-      lines.push({ productId, quantity })
+      lines.push({
+        productId: l.productId,
+        quantity: l.qty,
+        unitPriceLbp: l.unitPriceLbp,
+      })
     }
     if (lines.length === 0) {
       return
@@ -591,17 +648,17 @@ export function PosPage() {
       if (cart.length === 0 || cartHasUnlinkedLines || payDebtBusy || !activeTicket) {
         return false
       }
-      const byProduct = new Map<string, number>()
+      const lines: { productId: string; quantity: number; unitPriceLbp?: number }[] = []
       for (const l of cart) {
         if (!l.productId) {
           return false
         }
-        byProduct.set(l.productId, (byProduct.get(l.productId) ?? 0) + l.qty)
+        lines.push({
+          productId: l.productId,
+          quantity: l.qty,
+          unitPriceLbp: l.unitPriceLbp,
+        })
       }
-      const lines = [...byProduct.entries()].map(([productId, quantity]) => ({
-        productId,
-        quantity,
-      }))
       if (lines.length === 0) {
         return false
       }
@@ -1010,7 +1067,39 @@ export function PosPage() {
                                 >
                                   <Minus size={16} strokeWidth={2} aria-hidden />
                                 </button>
-                                <span className="pos-qty__val">{line.qty}</span>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  className="pos-qty__input"
+                                  value={qtyDrafts[line.id] ?? String(line.qty)}
+                                  aria-label={t('pos.cart.colQty')}
+                                  onChange={(e) => {
+                                    const value = e.currentTarget.value
+                                    setQtyDrafts((prev) => ({ ...prev, [line.id]: value }))
+                                    if (parsePositiveNumber(value) != null) {
+                                      setQty(line.id, value)
+                                    }
+                                  }}
+                                  onBlur={(e) => {
+                                    setQty(line.id, e.currentTarget.value)
+                                    setQtyDrafts((prev) => {
+                                      const next = { ...prev }
+                                      delete next[line.id]
+                                      return next
+                                    })
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      setQty(line.id, e.currentTarget.value)
+                                      setQtyDrafts((prev) => {
+                                        const next = { ...prev }
+                                        delete next[line.id]
+                                        return next
+                                      })
+                                      e.currentTarget.blur()
+                                    }
+                                  }}
+                                />
                                 <button
                                   type="button"
                                   className="pos-qty__btn"
@@ -1024,7 +1113,39 @@ export function PosPage() {
                               </div>
                             </td>
                             <td className="pos-table__cell-money pos-table__num">
-                              {formatLbp(line.unitPriceLbp, lng)}
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                className="pos-money-input"
+                                  value={priceDrafts[line.id] ?? String(line.unitPriceLbp)}
+                                aria-label={t('pos.cart.colPrice')}
+                                  onChange={(e) => {
+                                    const value = e.currentTarget.value
+                                    setPriceDrafts((prev) => ({ ...prev, [line.id]: value }))
+                                    if (parsePositiveNumber(value) != null) {
+                                      setUnitPrice(line.id, value)
+                                    }
+                                  }}
+                                onBlur={(e) => {
+                                  setUnitPrice(line.id, e.currentTarget.value)
+                                    setPriceDrafts((prev) => {
+                                      const next = { ...prev }
+                                      delete next[line.id]
+                                      return next
+                                    })
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    setUnitPrice(line.id, e.currentTarget.value)
+                                      setPriceDrafts((prev) => {
+                                        const next = { ...prev }
+                                        delete next[line.id]
+                                        return next
+                                      })
+                                    e.currentTarget.blur()
+                                  }
+                                }}
+                              />
                             </td>
                             <td className="pos-table__cell-money pos-table__num pos-table__strong">
                               {formatLbp(lineTotal, lng)}

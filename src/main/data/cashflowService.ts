@@ -10,6 +10,9 @@ function asResult<T>(fn: () => T): IpcResult<T> {
     return { ok: true, data: fn() }
   } catch (e) {
     const m = e instanceof Error ? e.message : String(e)
+    if (m === 'invalid_input') {
+      return { ok: false, error: makeError('validation', m) }
+    }
     return { ok: false, error: makeError('internal_error', m) }
   }
 }
@@ -39,6 +42,10 @@ type RawLine = {
   saleId: string | null
 }
 
+function isValidYmd(s: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s)
+}
+
 /**
  * Newest-first merged feed for POS / drawer review. Limit clamped 5–20.
  */
@@ -50,6 +57,27 @@ export function listRecentCashflow(
     const rawLim = Math.floor(Number(input.limit))
     const lim = Number.isFinite(rawLim) ? Math.min(20, Math.max(5, rawLim)) : 10
     const fetchCap = lim
+    const fromD = (input.fromDate ?? '').trim()
+    const toD = (input.toDate ?? '').trim()
+    const hasFrom = fromD.length > 0
+    const hasTo = toD.length > 0
+    if ((hasFrom && !isValidYmd(fromD)) || (hasTo && !isValidYmd(toD))) {
+      throw new Error('invalid_input')
+    }
+    if (hasFrom && hasTo && fromD > toD) {
+      throw new Error('invalid_input')
+    }
+    const hasRange = hasFrom && hasTo
+    const dateWhereSales = hasRange
+      ? ' AND date(s.created_at) >= date(@fromD) AND date(s.created_at) <= date(@toD)'
+      : ''
+    const dateWherePayments = hasRange
+      ? ' AND date(p.created_at) >= date(@fromD) AND date(p.created_at) <= date(@toD)'
+      : ''
+    const dateWhereExpenses = hasRange
+      ? ' AND date(e.spent_at) >= date(@fromD) AND date(e.spent_at) <= date(@toD)'
+      : ''
+    const queryParams = hasRange ? { lim: fetchCap, fromD, toD } : { lim: fetchCap }
 
     const cashSales = db
       .prepare(
@@ -62,11 +90,11 @@ export function listRecentCashflow(
            u.full_name AS actor_full_name
          FROM sales s
          LEFT JOIN users u ON u.id = s.created_by_user_id
-         WHERE payment_type = 'cash' AND voided_at IS NULL
-         ORDER BY created_at DESC
-         LIMIT ?`,
+         WHERE payment_type = 'cash' AND voided_at IS NULL${dateWhereSales}
+        ORDER BY s.created_at DESC
+         LIMIT @lim`,
       )
-      .all(fetchCap) as {
+      .all(queryParams) as {
       id: string
       created_at: string
       total_lbp: number
@@ -88,11 +116,11 @@ export function listRecentCashflow(
          FROM sales s
          LEFT JOIN customers c ON c.id = s.customer_id
          LEFT JOIN users u ON u.id = s.created_by_user_id
-         WHERE s.payment_type = 'debt'
+         WHERE s.payment_type = 'debt'${dateWhereSales}
          ORDER BY s.created_at DESC
-         LIMIT ?`,
+         LIMIT @lim`,
       )
-      .all(fetchCap) as {
+      .all(queryParams) as {
       id: string
       created_at: string
       total_lbp: number
@@ -109,10 +137,11 @@ export function listRecentCashflow(
          FROM debt_payments p
          INNER JOIN customers c ON c.id = p.customer_id
          LEFT JOIN users u ON u.id = p.created_by_user_id
+         WHERE 1 = 1${dateWherePayments}
          ORDER BY p.created_at DESC
-         LIMIT ?`,
+         LIMIT @lim`,
       )
-      .all(fetchCap) as {
+      .all(queryParams) as {
       id: string
       created_at: string
       amount_lbp: number
@@ -130,10 +159,11 @@ export function listRecentCashflow(
          FROM supplier_payments p
          INNER JOIN suppliers s ON s.id = p.supplier_id
          LEFT JOIN users u ON u.id = p.created_by_user_id
+         WHERE 1 = 1${dateWherePayments}
          ORDER BY p.created_at DESC
-         LIMIT ?`,
+         LIMIT @lim`,
       )
-      .all(fetchCap) as {
+      .all(queryParams) as {
       id: string
       created_at: string
       amount_lbp: number
@@ -151,10 +181,11 @@ export function listRecentCashflow(
          FROM expenses e
          INNER JOIN expense_categories c ON c.id = e.category_id
          LEFT JOIN users u ON u.id = e.created_by_user_id
+         WHERE 1 = 1${dateWhereExpenses}
          ORDER BY e.spent_at DESC, e.created_at DESC
-         LIMIT ?`,
+         LIMIT @lim`,
       )
-      .all(fetchCap) as {
+      .all(queryParams) as {
       id: string
       spent_at: string
       amount_lbp: number

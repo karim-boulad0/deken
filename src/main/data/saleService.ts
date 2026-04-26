@@ -38,24 +38,44 @@ function asResult<T>(fn: () => T): IpcResult<T> {
 }
 
 type ProductRow = { id: string; name: string; price_lbp: number; stock: number }
+type MergedLine = { productId: string; quantity: number; unitPriceLbp: number | null }
 
-function mergeLines(lines: PosSaleLineInput[]): { productId: string; quantity: number }[] {
-  const m = new Map<string, number>()
+function mergeLines(lines: PosSaleLineInput[]): MergedLine[] {
+  const m = new Map<string, { quantity: number; unitPriceLbp: number | null }>()
   for (const l of lines) {
     const id = l.productId.trim()
     if (!id) {
       continue
     }
     const q = l.quantity
-    if (!Number.isInteger(q) || q <= 0) {
+    if (!Number.isFinite(q) || q <= 0) {
       throw new Error('invalid_line')
     }
-    m.set(id, (m.get(id) ?? 0) + q)
+    const maybeUnit = l.unitPriceLbp
+    const unitPriceLbp =
+      maybeUnit == null
+        ? null
+        : Number.isFinite(maybeUnit) && maybeUnit >= 0
+          ? maybeUnit
+          : (() => {
+              throw new Error('invalid_line')
+            })()
+    const key = `${id}::${unitPriceLbp == null ? 'catalog' : unitPriceLbp}`
+    const existing = m.get(key)
+    if (existing) {
+      existing.quantity += q
+      continue
+    }
+    m.set(key, { quantity: q, unitPriceLbp })
   }
   if (m.size === 0) {
     throw new Error('empty_lines')
   }
-  return [...m.entries()].map(([productId, quantity]) => ({ productId, quantity }))
+  return [...m.entries()].map(([key, v]) => {
+    const sep = key.indexOf('::')
+    const productId = key.slice(0, sep)
+    return { productId, quantity: v.quantity, unitPriceLbp: v.unitPriceLbp }
+  })
 }
 
 /**
@@ -89,12 +109,13 @@ export function completeCashSale(
       if (p.stock < row.quantity) {
         throw new Error('insufficient_stock')
       }
-      const lineTotal = p.price_lbp * row.quantity
+      const unit = row.unitPriceLbp ?? p.price_lbp
+      const lineTotal = unit * row.quantity
       prepared.push({
         productId: p.id,
         quantity: row.quantity,
         name: p.name,
-        unit: p.price_lbp,
+        unit,
         lineTotal,
       })
     }
@@ -169,12 +190,13 @@ export function completeDebtSale(
       if (p.stock < row.quantity) {
         throw new Error('insufficient_stock')
       }
-      const lineTotal = p.price_lbp * row.quantity
+      const unit = row.unitPriceLbp ?? p.price_lbp
+      const lineTotal = unit * row.quantity
       prepared.push({
         productId: p.id,
         quantity: row.quantity,
         name: p.name,
-        unit: p.price_lbp,
+        unit,
         lineTotal,
       })
     }
