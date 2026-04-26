@@ -207,8 +207,11 @@ export function registerIpc(): void {
   ipcMain.handle(
     IpcInvokes.listProducts,
     (_evt, q: string, filterCategoryId: string | null | undefined) => {
-      const g = guard('products')
-      if (!g.ok) return g
+      let g = guard('products')
+      if (!g.ok) {
+        g = guard('pos')
+        if (!g.ok) return g
+      }
       return listProducts(db(), q ?? '', filterCategoryId ?? null)
     },
   )
@@ -310,8 +313,11 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.listCustomers, () => {
-    const g = guard('debts')
-    if (!g.ok) return g
+    let g = guard('debts')
+    if (!g.ok) {
+      g = guard('pos')
+      if (!g.ok) return g
+    }
     return listCustomers(db())
   })
 
@@ -343,8 +349,11 @@ export function registerIpc(): void {
   })
 
   ipcMain.handle(IpcInvokes.completeDebtSale, (_evt, input: CompleteDebtSaleInput) => {
-    const g = guardSession('debts')
-    if (!g.ok) return g
+    let g = guardSession('debts')
+    if (!g.ok) {
+      g = guardSession('pos')
+      if (!g.ok) return g
+    }
     if (input == null || typeof input !== 'object' || !Array.isArray((input as CompleteDebtSaleInput).lines)) {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
