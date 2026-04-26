@@ -832,7 +832,8 @@
       "totalLbp": "Total (LBP)",
       "cashLbp": "Cash (LBP)",
       "debtLbp": "On account (LBP)",
-      "saleCount": "Invoices"
+      "saleCount": "Invoices",
+      "netProfitLbp": "Gross profit (LBP)"
     },
     "filters": {
       "periodLabel": "Period",
@@ -858,7 +859,8 @@
       "sectionTitle": "Daily detail",
       "colDay": "Day",
       "colSales": "Total (LBP)",
-      "colInvoices": "Invoices"
+      "colInvoices": "Invoices",
+      "colProfit": "Gross profit (LBP)"
     }
   },
   "employees": {

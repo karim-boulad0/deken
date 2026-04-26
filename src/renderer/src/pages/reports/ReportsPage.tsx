@@ -118,6 +118,7 @@ export function ReportsPage() {
     lines.push(toCsvLine([t('reports.filters.toLabel'), report.toDate]))
     lines.push('')
     lines.push(toCsvLine([t('reports.summary.totalLbp'), report.totalLbp]))
+    lines.push(toCsvLine([t('reports.summary.netProfitLbp'), report.grossProfitLbp]))
     lines.push(toCsvLine([t('reports.summary.cashLbp'), report.totalCashLbp]))
     lines.push(toCsvLine([t('reports.summary.debtLbp'), report.totalDebtLbp]))
     lines.push(toCsvLine([t('reports.summary.saleCount'), report.saleCount]))
@@ -127,10 +128,11 @@ export function ReportsPage() {
         'day', // YYYY-MM-DD
         t('reports.table.colInvoices'),
         'total_lbp',
+        'net_profit_lbp'
       ]),
     )
     for (const d of chartByDay) {
-      lines.push(toCsvLine([d.day, d.count, d.totalLbp]))
+      lines.push(toCsvLine([d.day, d.count, d.totalLbp, d.grossProfitLbp]))
     }
     const fname = `deken-report-${report.fromDate}_to_${report.toDate}`.replace(/[:/\\?*[\]]/g, '_')
     downloadAsCsvFile(fname, lines)
@@ -225,6 +227,10 @@ export function ReportsPage() {
           <div className="rep-summary__card">
             <span className="rep-summary__label">{t('reports.summary.totalLbp')}</span>
             <span className="rep-summary__value">{formatLbp(report.totalLbp, lng)}</span>
+          </div>
+          <div className="rep-summary__card">
+            <span className="rep-summary__label">{t('reports.summary.netProfitLbp')}</span>
+            <span className="rep-summary__value">{formatLbp(report.grossProfitLbp, lng)}</span>
           </div>
           <div className="rep-summary__card">
             <span className="rep-summary__label">{t('reports.summary.cashLbp')}</span>
@@ -360,6 +366,9 @@ export function ReportsPage() {
                     <th scope="col" className="rep-table__num">
                       {t('reports.table.colSales')}
                     </th>
+                    <th scope="col" className="rep-table__num">
+                      {t('reports.table.colProfit')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -381,6 +390,9 @@ export function ReportsPage() {
                           </td>
                           <td className="rep-table__num rep-table__strong">
                             {formatLbp(d.totalLbp, lng)}
+                          </td>
+                          <td className="rep-table__num rep-table__strong">
+                            {formatLbp(d.grossProfitLbp, lng)}
                           </td>
                         </tr>
                       )

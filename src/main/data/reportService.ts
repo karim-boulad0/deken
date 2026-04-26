@@ -30,18 +30,30 @@ export function getSalesReport(
   return asResult(() => {
     const stDay = db.prepare(
       `SELECT
-         date(created_at) AS d,
+         d,
          SUM(total_lbp) AS total_lbp,
-         COUNT(*) AS sale_count
-       FROM sales
-       WHERE voided_at IS NULL AND date(created_at) >= @fromD AND date(created_at) <= @toD
-       GROUP BY date(created_at)
+         COUNT(*) AS sale_count,
+         SUM(gross_profit_lbp) AS gross_profit_lbp
+       FROM (
+         SELECT 
+           date(s.created_at) AS d,
+           s.id,
+           s.total_lbp,
+           COALESCE(SUM(sl.line_total_lbp - (COALESCE(p.base_price_lbp, 0) * sl.quantity)), 0) AS gross_profit_lbp
+         FROM sales s
+         LEFT JOIN sale_lines sl ON s.id = sl.sale_id
+         LEFT JOIN products p ON p.id = sl.product_id
+         WHERE s.voided_at IS NULL AND date(s.created_at) >= @fromD AND date(s.created_at) <= @toD
+         GROUP BY s.id
+       )
+       GROUP BY d
        ORDER BY d`,
     )
     const byDayRaw = stDay.all({ fromD: fromDate, toD: toDate }) as {
       d: string
       total_lbp: number
       sale_count: number
+      gross_profit_lbp: number
     }[]
 
     const stType = db.prepare(
@@ -77,10 +89,26 @@ export function getSalesReport(
     )
     const totalLbp = (stSum.get({ fromD: fromDate, toD: toDate }) as { t: number }).t
 
+    const stGrossProfit = db.prepare(
+      `SELECT
+         COALESCE(SUM(sl.line_total_lbp), 0) AS sales_total,
+         COALESCE(SUM(COALESCE(p.base_price_lbp, 0) * sl.quantity), 0) AS cost_total
+       FROM sale_lines sl
+       INNER JOIN sales s ON s.id = sl.sale_id
+       LEFT JOIN products p ON p.id = sl.product_id
+       WHERE s.voided_at IS NULL
+         AND date(s.created_at) >= @fromD
+         AND date(s.created_at) <= @toD`,
+    )
+    const gp = stGrossProfit.get({ fromD: fromDate, toD: toDate }) as { sales_total: number; cost_total: number }
+    const grossProfitLbp = gp.sales_total - gp.cost_total
+    const grossMarginPct = gp.sales_total > 0 ? (grossProfitLbp / gp.sales_total) * 100 : null
+
     const byDay: SalesReportDto['byDay'] = byDayRaw.map((x) => ({
       day: x.d,
       totalLbp: x.total_lbp,
       count: x.sale_count,
+      grossProfitLbp: x.gross_profit_lbp,
     }))
 
     return {
@@ -90,6 +118,8 @@ export function getSalesReport(
       totalCashLbp,
       totalDebtLbp,
       saleCount,
+      grossProfitLbp,
+      grossMarginPct,
       byDay,
     }
   })

@@ -268,6 +268,7 @@ export type SalesReportDay = {
   day: string
   totalLbp: number
   count: number
+  grossProfitLbp: number
 }
 
 export type AppNavLayout = 'sidebar' | 'top'
@@ -304,6 +305,8 @@ export type SalesReportDto = {
   totalCashLbp: number
   totalDebtLbp: number
   saleCount: number
+  grossProfitLbp: number
+  grossMarginPct: number | null
   byDay: SalesReportDay[]
 }
 

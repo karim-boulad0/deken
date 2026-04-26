@@ -832,7 +832,8 @@
       "totalLbp": "الإجمالي (ل.ل.)",
       "cashLbp": "نقدي (ل.ل.)",
       "debtLbp": "دين (ل.ل.)",
-      "saleCount": "فواتير"
+      "saleCount": "فواتير",
+      "netProfitLbp": "إجمالي الربح (ل.ل.)"
     },
     "filters": {
       "periodLabel": "الفترة",
@@ -858,7 +859,8 @@
       "sectionTitle": "تفصيل يومي",
       "colDay": "اليوم",
       "colSales": "الإجمالي (ل.ل.)",
-      "colInvoices": "فواتير"
+      "colInvoices": "فواتير",
+      "colProfit": "إجمالي الربح (ل.ل.)"
     }
   },
   "employees": {
