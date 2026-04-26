@@ -158,6 +158,9 @@ type DekenPreload = {
   cashflow: {
     listRecent: (input: ListRecentCashflowInput) => Promise<IpcResult<CashflowLineDto[]>>
   }
+  devTools: {
+    clearAllTransactions: () => Promise<IpcResult<null>>
+  }
 }
 
 declare global {

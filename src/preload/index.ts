@@ -290,4 +290,9 @@ contextBridge.exposeInMainWorld('deken', {
       return invoke(IpcInvokes.listRecentCashflow, input)
     },
   },
+  devTools: {
+    clearAllTransactions: (): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.clearAllTransactions)
+    },
+  },
 })

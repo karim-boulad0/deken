@@ -9,6 +9,7 @@ import {
   Settings,
   Truck,
   Wallet,
+  Wrench,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -27,6 +28,7 @@ const routes: readonly { to: string; moduleKey: PermissionModule; labelKey: stri
   { to: '/reports', moduleKey: 'reports', labelKey: 'nav.reports', Icon: BarChart3 },
   { to: '/settings', moduleKey: 'settings', labelKey: 'nav.settings', Icon: Settings },
   { to: '/employees', moduleKey: 'employees', labelKey: 'nav.employees', Icon: Users },
+  { to: '/dev', moduleKey: 'devTools', labelKey: 'nav.devTools', Icon: Wrench },
 ]
 
 export type SidebarNavLayout = 'sidebar' | 'top'

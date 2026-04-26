@@ -18,6 +18,7 @@ export const PermissionModules = [
   'reports',
   'settings',
   'employees',
+  'devTools',
 ] as const
 
 export type PermissionModule = (typeof PermissionModules)[number]
@@ -631,6 +632,7 @@ export const IpcInvokes = {
   voidCashSale: 'deken:sales:voidCash',
   getActivationStatus: 'deken:activation:status',
   verifyActivation: 'deken:activation:verify',
+  clearAllTransactions: 'deken:devTools:clearAllTransactions',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

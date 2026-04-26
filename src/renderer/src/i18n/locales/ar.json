@@ -15,7 +15,8 @@
     "cashflow": "حركة الصندوق",
     "reports": "التقارير",
     "settings": "الإعدادات",
-    "employees": "الموظفون"
+    "employees": "الموظفون",
+    "devTools": "أدوات المطور"
   },
   "lang": {
     "aria": "لغة الواجهة",
@@ -901,6 +902,8 @@
       "username_required": "اسم المستخدم مطلوب.",
       "full_name_required": "الاسم الكامل مطلوب.",
       "password_or_pin_required": "أدخل كلمة مرور أو PIN.",
+      "passwordRequired": "كلمة المرور مطلوبة",
+      "passwordLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
       "credentials_required": "أدخل وسيلة دخول واحدة على الأقل.",
       "system_admin_immutable": "لا يمكن تعديل الأدمن الثابت.",
       "username_taken": "اسم المستخدم مستخدم بالفعل.",
@@ -908,6 +911,7 @@
       "not_found": "المستخدم غير موجود.",
       "internal_error": "تعذّر إتمام العملية."
     },
+
     "modules": {
       "dashboard": "لوحة التحكم",
       "pos": "نقطة البيع",
@@ -918,7 +922,8 @@
       "cashflow": "حركة الصندوق",
       "reports": "التقارير",
       "settings": "الإعدادات",
-      "employees": "الموظفون"
+      "employees": "الموظفون",
+      "devTools": "أدوات المطور"
     }
   },
   "settings": {
@@ -978,5 +983,13 @@
       "paperA4": "A4 (فاتورة)",
       "paper80": "حراري 80 مم"
     }
+  },
+  "dev": {
+    "title": "أدوات المطور (للصيانة)",
+    "dangerZone": "منطقة الخطر",
+    "clearTransactions": "تصفير الحركات",
+    "clearTransactionsDesc": "تحذير: هذا سيقوم بمسح كل المبيعات والمصاريف والدفعات نهائياً. لا يمكن التراجع عن هذه الخطوة!",
+    "confirmClear": "هل أنت متأكد أنك تريد حذف كل حركات الصندوق نهائياً؟",
+    "successClear": "تم تصفير جميع العمليات بنجاح."
   }
 }

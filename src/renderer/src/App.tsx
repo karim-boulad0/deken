@@ -15,6 +15,7 @@ import { ReportsPage } from './pages/reports/ReportsPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 import { EmployeesPage } from './pages/employees/EmployeesPage'
 import { LoginPage } from './pages/auth/LoginPage'
+import { DevPage } from './pages/dev/DevPage'
 import type { PermissionModule } from '../../shared/ipc/types'
 
 function ProtectedModule({ moduleKey, children }: { moduleKey: PermissionModule; children: ReactElement }) {
@@ -62,6 +63,7 @@ export default function App() {
                 <Route path="reports" element={<ProtectedModule moduleKey="reports"><ReportsPage /></ProtectedModule>} />
                 <Route path="settings" element={<ProtectedModule moduleKey="settings"><SettingsPage /></ProtectedModule>} />
                 <Route path="employees" element={<ProtectedModule moduleKey="employees"><EmployeesPage /></ProtectedModule>} />
+                <Route path="dev" element={<ProtectedModule moduleKey="devTools"><DevPage /></ProtectedModule>} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>

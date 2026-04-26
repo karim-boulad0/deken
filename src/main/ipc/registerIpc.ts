@@ -59,6 +59,7 @@ import {
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
 import { getDashboardSnapshot } from '../data/dashboardService'
+import { clearAllTransactions } from '../data/devService'
 import { getActivationStatus, verifyActivation } from '../data/activationService'
 import { applyApplicationMenu } from '../appMenu'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
@@ -584,5 +585,11 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
     return voidCashSale(db(), saleId)
+  })
+
+  ipcMain.handle(IpcInvokes.clearAllTransactions, () => {
+    const g = guard('devTools')
+    if (!g.ok) return g
+    return clearAllTransactions(db())
   })
 }

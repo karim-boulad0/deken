@@ -15,7 +15,8 @@
     "cashflow": "Cashflow",
     "reports": "Reports",
     "settings": "Settings",
-    "employees": "Employees"
+    "employees": "Employees",
+    "devTools": "Dev Tools"
   },
   "lang": {
     "aria": "Interface language",
@@ -918,7 +919,8 @@
       "cashflow": "Cashflow",
       "reports": "Reports",
       "settings": "Settings",
-      "employees": "Employees"
+      "employees": "Employees",
+      "devTools": "Dev Tools"
     }
   },
   "settings": {
@@ -978,5 +980,13 @@
       "paperA4": "A4 (invoice)",
       "paper80": "80 mm thermal"
     }
+  },
+  "dev": {
+    "title": "Dev Tools",
+    "dangerZone": "Danger Zone",
+    "clearTransactions": "Clear All Transactions",
+    "clearTransactionsDesc": "Warning: This will permanently delete all sales, expenses, and debt payments (products and customers are kept). This cannot be undone!",
+    "confirmClear": "Are you sure you want to permanently clear all cashflow transactions?",
+    "successClear": "All transactions have been cleared successfully."
   }
 }
