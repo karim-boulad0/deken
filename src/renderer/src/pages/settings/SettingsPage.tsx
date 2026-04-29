@@ -35,8 +35,6 @@ export function SettingsPage() {
   const [printBusy, setPrintBusy] = useState(false)
   const [devToolsBusy, setDevToolsBusy] = useState(false)
   const [wifiBusy, setWifiBusy] = useState(false)
-  const [wifiSsid, setWifiSsid] = useState<string | null>(null)
-  const [wifiPassword, setWifiPassword] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loaded) {
@@ -186,7 +184,7 @@ export function SettingsPage() {
     }
   }, [loaded, settings.showDevTools, refresh, t, toast])
 
-  const onLoadWifiCredential = useCallback(async () => {
+  const onCopyWifiPassword = useCallback(async () => {
     if (!loaded || window.deken == null) {
       return
     }
@@ -194,8 +192,11 @@ export function SettingsPage() {
     const r = await getCurrentWifiCredential()
     setWifiBusy(false)
     if (r.ok) {
-      setWifiSsid(r.data.ssid)
-      setWifiPassword(r.data.password)
+      if (!r.data.password) {
+        toast.error(t('settings.wifi.passwordUnavailable'))
+        return
+      }
+      await navigator.clipboard.writeText(r.data.password)
       toast.success(t('settings.wifi.toastLoaded'))
       return
     }
@@ -442,20 +443,11 @@ export function SettingsPage() {
                 <button
                   type="button"
                   className="set-btn set-btn--primary"
-                  onClick={() => void onLoadWifiCredential()}
+                  onClick={() => void onCopyWifiPassword()}
                   disabled={!loaded || wifiBusy || window.deken == null}
                 >
+                  {wifiBusy ? t('settings.wifi.loading') : t('settings.wifi.loadButton')}
                 </button>
-              </div>
-              {/* <div className="set-field">
-                <span className="set-field__label">{t('settings.wifi.ssidLabel')}</span>
-                <p className="set-field__static">{wifiSsid ?? t('common.emDash')}</p>
-              </div> */}
-              <div className="set-field">
-                {/* <span className="set-field__label">{t('settings.wifi.passwordLabel')}</span> */}
-                <p className="set-field__static">
-                  {wifiPassword == null ? t('settings.wifi.passwordUnavailable') : wifiPassword}
-                </p>
               </div>
             </div>
           </section>

@@ -988,7 +988,7 @@
     },
     "wifi": {
       "intro": "اعرض .",
-      "loadButton": "عرض شبكة الواي فاي الحالية",
+      "loadButton": "عرض  ",
       "loading": "جارٍ تحميل معلومات الواي فاي…",
       "ssidLabel": "اسم الشبكة (SSID)",
       "passwordLabel": "كلمة مرور الواي فاي",
