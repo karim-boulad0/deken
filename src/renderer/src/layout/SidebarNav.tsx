@@ -15,6 +15,7 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Users } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useAppSettings } from '../contexts/AppSettingsContext'
 import type { PermissionModule } from '../../../shared/ipc/types'
 
 const routes: readonly { to: string; moduleKey: PermissionModule; labelKey: string; Icon: LucideIcon }[] = [
@@ -41,13 +42,19 @@ type Props = {
 export function SidebarNav({ layout = 'sidebar' }: Props) {
   const { t } = useTranslation()
   const { hasPermission } = useAuth()
+  const { settings } = useAppSettings()
   const isTop = layout === 'top'
   const rootClass = isTop ? 'sidebar-nav sidebar-nav--top' : 'sidebar-nav'
 
   return (
     <nav className={rootClass} aria-label={t('nav.ariaPrimary')}>
       <ul className="sidebar-nav__list">
-        {routes.filter((route) => hasPermission(route.moduleKey)).map(({ to, labelKey, Icon }) => (
+        {routes
+          .filter((route) => {
+            if (route.moduleKey === 'devTools' && !settings.showDevTools) return false
+            return hasPermission(route.moduleKey)
+          })
+          .map(({ to, labelKey, Icon }) => (
           <li key={to} className="sidebar-nav__item">
             <NavLink
               to={to}

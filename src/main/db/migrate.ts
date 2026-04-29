@@ -16,10 +16,14 @@ export function getMigrationsDirectory(): string {
     if (existsSync(externalResourcesDir)) {
       return externalResourcesDir
     }
-    // electron-packager keeps project files under resources/app by default.
+    // electron-packager may bundle project files under resources/app or resources/app.asar
     const bundledAppDir = path.join(process.resourcesPath, 'app', 'db', 'migrations')
     if (existsSync(bundledAppDir)) {
       return bundledAppDir
+    }
+    const asarAppDir = path.join(process.resourcesPath, 'app.asar', 'db', 'migrations')
+    if (existsSync(asarAppDir)) {
+      return asarAppDir
     }
     return externalResourcesDir
   }

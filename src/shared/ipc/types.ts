@@ -288,6 +288,8 @@ export type AppSettingsDto = {
   printReceiptAfterSale: boolean
   /** Preferred receipt paper size preset. */
   receiptPaper: ReceiptPaper
+  /** Whether to show Dev Tools in the sidebar. */
+  showDevTools: boolean
 }
 
 export type UpdateAppSettingsInput = {
@@ -297,6 +299,7 @@ export type UpdateAppSettingsInput = {
   navLayout?: AppNavLayout
   printReceiptAfterSale?: boolean
   receiptPaper?: ReceiptPaper
+  showDevTools?: boolean
 }
 
 export type SalesReportDto = {

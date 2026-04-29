@@ -33,6 +33,7 @@ export function SettingsPage() {
   const [classicBusy, setClassicBusy] = useState(false)
   const [navLayoutBusy, setNavLayoutBusy] = useState(false)
   const [printBusy, setPrintBusy] = useState(false)
+  const [devToolsBusy, setDevToolsBusy] = useState(false)
 
   useEffect(() => {
     if (!loaded) {
@@ -162,6 +163,25 @@ export function SettingsPage() {
     },
     [loaded, settings.receiptPaper, refresh, t, toast],
   )
+
+  const onToggleDevTools = useCallback(async () => {
+    if (!loaded || window.deken == null) {
+      return
+    }
+    const next = !settings.showDevTools
+    setDevToolsBusy(true)
+    const r = await setAppSettings({ showDevTools: next })
+    setDevToolsBusy(false)
+    if (r.ok) {
+      await refresh()
+      toast.success(t('settings.toast.saved'))
+    } else {
+      const k = mapSettingsErrorKey(r.error.message)
+      toast.error(
+        k === 'save_failed' ? t('settings.errors.save_failed', { message: r.error.message }) : t(`settings.errors.${k}`),
+      )
+    }
+  }, [loaded, settings.showDevTools, refresh, t, toast])
 
   return (
     <div className="set">
@@ -313,6 +333,24 @@ export function SettingsPage() {
                 </label>
               </div>
             </fieldset>
+
+            <div className="set-toggle">
+              <span className="set-toggle__label" id="set-dev-tools-label">
+                {t('settings.interface.devToolsLabel')}
+              </span>
+              <button
+                type="button"
+                className={settings.showDevTools ? 'set-switch set-switch--on' : 'set-switch'}
+                role="switch"
+                aria-checked={settings.showDevTools}
+                aria-labelledby="set-dev-tools-label"
+                disabled={!loaded || devToolsBusy || window.deken == null}
+                onClick={() => void onToggleDevTools()}
+              >
+                <span className="set-switch__thumb" />
+              </button>
+            </div>
+            <p className="set-field__hint">{t('settings.interface.devToolsHint')}</p>
           </div>
         </section>
 

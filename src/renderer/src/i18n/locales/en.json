@@ -944,7 +944,9 @@
       "navLayoutSidebar": "Sidebar (default)",
       "navLayoutSidebarHint": "Navigation on the left; main content in the rest of the window.",
       "navLayoutTop": "Top bar",
-      "navLayoutTopHint": "Horizontal links under the header; the main work area uses the full width of the content column."
+      "navLayoutTopHint": "Horizontal links under the header; the main work area uses the full width of the content column.",
+      "devToolsLabel": "Show Dev Tools in sidebar",
+      "devToolsHint": "When disabled, the \"Dev Tools\" link will be hidden from the sidebar for a cleaner interface."
     },
     "general": {
       "shopName": "Business name",

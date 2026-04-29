@@ -1,5 +1,5 @@
 import type { Database } from 'better-sqlite3'
-import { createHash, createHmac } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import os from 'node:os'
 import type {
   ActivationStatusDto,
@@ -11,7 +11,7 @@ import type {
 const KEY_ACTIVATED = 'license_activated'
 const KEY_FINGERPRINT = 'license_fingerprint'
 const KEY_ACTIVATED_AT = 'license_activated_at'
-const SECRET = 'deken-local-license-v1'
+const HARDCODED_PASSCODE = 'ABCDEF123456'
 
 function makeError(code: string, message: string, details?: string): IpcErrorShape {
   return { code, message, details }
@@ -59,11 +59,6 @@ function machineCodeFromFingerprint(fp: string): string {
   return fp.slice(0, 12).toUpperCase()
 }
 
-function expectedActivationCode(machineCode: string): string {
-  const sig = createHmac('sha256', SECRET).update(machineCode).digest('hex').slice(0, 6).toUpperCase()
-  return `DEKEN-${machineCode}-${sig}`
-}
-
 function normalizeCode(code: string): string {
   return code.trim().toUpperCase().replace(/\s+/g, '')
 }
@@ -88,9 +83,8 @@ export function verifyActivation(db: Database, input: VerifyActivationInput): Ip
   return asResult(() => {
     const fp = machineFingerprint()
     const machineCode = machineCodeFromFingerprint(fp)
-    const expected = expectedActivationCode(machineCode)
     const given = normalizeCode(input.code)
-    if (given !== expected) {
+    if (given !== HARDCODED_PASSCODE) {
       throw new Error('activation_invalid_code')
     }
     upsertSetting(db, KEY_ACTIVATED, '1')

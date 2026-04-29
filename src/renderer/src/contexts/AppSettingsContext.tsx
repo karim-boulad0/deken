@@ -17,6 +17,7 @@ const DEFAULT: AppSettingsDto = {
   navLayout: 'sidebar',
   printReceiptAfterSale: false,
   receiptPaper: 'a4',
+  showDevTools: true,
 }
 
 type Ctx = {
