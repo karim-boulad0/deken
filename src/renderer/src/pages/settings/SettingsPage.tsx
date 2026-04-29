@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { LanguageSwitcher } from '../../components/LanguageSwitcher'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import { useToast } from '../../components/toast'
-import { setAppSettings } from '../../lib/api/dekenClient'
+import { getCurrentWifiCredential, setAppSettings } from '../../lib/api/dekenClient'
 import type { AppNavLayout, ReceiptPaper } from '../../../../shared/ipc/types'
 import './SettingsPage.css'
 
@@ -34,6 +34,9 @@ export function SettingsPage() {
   const [navLayoutBusy, setNavLayoutBusy] = useState(false)
   const [printBusy, setPrintBusy] = useState(false)
   const [devToolsBusy, setDevToolsBusy] = useState(false)
+  const [wifiBusy, setWifiBusy] = useState(false)
+  const [wifiSsid, setWifiSsid] = useState<string | null>(null)
+  const [wifiPassword, setWifiPassword] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loaded) {
@@ -182,6 +185,32 @@ export function SettingsPage() {
       )
     }
   }, [loaded, settings.showDevTools, refresh, t, toast])
+
+  const onLoadWifiCredential = useCallback(async () => {
+    if (!loaded || window.deken == null) {
+      return
+    }
+    setWifiBusy(true)
+    const r = await getCurrentWifiCredential()
+    setWifiBusy(false)
+    if (r.ok) {
+      setWifiSsid(r.data.ssid)
+      setWifiPassword(r.data.password)
+      toast.success(t('settings.wifi.toastLoaded'))
+      return
+    }
+
+    const message = r.error.message
+    if (
+      message === 'wifi_not_connected' ||
+      message === 'unsupported_platform' ||
+      message === 'wifi_lookup_failed'
+    ) {
+      toast.error(t(`settings.wifi.errors.${message}`))
+      return
+    }
+    toast.error(t('settings.errors.save_failed', { message }))
+  }, [loaded, t, toast])
 
   return (
     <div className="set">
@@ -399,6 +428,35 @@ export function SettingsPage() {
                 <option value="80">{t('settings.printing.paper80')}</option>
               </select>
             </label>
+          </div>
+        </section>
+
+        <section className="set-group" aria-labelledby="set-wifi-title">
+          <h2 className="set-group__title" id="set-wifi-title">
+            {t('settings.groups.wifi')}
+          </h2>
+          <div className="set-group__body">
+            <p className="set-group__note">{t('settings.wifi.intro')}</p>
+            <div className="set__actions">
+              <button
+                type="button"
+                className="set-btn set-btn--primary"
+                onClick={() => void onLoadWifiCredential()}
+                disabled={!loaded || wifiBusy || window.deken == null}
+              >
+                {wifiBusy ? t('settings.wifi.loading') : t('settings.wifi.loadButton')}
+              </button>
+            </div>
+            <div className="set-field">
+              <span className="set-field__label">{t('settings.wifi.ssidLabel')}</span>
+              <p className="set-field__static">{wifiSsid ?? t('common.emDash')}</p>
+            </div>
+            <div className="set-field">
+              <span className="set-field__label">{t('settings.wifi.passwordLabel')}</span>
+              <p className="set-field__static">
+                {wifiPassword == null ? t('settings.wifi.passwordUnavailable') : wifiPassword}
+              </p>
+            </div>
           </div>
         </section>
       </div>

@@ -4,6 +4,11 @@ import type {
   AuthSessionDto,
   ActivationStatusDto,
   CashflowLineDto,
+  BulkImportCategoryInput,
+  BulkImportCustomerInput,
+  BulkImportFlavorInput,
+  BulkImportProductInput,
+  BulkImportSizeInput,
   CategoryDto,
   CategoryFlavorDto,
   CategorySizeDto,
@@ -55,6 +60,7 @@ import type {
   VerifyActivationInput,
   ResetUserCredentialsInput,
   UserWithPermissionsDto,
+  WifiCredentialDto,
 } from '../../../../shared/ipc/types'
 
 function isDeken() {
@@ -278,6 +284,10 @@ export async function setAppSettings(
   return assertDeken().settings.set(input)
 }
 
+export async function getCurrentWifiCredential(): Promise<IpcResult<WifiCredentialDto>> {
+  return assertDeken().wifi.getCurrentCredential()
+}
+
 function localDateYmd(): string {
   const d = new Date()
   const y = d.getFullYear()
@@ -457,4 +467,34 @@ export async function listRecentCashflow(
 
 export async function voidCashSale(saleId: string): Promise<IpcResult<{ saleId: string }>> {
   return assertDeken().sales.voidCash(saleId)
+}
+
+export async function bulkImportProducts(
+  inputs: BulkImportProductInput[],
+): Promise<IpcResult<{ imported: number }>> {
+  return assertDeken().products.bulkImport(inputs)
+}
+
+export async function bulkImportCustomers(
+  inputs: BulkImportCustomerInput[],
+): Promise<IpcResult<{ imported: number }>> {
+  return assertDeken().customers.bulkImport(inputs)
+}
+
+export async function bulkImportCategories(
+  inputs: BulkImportCategoryInput[],
+): Promise<IpcResult<{ imported: number }>> {
+  return assertDeken().categories.bulkImport(inputs)
+}
+
+export async function bulkImportSizes(
+  inputs: BulkImportSizeInput[],
+): Promise<IpcResult<{ imported: number }>> {
+  return assertDeken().categorySizes.bulkImport(inputs)
+}
+
+export async function bulkImportFlavors(
+  inputs: BulkImportFlavorInput[],
+): Promise<IpcResult<{ imported: number }>> {
+  return assertDeken().categoryFlavors.bulkImport(inputs)
 }

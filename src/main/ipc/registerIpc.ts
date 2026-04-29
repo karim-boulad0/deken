@@ -1,21 +1,30 @@
 import { app, ipcMain } from 'electron'
 import {
+  bulkImportCategories,
+  categoryExistsById,
   createCategory,
   deleteCategory,
   listCategories,
   updateCategory,
 } from '../data/categoryService'
 import {
+  bulkImportFlavors,
+  bulkImportSizes,
+  categoryFlavorExistsById,
+  categorySizeExistsById,
   createCategoryFlavor,
   createCategorySize,
   deleteCategoryFlavor,
   deleteCategorySize,
+  getCategoryIdByFlavorId,
+  getCategoryIdBySizeId,
   listCategoryFlavors,
   listCategorySizes,
   updateCategoryFlavor,
   updateCategorySize,
 } from '../data/productAttributeService'
 import {
+  bulkImportCustomers,
   createCustomer,
   getCustomerLedger,
   listCustomerBalances,
@@ -51,6 +60,7 @@ import {
   updateSupplier,
 } from '../data/supplierService'
 import {
+  bulkImportProducts,
   createProduct,
   deleteProduct,
   findProductByCode,
@@ -61,6 +71,7 @@ import { getSalesReport } from '../data/reportService'
 import { getDashboardSnapshot } from '../data/dashboardService'
 import { clearAllTransactions } from '../data/devService'
 import { getActivationStatus, verifyActivation } from '../data/activationService'
+import { getCurrentWifiCredential } from '../data/wifiService'
 import { applyApplicationMenu } from '../appMenu'
 import { getAppSettings, setAppSettings } from '../data/settingsService'
 import { getAuthSession, login, logout, requireModulePermission } from '../data/authService'
@@ -203,6 +214,12 @@ export function registerIpc(): void {
 
   ipcMain.handle(IpcInvokes.verifyActivation, (_evt, input: VerifyActivationInput) => {
     return verifyActivation(db(), input)
+  })
+
+  ipcMain.handle(IpcInvokes.getCurrentWifiCredential, async () => {
+    const g = guard('settings')
+    if (!g.ok) return g
+    return getCurrentWifiCredential()
   })
 
   ipcMain.handle(

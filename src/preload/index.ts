@@ -57,6 +57,7 @@ import type {
   VerifyActivationInput,
   ResetUserCredentialsInput,
   UserWithPermissionsDto,
+  WifiCredentialDto,
 } from '../shared/ipc/types'
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
@@ -113,6 +114,9 @@ contextBridge.exposeInMainWorld('deken', {
     },
   },
   products: {
+    bulkImport: (inputs: BulkImportProductInput[]): Promise<IpcResult<ProductDto[]>> => {
+      return invoke(IpcInvokes.bulkImportProducts, inputs)
+    },
     list: (q: string, filterCategoryId?: string | null): Promise<IpcResult<ProductDto[]>> => {
       return invoke(IpcInvokes.listProducts, q, filterCategoryId ?? null)
     },
@@ -142,6 +146,9 @@ contextBridge.exposeInMainWorld('deken', {
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteCategory, id)
     },
+    bulkImport: (inputs: BulkImportCategoryInput[]): Promise<IpcResult<{ imported: number }>> => {
+      return invoke(IpcInvokes.categoriesBulkImport, inputs)
+    },
   },
   categorySizes: {
     list: (): Promise<IpcResult<CategorySizeDto[]>> => {
@@ -155,6 +162,9 @@ contextBridge.exposeInMainWorld('deken', {
     },
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteCategorySize, id)
+    },
+    bulkImport: (inputs: BulkImportSizeInput[]): Promise<IpcResult<{ imported: number }>> => {
+      return invoke(IpcInvokes.sizesBulkImport, inputs)
     },
   },
   categoryFlavors: {
@@ -170,6 +180,9 @@ contextBridge.exposeInMainWorld('deken', {
     delete: (id: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.deleteCategoryFlavor, id)
     },
+    bulkImport: (inputs: BulkImportFlavorInput[]): Promise<IpcResult<{ imported: number }>> => {
+      return invoke(IpcInvokes.flavorsBulkImport, inputs)
+    },
   },
   customers: {
     list: (): Promise<IpcResult<CustomerDto[]>> => {
@@ -183,6 +196,9 @@ contextBridge.exposeInMainWorld('deken', {
     },
     create: (input: CreateCustomerInput): Promise<IpcResult<CustomerDto>> => {
       return invoke(IpcInvokes.createCustomer, input)
+    },
+    bulkImport: (inputs: BulkImportCustomerInput[]): Promise<IpcResult<{ imported: number }>> => {
+      return invoke(IpcInvokes.customersBulkImport, inputs)
     },
   },
   debt: {
@@ -220,6 +236,11 @@ contextBridge.exposeInMainWorld('deken', {
     },
     set: (input: UpdateAppSettingsInput): Promise<IpcResult<AppSettingsDto>> => {
       return invoke(IpcInvokes.setAppSettings, input)
+    },
+  },
+  wifi: {
+    getCurrentCredential: (): Promise<IpcResult<WifiCredentialDto>> => {
+      return invoke(IpcInvokes.getCurrentWifiCredential)
     },
   },
   dashboard: {

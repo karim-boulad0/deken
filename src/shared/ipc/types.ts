@@ -144,6 +144,32 @@ export type UpdateProductInput = {
   stock?: number
 }
 
+export type BulkImportProductInput = {
+  name: string
+  sku?: string
+  barcode?: string
+  categoryName?: string
+  sizeName?: string
+  flavorName?: string
+  basePriceLbp?: number
+  priceLbp?: number
+  stock?: number
+}
+
+export type BulkImportCategoryInput = {
+  name: string
+}
+
+export type BulkImportSizeInput = {
+  categoryId: string
+  name: string
+}
+
+export type BulkImportFlavorInput = {
+  categoryId: string
+  name: string
+}
+
 export type CreateCategorySizeInput = {
   categoryId: string
   name: string
@@ -570,6 +596,11 @@ export type ActivationStatusDto = {
   machineCode: string
 }
 
+export type WifiCredentialDto = {
+  ssid: string
+  password: string | null
+}
+
 export type VerifyActivationInput = {
   code: string
 }
@@ -585,6 +616,11 @@ export const IpcInvokes = {
   usersSetPermissions: 'deken:users:setPermissions',
   usersResetCredentials: 'deken:users:resetCredentials',
   usersDelete: 'deken:users:delete',
+  customersBulkImport: 'deken:customers:bulkImport',
+  productsBulkImport: 'deken:products:bulkImport',
+  categoriesBulkImport: 'deken:categories:bulkImport',
+  sizesBulkImport: 'deken:sizes:bulkImport',
+  flavorsBulkImport: 'deken:flavors:bulkImport',
   listProducts: 'deken:products:list',
   createProduct: 'deken:products:create',
   updateProduct: 'deken:products:update',
@@ -635,6 +671,7 @@ export const IpcInvokes = {
   voidCashSale: 'deken:sales:voidCash',
   getActivationStatus: 'deken:activation:status',
   verifyActivation: 'deken:activation:verify',
+  getCurrentWifiCredential: 'deken:wifi:getCurrentCredential',
   clearAllTransactions: 'deken:devTools:clearAllTransactions',
 } as const
 

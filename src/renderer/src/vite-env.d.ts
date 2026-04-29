@@ -57,6 +57,7 @@ import type {
   ResetUserCredentialsInput,
   UpdateUserInput,
   UserWithPermissionsDto,
+  WifiCredentialDto,
 } from '../../shared/ipc/types'
 
 type DekenPreload = {
@@ -130,6 +131,9 @@ type DekenPreload = {
   settings: {
     get: () => Promise<IpcResult<AppSettingsDto>>
     set: (input: UpdateAppSettingsInput) => Promise<IpcResult<AppSettingsDto>>
+  }
+  wifi: {
+    getCurrentCredential: () => Promise<IpcResult<WifiCredentialDto>>
   }
   dashboard: {
     getSnapshot: (input?: DashboardSnapshotInput) => Promise<IpcResult<DashboardSnapshotDto>>

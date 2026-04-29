@@ -932,7 +932,8 @@
       "general": "General",
       "interface": "Window & menu",
       "language": "Language",
-      "printing": "Printing"
+      "printing": "Printing",
+      "wifi": "Wi-Fi"
     },
     "interface": {
       "classicMenuIntro": "By default the app hides the full desktop menu bar (File / Edit / View) for a cleaner POS. Turn the option on if you need reload, DevTools, or the usual edit shortcuts (for support and advanced users).",
@@ -981,6 +982,20 @@
       "paperTitle": "Preferred paper preset for printed receipt.",
       "paperA4": "A4 (invoice)",
       "paper80": "80 mm thermal"
+    },
+    "wifi": {
+      "intro": "Load the currently connected Wi-Fi name and saved password from this Windows device.",
+      "loadButton": "Show current Wi-Fi",
+      "loading": "Loading Wi-Fi…",
+      "ssidLabel": "Wi-Fi name (SSID)",
+      "passwordLabel": "Wi-Fi password",
+      "passwordUnavailable": "Not available",
+      "toastLoaded": "Current Wi-Fi info loaded.",
+      "errors": {
+        "wifi_not_connected": "No Wi-Fi connection is currently active.",
+        "unsupported_platform": "This feature is available on Windows only.",
+        "wifi_lookup_failed": "Could not read Wi-Fi details from the system."
+      }
     }
   },
   "dev": {
