@@ -1,5 +1,5 @@
-import { Download, Pencil, Search, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Download, Pencil, Search, Trash2, Upload } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type {
   CategoryDto,
@@ -11,6 +11,7 @@ import type {
 } from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
 import {
+  bulkImportProducts,
   createCategoryFlavor,
   createCategorySize,
   createProduct,
@@ -25,6 +26,7 @@ import {
   updateCategorySize,
   updateProduct,
 } from '../../lib/api/dekenClient'
+import { parseCsv } from '../../lib/csvImport'
 import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { formatLbp } from '../pos/formatPos'
 import { CategoryLinkedOptionsPanel } from './CategoryLinkedOptionsPanel'
@@ -68,6 +70,7 @@ export function ProductsPage() {
   const toast = useToast()
   const lng = i18n.language
   const [section, setSection] = useState<PageSection>('catalog')
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [searchDebounced, setSearchDebounced] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
@@ -230,6 +233,65 @@ export function ProductsPage() {
     toast.success(t('common.exportToast'))
   }
 
+  function triggerImport() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      const text = evt.target?.result
+      if (typeof text !== 'string') return
+
+      try {
+        const rowsParsed = parseCsv(text)
+        if (rowsParsed.length < 2) {
+          toast.error(t('common.importInvalidFormat'))
+          return
+        }
+
+        const bodyRows = rowsParsed.slice(1)
+        const inputs = bodyRows
+          .map((row) => ({
+            name: row[0],
+            sku: row[1] || undefined,
+            barcode: row[2] || undefined,
+            categoryName: row[3] || undefined,
+            sizeName: row[4] || undefined,
+            flavorName: row[5] || undefined,
+            basePriceLbp: row[6] ? Math.floor(Number(row[6])) : undefined,
+            priceLbp: row[7] ? Math.floor(Number(row[7])) : undefined,
+            stock: row[8] ? Math.floor(Number(row[8])) : undefined,
+          }))
+          .filter((i) => i.name && i.name.trim().length > 0)
+
+        if (inputs.length === 0) {
+          toast.warning(t('common.exportEmpty'))
+          return
+        }
+
+        setLoading(true)
+        const res = await bulkImportProducts(inputs)
+        setLoading(false)
+
+        if (res.ok) {
+          toast.success(t('common.importToast', { count: res.data.imported }))
+          void refresh()
+        } else {
+          toast.error(t('common.importError', { message: res.error.message }))
+        }
+      } catch (err) {
+        setLoading(false)
+        toast.error(t('common.importError', { message: String(err) }))
+      }
+    }
+    reader.readAsText(file)
+  }
+
   async function executeDelete() {
     if (deleteTarget == null) {
       return
@@ -386,6 +448,24 @@ export function ProductsPage() {
                 <Download size={18} strokeWidth={2} aria-hidden />
                 {t('common.export')}
               </button>
+              <button
+                type="button"
+                className="prod-btn prod-btn--ghost"
+                onClick={triggerImport}
+                disabled={loading}
+                title={t('common.importAria')}
+                aria-label={t('common.importAria')}
+              >
+                <Upload size={18} strokeWidth={2} aria-hidden />
+                {t('common.import')}
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept=".csv,text/csv"
+                onChange={handleImport}
+              />
               <label className="prod__filter">
                 <span className="prod__filter-label">{t('products.toolbar.filterLabel')}</span>
                 <select

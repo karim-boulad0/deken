@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import type { CategoryDto, CreateCategoryInput, IpcErrorShape, IpcResult, UpdateCategoryInput } from '../../shared/ipc/types'
+import {
+  BulkImportCategoryInput,
+  CategoryDto,
+  CreateCategoryInput,
+  IpcErrorShape,
+  IpcResult,
+  UpdateCategoryInput,
+} from '../../shared/ipc/types'
 import type { Database } from 'better-sqlite3'
 
 type Row = {
@@ -50,6 +57,54 @@ export function listCategories(db: Database): IpcResult<CategoryDto[]> {
   return asResult(() => {
     const st = db.prepare('SELECT * FROM categories ORDER BY lower(trim(name)) ASC')
     return (st.all() as Row[]).map(rowToDto)
+  })
+}
+
+export function findOrCreateCategoryByName(db: Database, name: string): string {
+  const normName = name.trim()
+  const existing = db
+    .prepare('SELECT id FROM categories WHERE name = ? COLLATE NOCASE')
+    .get(normName) as { id: string } | undefined
+  if (existing) return existing.id
+
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
+    id,
+    normName,
+    now,
+    now,
+  )
+  return id
+}
+
+export function bulkImportCategories(
+  db: Database,
+  inputs: BulkImportCategoryInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let count = 0
+    const transaction = db.transaction((rows: BulkImportCategoryInput[]) => {
+      for (const row of rows) {
+        if (!row.name) continue
+        const existing = db
+          .prepare('SELECT 1 FROM categories WHERE lower(name) = ?')
+          .get(row.name.toLowerCase())
+        if (existing) continue
+
+        const id = randomUUID()
+        const now = new Date().toISOString()
+        db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
+          id,
+          row.name,
+          now,
+          now,
+        )
+        count++
+      }
+    })
+    transaction(inputs)
+    return { imported: count }
   })
 }
 
@@ -125,6 +180,6 @@ export function deleteCategory(db: Database, id: string): IpcResult<null> {
 }
 
 export function categoryExistsById(db: Database, id: string): boolean {
-  const r = db.prepare('SELECT 1 as x FROM categories WHERE id = ?').get(id) as { x: number } | undefined
-  return Boolean(r)
+  const r = db.prepare('SELECT 1 FROM categories WHERE id = ?').get(id)
+  return !!r
 }

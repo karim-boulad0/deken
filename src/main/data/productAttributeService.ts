@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type {
+  BulkImportFlavorInput,
+  BulkImportSizeInput,
   CategoryFlavorDto,
   CategorySizeDto,
   CreateCategoryFlavorInput,
@@ -71,6 +73,36 @@ function assertCategory(db: Database, categoryId: string): string {
   if (isBlank(cid)) throw new Error('category_required')
   if (!categoryExistsById(db, cid)) throw new Error('category_not_found')
   return cid
+}
+
+export function findOrCreateSizeByName(db: Database, categoryId: string, name: string): string {
+  const normName = name.trim()
+  const existing = db
+    .prepare('SELECT id FROM product_sizes WHERE category_id = ? AND name = ? COLLATE NOCASE')
+    .get(categoryId, normName) as { id: string } | undefined
+  if (existing) return existing.id
+
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare(
+    'INSERT INTO product_sizes (id, category_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, categoryId, normName, now, now)
+  return id
+}
+
+export function findOrCreateFlavorByName(db: Database, categoryId: string, name: string): string {
+  const normName = name.trim()
+  const existing = db
+    .prepare('SELECT id FROM product_flavors WHERE category_id = ? AND name = ? COLLATE NOCASE')
+    .get(categoryId, normName) as { id: string } | undefined
+  if (existing) return existing.id
+
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare(
+    'INSERT INTO product_flavors (id, category_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+  ).run(id, categoryId, normName, now, now)
+  return id
 }
 
 export function listCategorySizes(db: Database): IpcResult<CategorySizeDto[]> {
@@ -224,4 +256,40 @@ export function getCategoryIdByFlavorId(db: Database, id: string): string | null
     | { category_id: string }
     | undefined
   return row?.category_id ?? null
+}
+
+export function bulkImportSizes(
+  db: Database,
+  inputs: BulkImportSizeInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let count = 0
+    const transaction = db.transaction((rows: BulkImportSizeInput[]) => {
+      for (const row of rows) {
+        if (!row.name || !row.categoryId) continue
+        findOrCreateSizeByName(db, row.categoryId, row.name)
+        count++
+      }
+    })
+    transaction(inputs)
+    return { imported: count }
+  })
+}
+
+export function bulkImportFlavors(
+  db: Database,
+  inputs: BulkImportFlavorInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let count = 0
+    const transaction = db.transaction((rows: BulkImportFlavorInput[]) => {
+      for (const row of rows) {
+        if (!row.name || !row.categoryId) continue
+        findOrCreateFlavorByName(db, row.categoryId, row.name)
+        count++
+      }
+    })
+    transaction(inputs)
+    return { imported: count }
+  })
 }

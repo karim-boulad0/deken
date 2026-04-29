@@ -415,3 +415,88 @@ export function deleteProduct(db: Database, id: string): IpcResult<null> {
     return null
   })
 }
+
+export function bulkImportProducts(
+  db: Database,
+  inputs: BulkImportProductInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let count = 0
+    const transaction = db.transaction((rows: BulkImportProductInput[]) => {
+      for (const row of rows) {
+        if (!row.name) continue
+
+        const id = randomUUID()
+        const now = new Date().toISOString()
+
+        // Resolve category
+        let categoryId: string | null = null
+        if (row.categoryName) {
+          categoryId = findOrCreateCategoryByName(db, row.categoryName)
+        }
+
+        // Resolve size
+        let sizeId: string | null = null
+        if (row.sizeName && categoryId) {
+          sizeId = findOrCreateSizeByName(db, categoryId, row.sizeName)
+        }
+
+        // Resolve flavor
+        let flavorId: string | null = null
+        if (row.flavorName && categoryId) {
+          flavorId = findOrCreateFlavorByName(db, categoryId, row.flavorName)
+        }
+
+        db.prepare(
+          `INSERT INTO products (
+            id, sku, barcode, name, category_id, category_size_id, category_flavor_id,
+            base_price_lbp, price_lbp, stock, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ).run(
+          id,
+          row.sku || id.slice(0, 8),
+          row.barcode || null,
+          row.name,
+          categoryId,
+          sizeId,
+          flavorId,
+          row.basePriceLbp || 0,
+          row.priceLbp || 0,
+          row.stock || 0,
+          now,
+          now,
+        )
+        count++
+      }
+    })
+    transaction(inputs)
+    return { imported: count }
+  })
+}
+
+function findOrCreateCategoryByName(db: Database, name: string): string {
+  const existing = db.prepare('SELECT id FROM categories WHERE lower(name) = ?').get(name.toLowerCase()) as { id: string } | undefined
+  if (existing) return existing.id
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(id, name, now, now)
+  return id
+}
+
+function findOrCreateSizeByName(db: Database, categoryId: string, name: string): string {
+  const existing = db.prepare('SELECT id FROM product_sizes WHERE category_id = ? AND lower(name) = ?').get(categoryId, name.toLowerCase()) as { id: string } | undefined
+  if (existing) return existing.id
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare('INSERT INTO product_sizes (id, category_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(id, categoryId, name, now, now)
+  return id
+}
+
+function findOrCreateFlavorByName(db: Database, categoryId: string, name: string): string {
+  const existing = db.prepare('SELECT id FROM product_flavors WHERE category_id = ? AND lower(name) = ?').get(categoryId, name.toLowerCase()) as { id: string } | undefined
+  if (existing) return existing.id
+  const id = randomUUID()
+  const now = new Date().toISOString()
+  db.prepare('INSERT INTO product_flavors (id, category_id, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(id, categoryId, name, now, now)
+  return id
+}

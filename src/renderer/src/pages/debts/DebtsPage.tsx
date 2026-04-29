@@ -1,9 +1,14 @@
-import { Download, Eye, Search, Wallet } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Download, Eye, Search, Upload, Wallet } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { listCustomerBalances, recordDebtPayment } from '../../lib/api/dekenClient'
+import {
+  bulkImportCustomers,
+  listCustomerBalances,
+  recordDebtPayment,
+} from '../../lib/api/dekenClient'
+import { parseCsv } from '../../lib/csvImport'
 import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
 import { formatLbp, formatUsd } from '../pos/formatPos'
 import { CustomerHistoryDialog } from './CustomerHistoryDialog'
@@ -40,6 +45,7 @@ export function DebtsPage() {
   const [loadError, setLoadError] = useState(false)
   const [payTarget, setPayTarget] = useState<CustomerBalanceRow | null>(null)
   const [payBusy, setPayBusy] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [historyTarget, setHistoryTarget] = useState<CustomerBalanceRow | null>(null)
   const [ledgerRefresh, setLedgerRefresh] = useState(0)
 
@@ -114,6 +120,59 @@ export function DebtsPage() {
     })
     downloadAsCsvFile(`deken-debts-${fileDateStamp()}`, [h, ...body])
     toast.success(t('common.exportToast'))
+  }
+
+  function triggerImport() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      const text = evt.target?.result
+      if (typeof text !== 'string') return
+
+      try {
+        const rows = parseCsv(text)
+        if (rows.length < 2) {
+          toast.error(t('common.importInvalidFormat'))
+          return
+        }
+
+        const bodyRows = rows.slice(1)
+        const inputs = bodyRows
+          .map((row) => ({
+            name: row[0],
+            phone: row[1],
+            note: row[2],
+          }))
+          .filter((i) => i.name && i.name.trim().length > 0)
+
+        if (inputs.length === 0) {
+          toast.warning(t('common.exportEmpty'))
+          return
+        }
+
+        setLoading(true)
+        const res = await bulkImportCustomers(inputs)
+        setLoading(false)
+
+        if (res.ok) {
+          toast.success(t('common.importToast', { count: res.data.imported }))
+          void load()
+        } else {
+          toast.error(t('common.importError', { message: res.error.message }))
+        }
+      } catch (err) {
+        setLoading(false)
+        toast.error(t('common.importError', { message: String(err) }))
+      }
+    }
+    reader.readAsText(file)
   }
 
   async function submitPayment(amountLbp: number, note: string) {
@@ -200,6 +259,24 @@ export function DebtsPage() {
             <Download size={18} strokeWidth={2} aria-hidden />
             {t('common.export')}
           </button>
+          <button
+            type="button"
+            className="debts-btn debts-btn--ghost"
+            onClick={triggerImport}
+            disabled={loading}
+            title={t('common.importAria')}
+            aria-label={t('common.importAria')}
+          >
+            <Upload size={18} strokeWidth={2} aria-hidden />
+            {t('common.import')}
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            accept=".csv,text/csv"
+            onChange={handleImport}
+          />
         </div>
       </div>
 

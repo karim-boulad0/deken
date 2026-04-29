@@ -1,9 +1,14 @@
-import { Download, Pencil, Plus, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Download, Pencil, Plus, Trash2, Upload } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CategoryDto } from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
+import {
+  bulkImportFlavors,
+  bulkImportSizes,
+} from '../../lib/api/dekenClient'
 import { downloadAsCsvFile, fileDateStamp, toCsvLine } from '../../lib/csvExport'
+import { parseCsv } from '../../lib/csvImport'
 import './ProductFormDialog.css'
 import './DeleteProductDialog.css'
 import './ProductsPage.css'
@@ -65,6 +70,7 @@ export function CategoryLinkedOptionsPanel({
   const [deleting, setDeleting] = useState<LinkedRow | null>(null)
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const trBase = kind === 'sizes' ? 'productSizes' : 'productFlavors'
 
@@ -160,6 +166,69 @@ export function CategoryLinkedOptionsPanel({
     toast.success(t('common.exportToast'))
   }
 
+  function triggerImport() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const reader = new FileReader()
+    reader.onload = async (evt) => {
+      const text = evt.target?.result
+      if (typeof text !== 'string') return
+
+      try {
+        const rowsParsed = parseCsv(text)
+        if (rowsParsed.length < 2) {
+          toast.error(t('common.importInvalidFormat'))
+          return
+        }
+
+        const bodyRows = rowsParsed.slice(1)
+        // Expected CSV: categoryName, name
+        // We'll try to find categoryId by name
+        const inputs: { categoryId: string; name: string }[] = []
+        
+        for (const row of bodyRows) {
+          const catName = row[0]?.trim()
+          const itemName = row[1]?.trim()
+          if (!catName || !itemName) continue
+
+          const cat = categories.find(c => c.name.toLowerCase() === catName.toLowerCase())
+          if (cat) {
+            inputs.push({ categoryId: cat.id, name: itemName })
+          }
+        }
+
+        if (inputs.length === 0) {
+          toast.warning(t('common.exportEmpty'))
+          return
+        }
+
+        setLoading(true)
+        const res = kind === 'sizes' 
+          ? await bulkImportSizes(inputs)
+          : await bulkImportFlavors(inputs)
+        setLoading(false)
+
+        if (res.ok) {
+          toast.success(t('common.importToast', { count: res.data.imported }))
+          void refresh()
+          onChanged()
+        } else {
+          toast.error(t('common.importError', { message: res.error.message }))
+        }
+      } catch (err) {
+        setLoading(false)
+        toast.error(t('common.importError', { message: String(err) }))
+      }
+    }
+    reader.readAsText(file)
+  }
+
   return (
     <section className="prod-panel">
       <div className="prod-panel__head prod-categories__head">
@@ -169,6 +238,24 @@ export function CategoryLinkedOptionsPanel({
             <Download size={18} strokeWidth={2} aria-hidden />
             {t('common.export')}
           </button>
+          <button
+            type="button"
+            className="prod-btn prod-btn--ghost"
+            onClick={triggerImport}
+            disabled={loading}
+            title={t('common.importAria')}
+            aria-label={t('common.importAria')}
+          >
+            <Upload size={18} strokeWidth={2} aria-hidden />
+            {t('common.import')}
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            accept=".csv,text/csv"
+            onChange={handleImport}
+          />
           <button type="button" className="prod-btn prod-btn--primary" onClick={() => setFormMode({ type: 'create' })}>
             <Plus size={18} strokeWidth={2} aria-hidden />
             {t(`${trBase}.actions.add`)}
