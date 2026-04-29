@@ -60,10 +60,36 @@ function toDto(r: CustomerRow): CustomerDto {
 
 const isBlank = (s: string) => s.trim().length === 0
 
+type BulkImportCustomerInput = {
+  name: string
+  phone?: string
+}
+
 export function listCustomers(db: Database): IpcResult<CustomerDto[]> {
   return asResult(() => {
     const st = db.prepare('SELECT * FROM customers ORDER BY name COLLATE NOCASE')
     return (st.all() as CustomerRow[]).map(toDto)
+  })
+}
+
+export function bulkImportCustomers(
+  db: Database,
+  inputs: BulkImportCustomerInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let imported = 0
+    const now = new Date().toISOString()
+    const tx = db.transaction((rows: BulkImportCustomerInput[]) => {
+      for (const row of rows) {
+        const name = (row.name ?? '').trim()
+        if (name.length === 0) continue
+        const phone = row.phone != null && String(row.phone).trim() ? String(row.phone).trim() : null
+        insertCustomerRow(db, name, phone, now, null)
+        imported++
+      }
+    })
+    tx(inputs)
+    return { imported }
   })
 }
 

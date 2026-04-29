@@ -114,8 +114,8 @@ contextBridge.exposeInMainWorld('deken', {
     },
   },
   products: {
-    bulkImport: (inputs: BulkImportProductInput[]): Promise<IpcResult<ProductDto[]>> => {
-      return invoke(IpcInvokes.bulkImportProducts, inputs)
+    bulkImport: (inputs: BulkImportProductInput[]): Promise<IpcResult<{ imported: number }>> => {
+      return invoke(IpcInvokes.productsBulkImport, inputs)
     },
     list: (q: string, filterCategoryId?: string | null): Promise<IpcResult<ProductDto[]>> => {
       return invoke(IpcInvokes.listProducts, q, filterCategoryId ?? null)

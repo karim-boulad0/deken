@@ -1,7 +1,6 @@
 import { app, ipcMain } from 'electron'
 import {
   bulkImportCategories,
-  categoryExistsById,
   createCategory,
   deleteCategory,
   listCategories,
@@ -10,14 +9,10 @@ import {
 import {
   bulkImportFlavors,
   bulkImportSizes,
-  categoryFlavorExistsById,
-  categorySizeExistsById,
   createCategoryFlavor,
   createCategorySize,
   deleteCategoryFlavor,
   deleteCategorySize,
-  getCategoryIdByFlavorId,
-  getCategoryIdBySizeId,
   listCategoryFlavors,
   listCategorySizes,
   updateCategoryFlavor,
@@ -602,6 +597,36 @@ export function registerIpc(): void {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }
     return voidCashSale(db(), saleId)
+  })
+
+  ipcMain.handle(IpcInvokes.productsBulkImport, (_evt, inputs: any[]) => {
+    const g = guard('products')
+    if (!g.ok) return g
+    return bulkImportProducts(db(), inputs)
+  })
+
+  ipcMain.handle(IpcInvokes.customersBulkImport, (_evt, inputs: any[]) => {
+    const g = guard('customers')
+    if (!g.ok) return g
+    return bulkImportCustomers(db(), inputs)
+  })
+
+  ipcMain.handle(IpcInvokes.categoriesBulkImport, (_evt, inputs: any[]) => {
+    const g = guard('products')
+    if (!g.ok) return g
+    return bulkImportCategories(db(), inputs)
+  })
+
+  ipcMain.handle(IpcInvokes.sizesBulkImport, (_evt, inputs: any[]) => {
+    const g = guard('products')
+    if (!g.ok) return g
+    return bulkImportSizes(db(), inputs)
+  })
+
+  ipcMain.handle(IpcInvokes.flavorsBulkImport, (_evt, inputs: any[]) => {
+    const g = guard('products')
+    if (!g.ok) return g
+    return bulkImportFlavors(db(), inputs)
   })
 
   ipcMain.handle(IpcInvokes.clearAllTransactions, () => {

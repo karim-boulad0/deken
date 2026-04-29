@@ -18,6 +18,7 @@ const DEFAULT: AppSettingsDto = {
   printReceiptAfterSale: false,
   receiptPaper: 'a4',
   showDevTools: true,
+  showWifiSection: false,
 }
 
 type Ctx = {

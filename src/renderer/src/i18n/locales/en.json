@@ -1004,6 +1004,11 @@
     "clearTransactions": "Clear All Transactions",
     "clearTransactionsDesc": "Warning: This will permanently delete all sales, expenses, and debt payments (products and customers are kept). This cannot be undone!",
     "confirmClear": "Are you sure you want to permanently clear all cashflow transactions?",
-    "successClear": "All transactions have been cleared successfully."
+    "successClear": "All transactions have been cleared successfully.",
+    "cornerToggleAria": "Hidden toggle for Wi-Fi section visibility",
+    "cornerToggleTitle": "Double-click to toggle Wi-Fi section in Settings",
+    "wifiEnabled": "Wi-Fi section is now visible in Settings.",
+    "wifiDisabled": "Wi-Fi section is now hidden in Settings.",
+    "toggleWifiFailed": "Could not toggle Wi-Fi section visibility."
   }
 }

@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto'
-import {
+import { randomUUID } from 'crypto'
+import type {
   BulkImportCategoryInput,
   CategoryDto,
   CreateCategoryInput,
@@ -55,72 +55,24 @@ const isBlank = (s: string) => s.trim().length === 0
 
 export function listCategories(db: Database): IpcResult<CategoryDto[]> {
   return asResult(() => {
-    const st = db.prepare('SELECT * FROM categories ORDER BY lower(trim(name)) ASC')
-    return (st.all() as Row[]).map(rowToDto)
-  })
-}
-
-export function findOrCreateCategoryByName(db: Database, name: string): string {
-  const normName = name.trim()
-  const existing = db
-    .prepare('SELECT id FROM categories WHERE name = ? COLLATE NOCASE')
-    .get(normName) as { id: string } | undefined
-  if (existing) return existing.id
-
-  const id = randomUUID()
-  const now = new Date().toISOString()
-  db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
-    id,
-    normName,
-    now,
-    now,
-  )
-  return id
-}
-
-export function bulkImportCategories(
-  db: Database,
-  inputs: BulkImportCategoryInput[],
-): IpcResult<{ imported: number }> {
-  return asResult(() => {
-    let count = 0
-    const transaction = db.transaction((rows: BulkImportCategoryInput[]) => {
-      for (const row of rows) {
-        if (!row.name) continue
-        const existing = db
-          .prepare('SELECT 1 FROM categories WHERE lower(name) = ?')
-          .get(row.name.toLowerCase())
-        if (existing) continue
-
-        const id = randomUUID()
-        const now = new Date().toISOString()
-        db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
-          id,
-          row.name,
-          now,
-          now,
-        )
-        count++
-      }
-    })
-    transaction(inputs)
-    return { imported: count }
+    const rows = db.prepare('SELECT * FROM categories ORDER BY lower(trim(name)) ASC').all() as Row[]
+    return rows.map(rowToDto)
   })
 }
 
 export function createCategory(db: Database, input: CreateCategoryInput): IpcResult<CategoryDto> {
-  if (isBlank(input.name)) {
-    return { ok: false, error: makeError('validation', 'name_required') }
-  }
+  if (isBlank(input.name)) return { ok: false, error: makeError('validation', 'name_required') }
   return asResult(() => {
     const id = randomUUID()
     const now = new Date().toISOString()
-    const st = db.prepare(
-      `INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+    db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
+      id,
+      norm(input.name),
+      now,
+      now,
     )
-    st.run(id, norm(input.name), now, now)
-    const r = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Row
-    return rowToDto(r)
+    const row = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Row
+    return rowToDto(row)
   })
 }
 
@@ -129,22 +81,16 @@ export function updateCategory(
   id: string,
   input: UpdateCategoryInput,
 ): IpcResult<CategoryDto> {
-  if (isBlank(id)) {
-    return { ok: false, error: makeError('validation', 'id_required') }
-  }
-  if (isBlank(input.name)) {
-    return { ok: false, error: makeError('validation', 'name_required') }
-  }
+  if (isBlank(id)) return { ok: false, error: makeError('validation', 'id_required') }
   return asResult(() => {
     const existing = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Row | undefined
-    if (!existing) {
-      throw new Error('not_found')
-    }
+    if (!existing) throw new Error('not_found')
+    const name = input.name !== undefined ? norm(input.name) : existing.name
+    if (isBlank(name)) throw new Error('name_required')
     const now = new Date().toISOString()
-    const st = db.prepare('UPDATE categories SET name = @name, updated_at = @u WHERE id = @id')
-    st.run({ name: norm(input.name), u: now, id })
-    const r = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Row
-    return rowToDto(r)
+    db.prepare('UPDATE categories SET name = ?, updated_at = ? WHERE id = ?').run(name, now, id)
+    const row = db.prepare('SELECT * FROM categories WHERE id = ?').get(id) as Row
+    return rowToDto(row)
   })
 }
 
@@ -182,4 +128,34 @@ export function deleteCategory(db: Database, id: string): IpcResult<null> {
 export function categoryExistsById(db: Database, id: string): boolean {
   const r = db.prepare('SELECT 1 FROM categories WHERE id = ?').get(id)
   return !!r
+}
+
+export function bulkImportCategories(
+  db: Database,
+  inputs: BulkImportCategoryInput[],
+): IpcResult<{ imported: number }> {
+  return asResult(() => {
+    let count = 0
+    const transaction = db.transaction((rows: BulkImportCategoryInput[]) => {
+      for (const row of rows) {
+        if (!row.name) continue
+        const existing = db
+          .prepare('SELECT 1 FROM categories WHERE lower(name) = ?')
+          .get(row.name.toLowerCase())
+        if (existing) continue
+
+        const id = randomUUID()
+        const now = new Date().toISOString()
+        db.prepare('INSERT INTO categories (id, name, created_at, updated_at) VALUES (?, ?, ?, ?)').run(
+          id,
+          row.name.trim(),
+          now,
+          now,
+        )
+        count++
+      }
+    })
+    transaction(inputs)
+    return { imported: count }
+  })
 }

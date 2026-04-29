@@ -431,34 +431,35 @@ export function SettingsPage() {
           </div>
         </section>
 
-        <section className="set-group" aria-labelledby="set-wifi-title">
-          <h2 className="set-group__title" id="set-wifi-title">
-            {t('settings.groups.wifi')}
-          </h2>
-          <div className="set-group__body">
-            <p className="set-group__note">{t('settings.wifi.intro')}</p>
-            <div className="set__actions">
-              <button
-                type="button"
-                className="set-btn set-btn--primary"
-                onClick={() => void onLoadWifiCredential()}
-                disabled={!loaded || wifiBusy || window.deken == null}
-              >
-                {wifiBusy ? t('settings.wifi.loading') : t('settings.wifi.loadButton')}
-              </button>
+        {settings.showWifiSection ? (
+          <section className="set-group" aria-labelledby="set-wifi-title">
+            {/* <h2 className="set-group__title" id="set-wifi-title">
+              {t('settings.groups.wifi')}
+            </h2> */}
+            <div className="set-group__body">
+              <p className="set-group__note"></p>
+              <div className="set__actions">
+                <button
+                  type="button"
+                  className="set-btn set-btn--primary"
+                  onClick={() => void onLoadWifiCredential()}
+                  disabled={!loaded || wifiBusy || window.deken == null}
+                >
+                </button>
+              </div>
+              {/* <div className="set-field">
+                <span className="set-field__label">{t('settings.wifi.ssidLabel')}</span>
+                <p className="set-field__static">{wifiSsid ?? t('common.emDash')}</p>
+              </div> */}
+              <div className="set-field">
+                {/* <span className="set-field__label">{t('settings.wifi.passwordLabel')}</span> */}
+                <p className="set-field__static">
+                  {wifiPassword == null ? t('settings.wifi.passwordUnavailable') : wifiPassword}
+                </p>
+              </div>
             </div>
-            <div className="set-field">
-              <span className="set-field__label">{t('settings.wifi.ssidLabel')}</span>
-              <p className="set-field__static">{wifiSsid ?? t('common.emDash')}</p>
-            </div>
-            <div className="set-field">
-              <span className="set-field__label">{t('settings.wifi.passwordLabel')}</span>
-              <p className="set-field__static">
-                {wifiPassword == null ? t('settings.wifi.passwordUnavailable') : wifiPassword}
-              </p>
-            </div>
-          </div>
-        </section>
+          </section>
+        ) : null}
       </div>
     </div>
   )

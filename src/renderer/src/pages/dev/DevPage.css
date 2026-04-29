@@ -89,3 +89,15 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+.dev-corner-toggle {
+  margin-inline-start: var(--space-xs);
+  width: 0.95rem;
+  height: 0.95rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ef4444;
+  opacity: 0.95;
+  cursor: pointer;
+  flex: 0 0 auto;
+}

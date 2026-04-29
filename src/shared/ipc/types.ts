@@ -316,6 +316,8 @@ export type AppSettingsDto = {
   receiptPaper: ReceiptPaper
   /** Whether to show Dev Tools in the sidebar. */
   showDevTools: boolean
+  /** Hidden support toggle for showing Wi-Fi credentials section in Settings. */
+  showWifiSection: boolean
 }
 
 export type UpdateAppSettingsInput = {
@@ -326,6 +328,7 @@ export type UpdateAppSettingsInput = {
   printReceiptAfterSale?: boolean
   receiptPaper?: ReceiptPaper
   showDevTools?: boolean
+  showWifiSection?: boolean
 }
 
 export type SalesReportDto = {

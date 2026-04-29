@@ -36,6 +36,7 @@ const KEY_NAV_LAYOUT = 'nav_layout'
 const KEY_PRINT_RECEIPT = 'print_receipt_after_sale'
 const KEY_RECEIPT_PAPER = 'receipt_paper'
 const KEY_SHOW_DEV_TOOLS = 'show_dev_tools'
+const KEY_SHOW_WIFI_SECTION = 'show_wifi_section'
 const MAX_SHOP = 200
 
 const DEFAULT_LBP = 89_500
@@ -60,6 +61,8 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
     const receiptPaper: ReceiptPaper = parseReceiptPaper(readRowValue(st, KEY_RECEIPT_PAPER, 'a4'))
     const rawShowDev = readRowValue(st, KEY_SHOW_DEV_TOOLS, '1').trim()
     const showDevTools = rawShowDev === '1' || rawShowDev === 'true'
+    const rawShowWifiSection = readRowValue(st, KEY_SHOW_WIFI_SECTION, '0').trim()
+    const showWifiSection = rawShowWifiSection === '1' || rawShowWifiSection === 'true'
     return {
       shopName: shopName.length > MAX_SHOP ? shopName.slice(0, MAX_SHOP) : shopName,
       lbpPerUsd,
@@ -68,6 +71,7 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
       printReceiptAfterSale,
       receiptPaper,
       showDevTools,
+      showWifiSection,
     }
   })
 }
@@ -96,7 +100,8 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     input.navLayout === undefined &&
     input.printReceiptAfterSale === undefined &&
     input.receiptPaper === undefined &&
-    input.showDevTools === undefined
+    input.showDevTools === undefined &&
+    input.showWifiSection === undefined
   ) {
     return getAppSettings(db)
   }
@@ -142,6 +147,9 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     }
     if (input.showDevTools !== undefined) {
       stUpsert.run({ k: KEY_SHOW_DEV_TOOLS, v: input.showDevTools ? '1' : '0' })
+    }
+    if (input.showWifiSection !== undefined) {
+      stUpsert.run({ k: KEY_SHOW_WIFI_SECTION, v: input.showWifiSection ? '1' : '0' })
     }
     const g = getAppSettings(db)
     if (!g.ok) {

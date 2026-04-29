@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { randomUUID } from 'crypto'
 import type { CreateProductInput, IpcErrorShape, IpcResult, ProductDto, UpdateProductInput } from '../../shared/ipc/types'
 import { categoryExistsById } from './categoryService'
 import { getCategoryIdByFlavorId, getCategoryIdBySizeId } from './productAttributeService'
