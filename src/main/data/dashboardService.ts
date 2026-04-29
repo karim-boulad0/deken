@@ -180,7 +180,7 @@ export function getDashboardSnapshot(
     const grossProfitLbp = gp.sales_total - gp.cost_total
     const grossMarginPct = gp.sales_total > 0 ? (grossProfitLbp / gp.sales_total) * 100 : null
 
-    const stCashIn = db.prepare(
+    const stCashSalesIn = db.prepare(
       `SELECT COALESCE(SUM(total_lbp), 0) AS t
        FROM sales
        WHERE voided_at IS NULL
@@ -188,7 +188,15 @@ export function getDashboardSnapshot(
          AND created_at >= @s
          AND created_at < @e`,
     )
-    const cashInLbp = (stCashIn.get({ s: startIso, e: endIso }) as { t: number }).t
+    const cashSalesInLbp = (stCashSalesIn.get({ s: startIso, e: endIso }) as { t: number }).t
+    const stDebtPaymentsIn = db.prepare(
+      `SELECT COALESCE(SUM(amount_lbp), 0) AS t
+       FROM debt_payments
+       WHERE created_at >= @s
+         AND created_at < @e`,
+    )
+    const debtPaymentsInLbp = (stDebtPaymentsIn.get({ s: startIso, e: endIso }) as { t: number }).t
+    const cashInLbp = cashSalesInLbp + debtPaymentsInLbp
 
     const stSupplierPay = db.prepare(
       `SELECT COALESCE(SUM(amount_lbp), 0) AS t
