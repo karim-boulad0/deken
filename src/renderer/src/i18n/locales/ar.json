@@ -67,6 +67,11 @@
     "exportToast": "تم تنزيل ملف CSV",
     "exportEmpty": "لا بيانات للتصدير في العرض الحالي",
     "exportAria": "تنزيل البيانات الحالية كملف CSV",
+    "import": "استيراد",
+    "importAria": "استيراد بيانات من ملف CSV",
+    "importToast": "تم استيراد {{count}} سجل بنجاح",
+    "importInvalidFormat": "تنسيق الملف غير صالح أو فارغ",
+    "importError": "حدث خطأ أثناء الاستيراد: {{message}}",
     "byUser": "بواسطة"
   },
   "dashboard": {

@@ -67,6 +67,11 @@
     "exportToast": "CSV file downloaded",
     "exportEmpty": "Nothing to export for the current view",
     "exportAria": "Download current data as a CSV file",
+    "import": "Import",
+    "importAria": "Import data from a CSV file",
+    "importToast": "Successfully imported {{count}} records",
+    "importInvalidFormat": "Invalid file format or empty file",
+    "importError": "Error during import: {{message}}",
     "byUser": "By"
   },
   "dashboard": {

@@ -160,6 +160,12 @@ export type BulkImportCategoryInput = {
   name: string
 }
 
+export type BulkImportCustomerInput = {
+  name: string
+  phone?: string
+  note?: string
+}
+
 export type BulkImportSizeInput = {
   categoryId: string
   name: string

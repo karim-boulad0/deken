@@ -46,6 +46,10 @@ export function SettingsPage() {
     }
   }, [loaded, settings, dirty])
 
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
   const onSave = useCallback(async () => {
     if (!loaded || window.deken == null) {
       return

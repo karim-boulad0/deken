@@ -3,8 +3,8 @@ import type {
   ActorRefDto,
   CreateCustomerInput,
   CustomerBalanceRow,
+  BulkImportCustomerInput,
   CustomerDto,
-  CustomerLedgerLineDto,
   IpcErrorShape,
   IpcResult,
   RecordDebtPaymentInput,
@@ -60,10 +60,6 @@ function toDto(r: CustomerRow): CustomerDto {
 
 const isBlank = (s: string) => s.trim().length === 0
 
-type BulkImportCustomerInput = {
-  name: string
-  phone?: string
-}
 
 export function listCustomers(db: Database): IpcResult<CustomerDto[]> {
   return asResult(() => {
@@ -84,13 +80,35 @@ export function bulkImportCustomers(
         const name = (row.name ?? '').trim()
         if (name.length === 0) continue
         const phone = row.phone != null && String(row.phone).trim() ? String(row.phone).trim() : null
-        insertCustomerRow(db, name, phone, now, null)
+        const note = row.note != null && String(row.note).trim() ? String(row.note).trim() : null
+        insertCustomerRowWithNote(db, name, phone, note, now, null)
         imported++
       }
     })
     tx(inputs)
     return { imported }
   })
+}
+
+function insertCustomerRowWithNote(
+  db: Database,
+  name: string,
+  phone: string | null,
+  note: string | null,
+  now: string,
+  actorUserId: string | null,
+): string {
+  const n = name.trim()
+  if (isBlank(n)) {
+    throw new Error('name_required')
+  }
+  const ph = phone != null && String(phone).trim() ? String(phone).trim() : null
+  const nt = note != null && String(note).trim() ? String(note).trim() : null
+  const id = randomUUID()
+  db.prepare(
+    `INSERT INTO customers (id, name, phone, note, created_at, updated_at, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  ).run(id, n, ph, nt, now, now, actorUserId)
+  return id
 }
 
 function normalizeNote(n: string | null): string | null {
