@@ -63,6 +63,12 @@ function parsePositiveNumber(raw: string): number | null {
   return n
 }
 
+let cachedQuery: string | null = null
+let cachedQtyDrafts: Record<string, string> | null = null
+let cachedPriceDrafts: Record<string, string> | null = null
+let cachedTickets: PosTicket[] | null = null
+let cachedActiveTicketId: string | null = null
+
 export function PosPage() {
   const { t, i18n } = useTranslation()
   const { settings } = useAppSettings()
@@ -73,22 +79,28 @@ export function PosPage() {
   const scannerBufferRef = useRef('')
   const scannerTimerRef = useRef<number | null>(null)
   const cartRegionId = useId()
-  const [query, setQuery] = useState('')
+  const [query, setQuery] = useState(() => cachedQuery ?? '')
   const [searchResults, setSearchResults] = useState<ProductDto[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
-  const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>({})
-  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({})
-  const [tickets, setTickets] = useState<PosTicket[]>(() => [
+  const [qtyDrafts, setQtyDrafts] = useState<Record<string, string>>(() => cachedQtyDrafts ?? {})
+  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>(() => cachedPriceDrafts ?? {})
+  const [tickets, setTickets] = useState<PosTicket[]>(() => cachedTickets ?? [
     { id: newId(), label: '1', cart: [] },
   ])
-  const [activeTicketId, setActiveTicketId] = useState<string | null>(null)
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(() => cachedActiveTicketId)
   const [loading, setLoading] = useState(true)
   const [payCashBusy, setPayCashBusy] = useState(false)
   const [payDebtBusy, setPayDebtBusy] = useState(false)
   const [debtOpen, setDebtOpen] = useState(false)
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const receiptFrameRef = useRef<HTMLIFrameElement | null>(null)
+
+  useEffect(() => { cachedQuery = query }, [query])
+  useEffect(() => { cachedQtyDrafts = qtyDrafts }, [qtyDrafts])
+  useEffect(() => { cachedPriceDrafts = priceDrafts }, [priceDrafts])
+  useEffect(() => { cachedTickets = tickets }, [tickets])
+  useEffect(() => { cachedActiveTicketId = activeTicketId }, [activeTicketId])
 
   useEffect(() => {
     const tmr = window.setTimeout(() => setLoading(false), 380)
