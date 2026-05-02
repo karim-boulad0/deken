@@ -54,6 +54,11 @@ function ymd(d: Date): string {
   return `${y}-${m}-${day}`
 }
 
+function parseYmd(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y, m - 1, d, 0, 0, 0, 0)
+}
+
 function rangeDays(range: DashboardRange): number {
   if (range === '7d') return 7
   if (range === '30d') return 30
@@ -141,8 +146,44 @@ export function getDashboardSnapshot(
 ): IpcResult<DashboardSnapshotDto> {
   return asResult(() => {
     const range = input.range ?? 'today'
-    const currentBounds = localPeriodBounds(range, 0)
-    const previousBounds = localPeriodBounds(range, 1)
+    let currentBounds: PeriodBounds
+    let previousBounds: PeriodBounds
+
+    if (range === 'custom' && input.fromDate && input.toDate) {
+      const start = parseYmd(input.fromDate)
+      const endInclusive = parseYmd(input.toDate)
+      const endExclusive = new Date(endInclusive)
+      endExclusive.setDate(endExclusive.getDate() + 1)
+
+      const diffMs = endExclusive.getTime() - start.getTime()
+      const days = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)))
+
+      currentBounds = {
+        startIso: start.toISOString(),
+        endIso: endExclusive.toISOString(),
+        startDateYmd: input.fromDate,
+        endDateYmd: input.toDate,
+        days,
+      }
+
+      const prevStart = new Date(start)
+      prevStart.setDate(prevStart.getDate() - days)
+      const prevEndExclusive = new Date(start)
+      const prevEndInclusive = new Date(start)
+      prevEndInclusive.setDate(prevEndInclusive.getDate() - 1)
+
+      previousBounds = {
+        startIso: prevStart.toISOString(),
+        endIso: prevEndExclusive.toISOString(),
+        startDateYmd: ymd(prevStart),
+        endDateYmd: ymd(prevEndInclusive),
+        days,
+      }
+    } else {
+      currentBounds = localPeriodBounds(range, 0)
+      previousBounds = localPeriodBounds(range, 1)
+    }
+
     const { startIso, endIso, startDateYmd, endDateYmd } = currentBounds
 
     const stSales = db.prepare(

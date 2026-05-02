@@ -58,6 +58,34 @@
   color: var(--color-text);
 }
 
+.dash-range-custom {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0 0.5rem;
+}
+
+.dash-range-custom__input {
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 0.35rem 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.dash-range-custom__sep {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  user-select: none;
+}
+
 .dash__header-text {
   min-width: 0;
   flex: 1 1 12rem;

@@ -418,7 +418,7 @@ export function registerIpc(): void {
     if (!g.ok) return g
     if (
       input != null &&
-      (typeof input !== 'object' || !['today', '7d', '30d'].includes(String(input.range)))
+      (typeof input !== 'object' || !['today', '7d', '30d', 'custom'].includes(String(input.range)))
     ) {
       return { ok: false, error: { code: 'validation', message: 'invalid_input' } }
     }

@@ -396,10 +396,12 @@ export type DashboardSmartAlertDto = {
   context: string | null
 }
 
-export type DashboardRange = 'today' | '7d' | '30d'
+export type DashboardRange = 'today' | '7d' | '30d' | 'custom'
 
 export type DashboardSnapshotInput = {
   range: DashboardRange
+  fromDate?: string
+  toDate?: string
 }
 
 export type DashboardProductSalesDto = {

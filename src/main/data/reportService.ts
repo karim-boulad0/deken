@@ -83,6 +83,16 @@ export function getSalesReport(
       }
     }
 
+    // Adjust for debt payments in the same range
+    const stPayments = db.prepare(
+      `SELECT COALESCE(SUM(amount_lbp), 0) AS t
+       FROM debt_payments
+       WHERE date(created_at) >= @fromD AND date(created_at) <= @toD`,
+    )
+    const paymentsTotal = (stPayments.get({ fromD: fromDate, toD: toDate }) as { t: number }).t
+    totalCashLbp += paymentsTotal
+    totalDebtLbp -= paymentsTotal
+
     const stSum = db.prepare(
       `SELECT COALESCE(SUM(total_lbp), 0) AS t FROM sales
        WHERE voided_at IS NULL AND date(created_at) >= @fromD AND date(created_at) <= @toD`,

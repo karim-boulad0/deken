@@ -24,6 +24,7 @@ const MODULES: PermissionModule[] = [
   'reports',
   'settings',
   'employees',
+  'devTools',
 ]
 
 export function EmployeesPage() {

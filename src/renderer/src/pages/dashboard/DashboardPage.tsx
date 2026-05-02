@@ -41,7 +41,7 @@ function formatPct(n: number, lng: string): string {
   })}%`
 }
 
-const rangeOptions: DashboardRange[] = ['today', '7d', '30d']
+const rangeOptions: DashboardRange[] = ['today', '7d', '30d', 'custom']
 
 export function DashboardPage() {
   const { t, i18n } = useTranslation()
@@ -51,6 +51,13 @@ export function DashboardPage() {
   const lng = i18n.language
 
   const [range, setRange] = useState<DashboardRange>('today')
+  const [customFrom, setCustomFrom] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 7)
+    return d.toISOString().split('T')[0]
+  })
+  const [customTo, setCustomTo] = useState(() => new Date().toISOString().split('T')[0])
+
   const [snap, setSnap] = useState<DashboardSnapshotDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -58,7 +65,11 @@ export function DashboardPage() {
   const load = useCallback(async () => {
     setLoadError(false)
     setLoading(true)
-    const r = await getDashboardSnapshot({ range })
+    const r = await getDashboardSnapshot({
+      range,
+      fromDate: range === 'custom' ? customFrom : undefined,
+      toDate: range === 'custom' ? customTo : undefined,
+    })
     setLoading(false)
     if (r.ok) {
       setSnap(r.data)
@@ -66,7 +77,7 @@ export function DashboardPage() {
       setLoadError(true)
       setSnap(null)
     }
-  }, [range])
+  }, [range, customFrom, customTo])
 
   useEffect(() => {
     void load()
@@ -223,6 +234,31 @@ export function DashboardPage() {
                 </button>
               ))}
             </div>
+
+            {range === 'custom' ? (
+              <div className="dash-range-custom">
+                <input
+                  type="date"
+                  className="dash-range-custom__input"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  disabled={loading}
+                  aria-label={t('dashboard.range.from')}
+                />
+                <span className="dash-range-custom__sep" aria-hidden>
+                  →
+                </span>
+                <input
+                  type="date"
+                  className="dash-range-custom__input"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  disabled={loading}
+                  aria-label={t('dashboard.range.to')}
+                />
+              </div>
+            ) : null}
+
             {!loadError && snap != null && !loading ? (
               <button
                 type="button"

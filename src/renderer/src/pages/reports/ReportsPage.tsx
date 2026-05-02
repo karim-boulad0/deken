@@ -290,7 +290,7 @@ export function ReportsPage() {
                     className="rep-chart__grid"
                     style={{
                       gridTemplateColumns: `repeat(${Math.max(1, chartByDay.length)}, minmax(0, 1fr))`,
-                      minWidth: `max(100%, ${(Math.max(1, chartByDay.length) * 0.55).toFixed(2)}rem)`,
+                      minWidth: `max(100%, ${(Math.max(1, chartByDay.length) * 4).toFixed(2)}rem)`,
                     }}
                   >
                     {chartByDay.map((d) => {
