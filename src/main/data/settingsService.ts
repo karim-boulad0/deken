@@ -37,6 +37,12 @@ const KEY_PRINT_RECEIPT = 'print_receipt_after_sale'
 const KEY_RECEIPT_PAPER = 'receipt_paper'
 const KEY_SHOW_DEV_TOOLS = 'show_dev_tools'
 const KEY_SHOW_WIFI_SECTION = 'show_wifi_section'
+const KEY_PF_SHOW_NAME = 'pf_show_name'
+const KEY_PF_SHOW_CAT = 'pf_show_cat'
+const KEY_PF_SHOW_SIZE = 'pf_show_size'
+const KEY_PF_SHOW_FLAVOR = 'pf_show_flavor'
+const KEY_PF_NAME_REQ = 'pf_name_req'
+const KEY_PF_CAT_REQ = 'pf_cat_req'
 const MAX_SHOP = 200
 
 const DEFAULT_LBP = 89_500
@@ -63,6 +69,12 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
     const showDevTools = rawShowDev === '1' || rawShowDev === 'true'
     const rawShowWifiSection = readRowValue(st, KEY_SHOW_WIFI_SECTION, '0').trim()
     const showWifiSection = rawShowWifiSection === '1' || rawShowWifiSection === 'true'
+    const productFormShowName = readRowValue(st, KEY_PF_SHOW_NAME, '1') === '1'
+    const productFormShowCategory = readRowValue(st, KEY_PF_SHOW_CAT, '1') === '1'
+    const productFormShowSize = readRowValue(st, KEY_PF_SHOW_SIZE, '1') === '1'
+    const productFormShowFlavor = readRowValue(st, KEY_PF_SHOW_FLAVOR, '1') === '1'
+    const productFormNameRequired = readRowValue(st, KEY_PF_NAME_REQ, '0') === '1'
+    const productFormCategoryRequired = readRowValue(st, KEY_PF_CAT_REQ, '0') === '1'
     return {
       shopName: shopName.length > MAX_SHOP ? shopName.slice(0, MAX_SHOP) : shopName,
       lbpPerUsd,
@@ -72,6 +84,12 @@ export function getAppSettings(db: Database): IpcResult<AppSettingsDto> {
       receiptPaper,
       showDevTools,
       showWifiSection,
+      productFormShowName,
+      productFormShowCategory,
+      productFormShowSize,
+      productFormShowFlavor,
+      productFormNameRequired,
+      productFormCategoryRequired,
     }
   })
 }
@@ -101,7 +119,13 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     input.printReceiptAfterSale === undefined &&
     input.receiptPaper === undefined &&
     input.showDevTools === undefined &&
-    input.showWifiSection === undefined
+    input.showWifiSection === undefined &&
+    input.productFormShowName === undefined &&
+    input.productFormShowCategory === undefined &&
+    input.productFormShowSize === undefined &&
+    input.productFormShowFlavor === undefined &&
+    input.productFormNameRequired === undefined &&
+    input.productFormCategoryRequired === undefined
   ) {
     return getAppSettings(db)
   }
@@ -150,6 +174,24 @@ export function setAppSettings(db: Database, input: UpdateAppSettingsInput): Ipc
     }
     if (input.showWifiSection !== undefined) {
       stUpsert.run({ k: KEY_SHOW_WIFI_SECTION, v: input.showWifiSection ? '1' : '0' })
+    }
+    if (input.productFormShowName !== undefined) {
+      stUpsert.run({ k: KEY_PF_SHOW_NAME, v: input.productFormShowName ? '1' : '0' })
+    }
+    if (input.productFormShowCategory !== undefined) {
+      stUpsert.run({ k: KEY_PF_SHOW_CAT, v: input.productFormShowCategory ? '1' : '0' })
+    }
+    if (input.productFormShowSize !== undefined) {
+      stUpsert.run({ k: KEY_PF_SHOW_SIZE, v: input.productFormShowSize ? '1' : '0' })
+    }
+    if (input.productFormShowFlavor !== undefined) {
+      stUpsert.run({ k: KEY_PF_SHOW_FLAVOR, v: input.productFormShowFlavor ? '1' : '0' })
+    }
+    if (input.productFormNameRequired !== undefined) {
+      stUpsert.run({ k: KEY_PF_NAME_REQ, v: input.productFormNameRequired ? '1' : '0' })
+    }
+    if (input.productFormCategoryRequired !== undefined) {
+      stUpsert.run({ k: KEY_PF_CAT_REQ, v: input.productFormCategoryRequired ? '1' : '0' })
     }
     const g = getAppSettings(db)
     if (!g.ok) {

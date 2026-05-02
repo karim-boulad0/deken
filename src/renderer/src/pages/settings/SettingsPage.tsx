@@ -388,6 +388,57 @@ export function SettingsPage() {
           </div>
         </section>
 
+        <section className="set-group" aria-labelledby="set-pf-title">
+          <h2 className="set-group__title" id="set-pf-title">
+            {t('settings.interface.productFormTitle')}
+          </h2>
+          <div className="set-group__body">
+            {[
+              { key: 'productFormShowName', label: 'settings.interface.productFormShowName' },
+              { key: 'productFormShowCategory', label: 'settings.interface.productFormShowCategory' },
+              { key: 'productFormShowSize', label: 'settings.interface.productFormShowSize' },
+              { key: 'productFormShowFlavor', label: 'settings.interface.productFormShowFlavor' },
+              { key: 'productFormNameRequired', label: 'settings.interface.productFormNameRequired' },
+              { key: 'productFormCategoryRequired', label: 'settings.interface.productFormCategoryRequired' },
+            ].map((item) => (
+              <div className="set-toggle" key={item.key}>
+                <span className="set-toggle__label">{t(item.label)}</span>
+                <button
+                  type="button"
+                  className={settings[item.key] ? 'set-switch set-switch--on' : 'set-switch'}
+                  role="switch"
+                  aria-checked={settings[item.key]}
+                  disabled={!loaded || saving || window.deken == null}
+                  onClick={async () => {
+                    if (!loaded || window.deken == null) return
+                    const nextValue = !settings[item.key]
+                    
+                    // Enforce at least one of Name or Category must be visible
+                    if (!nextValue) {
+                      if (item.key === 'productFormShowName' && !settings.productFormShowCategory) {
+                        toast.error(t('settings.errors.name_or_cat_required_visibility'))
+                        return
+                      }
+                      if (item.key === 'productFormShowCategory' && !settings.productFormShowName) {
+                        toast.error(t('settings.errors.name_or_cat_required_visibility'))
+                        return
+                      }
+                    }
+
+                    const r = await setAppSettings({ [item.key]: nextValue })
+                    if (r.ok) {
+                      await refresh()
+                      toast.success(t('settings.toast.saved'))
+                    }
+                  }}
+                >
+                  <span className="set-switch__thumb" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="set-group" aria-labelledby="set-lang-title">
           <h2 className="set-group__title" id="set-lang-title">
             {t('settings.groups.language')}

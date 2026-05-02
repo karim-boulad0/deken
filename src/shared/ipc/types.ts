@@ -107,7 +107,7 @@ export type ProductDto = {
   id: string
   sku: string
   barcode: string | null
-  name: string
+  name: string | null
   category: ProductCategoryRef | null
   size: ProductCategoryRef | null
   flavor: ProductCategoryRef | null
@@ -121,7 +121,8 @@ export type ProductDto = {
 export type CreateProductInput = {
   sku: string
   barcode?: string
-  name: string
+  /** Product name. Can be null if category is provided. */
+  name?: string | null
   /** If omitted or null, the product is uncategorized. */
   categoryId?: string | null
   categorySizeId?: string | null
@@ -134,7 +135,7 @@ export type CreateProductInput = {
 export type UpdateProductInput = {
   sku?: string
   barcode?: string | null
-  name?: string
+  name?: string | null
   /** Set to null to clear category. Omitted = leave unchanged. */
   categoryId?: string | null
   categorySizeId?: string | null
@@ -324,6 +325,18 @@ export type AppSettingsDto = {
   showDevTools: boolean
   /** Hidden support toggle for showing Wi-Fi credentials section in Settings. */
   showWifiSection: boolean
+  /** Whether to show the Name field in the product form. */
+  productFormShowName: boolean
+  /** Whether to show the Category field in the product form. */
+  productFormShowCategory: boolean
+  /** Whether to show the Size field in the product form. */
+  productFormShowSize: boolean
+  /** Whether to show the Flavor field in the product form. */
+  productFormShowFlavor: boolean
+  /** Whether the Name field is mandatory in the product form. */
+  productFormNameRequired: boolean
+  /** Whether the Category field is mandatory in the product form. */
+  productFormCategoryRequired: boolean
 }
 
 export type UpdateAppSettingsInput = {
@@ -335,6 +348,12 @@ export type UpdateAppSettingsInput = {
   receiptPaper?: ReceiptPaper
   showDevTools?: boolean
   showWifiSection?: boolean
+  productFormShowName?: boolean
+  productFormShowCategory?: boolean
+  productFormShowSize?: boolean
+  productFormShowFlavor?: boolean
+  productFormNameRequired?: boolean
+  productFormCategoryRequired?: boolean
 }
 
 export type SalesReportDto = {

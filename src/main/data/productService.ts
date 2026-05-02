@@ -3,6 +3,7 @@ import type { CreateProductInput, IpcErrorShape, IpcResult, ProductDto, UpdatePr
 import { categoryExistsById } from './categoryService'
 import { getCategoryIdByFlavorId, getCategoryIdBySizeId } from './productAttributeService'
 import type { Database } from 'better-sqlite3'
+import { getAppSettings } from './settingsService'
 
 type JoinedRow = {
   id: string
@@ -72,7 +73,16 @@ function asResult<T>(fn: () => T): IpcResult<T> {
       m === 'flavor_not_found' ||
       m === 'category_required_for_variant' ||
       m === 'size_category_mismatch' ||
-      m === 'flavor_category_mismatch'
+      m === 'flavor_category_mismatch' ||
+      m === 'name_required' ||
+      m === 'category_required' ||
+      m === 'name_or_category_required' ||
+      m === 'barcode_required' ||
+      m === 'base_price_invalid' ||
+      m === 'price_invalid' ||
+      m === 'stock_invalid' ||
+      m === 'sku_required' ||
+      m === 'id_required'
     ) {
       return { ok: false, error: makeError('validation', m) }
     }
@@ -83,8 +93,12 @@ function asResult<T>(fn: () => T): IpcResult<T> {
   }
 }
 
-const norm = (s: string) => s.trim()
-const isBlank = (s: string) => s.trim().length === 0
+const norm = (s: string | null | undefined) => (s ? s.trim() : '')
+const normOrNull = (s: string | null | undefined) => {
+  const n = s ? s.trim() : ''
+  return n === '' ? null : n
+}
+const isBlank = (s: string | null | undefined) => (s ? s.trim().length === 0 : true)
 
 function assertCategoryIdValid(db: Database, categoryId: string | null | undefined): void {
   if (categoryId == null || isBlank(categoryId)) {
@@ -127,10 +141,19 @@ function assertSizeFlavorValid(
   }
 }
 
-function validateCreate(input: CreateProductInput): IpcErrorShape | null {
-  if (isBlank(input.name)) {
+function validateCreate(db: Database, input: CreateProductInput): IpcErrorShape | null {
+  const settingsRes = getAppSettings(db)
+  const settings = settingsRes.ok ? settingsRes.data : null
+
+  if (settings?.productFormNameRequired && isBlank(input.name || '')) {
     return makeError('validation', 'name_required')
   }
+  if (settingsRes.ok && settingsRes.data.productFormCategoryRequired && isBlank(input.categoryId || '')) {
+    return makeError('validation', 'category_required')
+  }
+
+  // Remove the global "name or category required" check to allow Barcode-only products.
+  
   if (isBlank(input.barcode || '')) {
     return makeError('validation', 'barcode_required')
   }
@@ -158,13 +181,22 @@ function generateAutoSku(db: Database): string {
   return `P${String(next).padStart(6, '0')}`
 }
 
-function validateUpdate(v: UpdateProductInput): IpcErrorShape | null {
+function validateUpdate(db: Database, v: UpdateProductInput): IpcErrorShape | null {
+  const settingsRes = getAppSettings(db)
+  const settings = settingsRes.ok ? settingsRes.data : null
+
   if (v.sku !== undefined && isBlank(v.sku)) {
     return makeError('validation', 'sku_required')
   }
-  if (v.name !== undefined && isBlank(v.name)) {
+  if (settings?.productFormNameRequired && v.name !== undefined && isBlank(v.name || '')) {
     return makeError('validation', 'name_required')
   }
+  if (settingsRes.ok && settingsRes.data.productFormCategoryRequired && v.categoryId !== undefined && isBlank(v.categoryId || '')) {
+    return makeError('validation', 'category_required')
+  }
+  
+  // Remove the global "name or category required" check to allow Barcode-only products.
+  
   if (v.barcode !== undefined && isBlank(v.barcode || '')) {
     return makeError('validation', 'barcode_required')
   }
@@ -240,7 +272,7 @@ function getProductById(db: Database, id: string): ProductDto {
 }
 
 export function createProduct(db: Database, input: CreateProductInput): IpcResult<ProductDto> {
-  const v = validateCreate(input)
+  const v = validateCreate(db, input)
   if (v) {
     return { ok: false, error: v }
   }
@@ -258,7 +290,7 @@ export function createProduct(db: Database, input: CreateProductInput): IpcResul
     assertCategoryIdValid(db, cid)
     assertSizeFlavorValid(db, cid, categorySizeId, categoryFlavorId)
     const id = randomUUID()
-    const barcode = input.barcode != null && norm(input.barcode) ? norm(input.barcode) : null
+    const barcode = normOrNull(input.barcode)
     const sku = isBlank(input.sku) ? generateAutoSku(db) : norm(input.sku)
     const now = new Date().toISOString()
     const st = db.prepare(
@@ -269,7 +301,7 @@ export function createProduct(db: Database, input: CreateProductInput): IpcResul
       id,
       sku,
       barcode,
-      norm(input.name),
+      normOrNull(input.name),
       cid,
       categorySizeId,
       categoryFlavorId,
@@ -288,7 +320,7 @@ export function updateProduct(
   id: string,
   input: UpdateProductInput,
 ): IpcResult<ProductDto> {
-  const v = validateUpdate(input)
+  const v = validateUpdate(db, input)
   if (v) {
     return { ok: false, error: v }
   }
@@ -318,16 +350,8 @@ export function updateProduct(
       throw new Error('not_found')
     }
     const sku = input.sku !== undefined ? norm(input.sku) : existing.sku
-    const name = input.name !== undefined ? norm(input.name) : existing.name
-    let barcode: string | null
-    if (input.barcode === null) {
-      barcode = null
-    } else if (input.barcode === undefined) {
-      barcode = existing.barcode
-    } else {
-      const b = norm(input.barcode)
-      barcode = b.length > 0 ? b : null
-    }
+    const name = input.name !== undefined ? normOrNull(input.name) : existing.name
+    const barcode = input.barcode !== undefined ? normOrNull(input.barcode) : existing.barcode
     const basePriceLbp =
       input.basePriceLbp !== undefined ? input.basePriceLbp : existing.base_price_lbp
     const priceLbp = input.priceLbp !== undefined ? input.priceLbp : existing.price_lbp

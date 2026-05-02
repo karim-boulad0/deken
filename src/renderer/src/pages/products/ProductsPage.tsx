@@ -1,6 +1,7 @@
 import { Download, Pencil, Search, Trash2, Upload } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
 import type {
   CategoryDto,
   CategoryFlavorDto,
@@ -43,6 +44,8 @@ function mapIpcErrorKey(message: string): string {
   if (
     m === 'sku_required' ||
     m === 'name_required' ||
+    m === 'category_required' ||
+    m === 'name_or_category_required' ||
     m === 'barcode_required' ||
     m === 'id_required' ||
     m === 'category_not_found'
@@ -68,6 +71,7 @@ function calcProfit(basePriceLbp: number, priceLbp: number): { amountLbp: number
 
 export function ProductsPage() {
   const { t, i18n } = useTranslation()
+  const { settings } = useAppSettings()
   const toast = useToast()
   const lng = i18n.language
   const [section, setSection] = useState<PageSection>('catalog')
@@ -165,9 +169,12 @@ export function ProductsPage() {
   ): Promise<boolean> {
     setFormError(null)
     setFormBusy(true)
+    console.log('[ProductsPage] onFormSave payload:', payload)
     try {
       if ('create' in payload) {
+        console.log('[ProductsPage] Creating product...', payload.create)
         const r = await createProduct(payload.create)
+        console.log('[ProductsPage] createProduct result:', r)
         if (r.ok) {
           if (formMode.type === 'edit') {
             setFormMode({ type: 'create' })
@@ -187,7 +194,9 @@ export function ProductsPage() {
           return false
         }
       } else {
+        console.log('[ProductsPage] Updating product...', payload.id, payload.input)
         const r = await updateProduct(payload.id, payload.input)
+        console.log('[ProductsPage] updateProduct result:', r)
         if (r.ok) {
           setFormMode({ type: 'create' })
           await refresh()
@@ -549,10 +558,10 @@ export function ProductsPage() {
                 <table className="prod-table">
                   <colgroup>
                     <col className="prod-table__col-sku" />
-                    <col className="prod-table__col-name" />
-                    <col className="prod-table__col-cat" />
-                    <col className="prod-table__col-cat" />
-                    <col className="prod-table__col-cat" />
+                    {settings.productFormShowName && <col className="prod-table__col-name" />}
+                    {settings.productFormShowCategory && <col className="prod-table__col-cat" />}
+                    {settings.productFormShowSize && <col className="prod-table__col-cat" />}
+                    {settings.productFormShowFlavor && <col className="prod-table__col-cat" />}
                     <col className="prod-table__col-stock" />
                     <col className="prod-table__col-price" />
                     <col className="prod-table__col-price" />
@@ -562,10 +571,10 @@ export function ProductsPage() {
                   <thead>
                     <tr>
                       <th scope="col">{t('products.table.idColumn')}</th>
-                      <th scope="col">{t('products.table.name')}</th>
-                      <th scope="col">{t('products.table.category')}</th>
-                      <th scope="col">{t('products.table.size')}</th>
-                      <th scope="col">{t('products.table.flavor')}</th>
+                      {settings.productFormShowName && <th scope="col">{t('products.table.name')}</th>}
+                      {settings.productFormShowCategory && <th scope="col">{t('products.table.category')}</th>}
+                      {settings.productFormShowSize && <th scope="col">{t('products.table.size')}</th>}
+                      {settings.productFormShowFlavor && <th scope="col">{t('products.table.flavor')}</th>}
                       <th scope="col" className="prod-table__num">
                         {t('products.table.stock')}
                       </th>
@@ -586,7 +595,7 @@ export function ProductsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={10} className="prod-table__cell-muted">
+                        <td colSpan={6 + (settings.productFormShowName ? 1 : 0) + (settings.productFormShowCategory ? 1 : 0) + (settings.productFormShowSize ? 1 : 0) + (settings.productFormShowFlavor ? 1 : 0)} className="prod-table__cell-muted">
                           {t('products.table.loadingRow')}
                         </td>
                       </tr>
@@ -604,31 +613,39 @@ export function ProductsPage() {
                           <td>
                             <code className="prod-code">{idx + 1}</code>
                           </td>
-                          <td className="prod-table__cell-truncate">
-                            <span className="prod-table__ellipsis" title={row.name}>
-                              {row.name}
-                            </span>
-                          </td>
-                          <td className="prod-table__cell-muted prod-table__cell-truncate">
-                            <span
-                              className="prod-table__ellipsis"
-                              title={row.category?.name}
-                            >
-                              {row.category?.name
-                                ? row.category.name
-                                : t('common.emDash')}
-                            </span>
-                          </td>
-                          <td className="prod-table__cell-muted prod-table__cell-truncate">
-                            <span className="prod-table__ellipsis" title={row.size?.name}>
-                              {row.size?.name ? row.size.name : t('common.emDash')}
-                            </span>
-                          </td>
-                          <td className="prod-table__cell-muted prod-table__cell-truncate">
-                            <span className="prod-table__ellipsis" title={row.flavor?.name}>
-                              {row.flavor?.name ? row.flavor.name : t('common.emDash')}
-                            </span>
-                          </td>
+                          {settings.productFormShowName && (
+                            <td className="prod-table__cell-truncate">
+                              <span className="prod-table__ellipsis" title={row.name}>
+                                {row.name}
+                              </span>
+                            </td>
+                          )}
+                          {settings.productFormShowCategory && (
+                            <td className="prod-table__cell-muted prod-table__cell-truncate">
+                              <span
+                                className="prod-table__ellipsis"
+                                title={row.category?.name}
+                              >
+                                {row.category?.name
+                                  ? row.category.name
+                                  : t('common.emDash')}
+                              </span>
+                            </td>
+                          )}
+                          {settings.productFormShowSize && (
+                            <td className="prod-table__cell-muted prod-table__cell-truncate">
+                              <span className="prod-table__ellipsis" title={row.size?.name}>
+                                {row.size?.name ? row.size.name : t('common.emDash')}
+                              </span>
+                            </td>
+                          )}
+                          {settings.productFormShowFlavor && (
+                            <td className="prod-table__cell-muted prod-table__cell-truncate">
+                              <span className="prod-table__ellipsis" title={row.flavor?.name}>
+                                {row.flavor?.name ? row.flavor.name : t('common.emDash')}
+                              </span>
+                            </td>
+                          )}
                           <td className="prod-table__num">
                             <span
                               className={

@@ -395,6 +395,7 @@
       "generic": "Could not save: {{message}}",
       "sku_required": "Enter a product code (SKU).",
       "name_required": "Enter a name.",
+      "name_or_category_required": "Name or category is required.",
       "barcode_required": "Enter a barcode.",
       "id_required": "Product not found. Refresh the list and try again.",
       "category_not_found": "That category no longer exists. Choose another or refresh the list.",
@@ -957,7 +958,14 @@
       "navLayoutTop": "Top bar",
       "navLayoutTopHint": "Horizontal links under the header; the main work area uses the full width of the content column.",
       "devToolsLabel": "Show Dev Tools in sidebar",
-      "devToolsHint": "When disabled, the \"Dev Tools\" link will be hidden from the sidebar for a cleaner interface."
+      "devToolsHint": "When disabled, the \"Dev Tools\" link will be hidden from the sidebar for a cleaner interface.",
+      "productFormTitle": "Product Form Fields",
+      "productFormShowName": "Show Name field",
+      "productFormShowCategory": "Show Category field",
+      "productFormShowSize": "Show Size field",
+      "productFormShowFlavor": "Show Flavor field",
+      "productFormNameRequired": "Product Name is mandatory",
+      "productFormCategoryRequired": "Product Category is mandatory"
     },
     "general": {
       "shopName": "Business name",
@@ -983,6 +991,7 @@
       "shop_name_too_long": "Shop name is too long (max 200 characters).",
       "nav_layout_invalid": "Invalid navigation layout.",
       "receipt_paper_invalid": "Invalid receipt paper option.",
+      "name_or_cat_required_visibility": "At least one of Name or Category must remain visible.",
       "save_failed": "Could not save settings ({{message}})."
     },
     "printing": {

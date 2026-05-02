@@ -395,8 +395,10 @@
       "generic": "تعذّر الحفظ: {{message}}",
       "sku_required": "أدخل رمز صنف (SKU).",
       "name_required": "أدخل اسماً.",
+      "name_or_category_required": "يجب إدخال الاسم أو التصنيف على الأقل.",
       "barcode_required": "أدخل الباركود.",
       "id_required": "الصنف غير موجود. حدّث القائمة ثم أعد المحاولة.",
+      "category_required": "اختَر تصنيفاً للمنتج.",
       "category_not_found": "هذا التصنيف لم يعد موجوداً. اختر آخر أو حدّث القائمة.",
       "category_required_for_variant": "اختَر التصنيف أولاً قبل ربط الحجم أو الطَعمة.",
       "size_not_found": "الحجم المحدد لم يعد موجوداً.",
@@ -960,7 +962,14 @@
       "navLayoutTop": "شريط علوي",
       "navLayoutTopHint": "روابط أفقية تحت رأس النافذة؛ منطقة العمل تستخدم عرض العمود بالكامل.",
       "devToolsLabel": "إظهار أدوات المطور في القائمة",
-      "devToolsHint": "عند إيقاف التشغيل، سيتم إخفاء رابط «أدوات المطور» من الشريط الجانبي لتسهيل الواجهة."
+      "devToolsHint": "عند إيقاف التشغيل، سيتم إخفاء رابط «أدوات المطور» من الشريط الجانبي لتسهيل الواجهة.",
+      "productFormTitle": "حقول نموذج المنتج",
+      "productFormShowName": "إظهار حقل الاسم",
+      "productFormShowCategory": "إظهار حقل التصنيف",
+      "productFormShowSize": "إظهار حقل الحجم",
+      "productFormShowFlavor": "إظهار حقل الطعمة",
+      "productFormNameRequired": "حقل الاسم إلزامي",
+      "productFormCategoryRequired": "حقل التصنيف إلزامي"
     },
     "general": {
       "shopName": "اسم النشاط",
@@ -986,6 +995,7 @@
       "shop_name_too_long": "اسم المحل طويل جداً (حد 200 حرف).",
       "nav_layout_invalid": "تخطيط تنقّل غير صالح.",
       "receipt_paper_invalid": "خيار ورق إيصال غير صالح.",
+      "name_or_cat_required_visibility": "يجب إبقاء حقل الاسم أو التصنيف ظاهراً على الأقل.",
       "save_failed": "تعذّر حفظ الإعدادات ({{message}})."
     },
     "printing": {

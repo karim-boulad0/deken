@@ -9,6 +9,7 @@ import type {
   UpdateProductInput,
 } from '../../../../shared/ipc/types'
 import { formatLbp } from '../pos/formatPos'
+import { useAppSettings } from '../../contexts/AppSettingsContext'
 import './ProductFormDialog.css'
 
 type Mode = { type: 'create' } | { type: 'edit'; product: ProductDto }
@@ -66,6 +67,7 @@ export function ProductFormDialog({
   barcodeResetKey,
 }: Props) {
   const { t, i18n } = useTranslation()
+  const { settings } = useAppSettings()
   const lng = i18n.language
   const titleId = useId()
   const [form, setForm] = useState<FormState>(empty)
@@ -169,6 +171,26 @@ export function ProductFormDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (busy) return
+
+    console.log('[ProductForm] Submitting...', { form, settings })
+
+    const nameTrim = form.name?.trim() || ''
+    const catIdTrim = form.categoryId?.trim() || ''
+
+    // 1. Specific field requirements
+    if (settings.productFormNameRequired && !nameTrim) {
+      toast.error(t('products.errors.name_required'))
+      return
+    }
+    if (settings.productFormCategoryRequired && !catIdTrim) {
+      toast.error(t('products.errors.category_not_found')) // Or add a specific "category required" translation
+      return
+    }
+
+    // Global "at least one" requirement is now removed to allow Barcode-only products.
+    // If the user wants specific fields to be mandatory, they can enable them in settings.
+
     const categoryId = form.categoryId && String(form.categoryId).trim() ? String(form.categoryId) : null
     const categorySizeId =
       form.categorySizeId && String(form.categorySizeId).trim() ? String(form.categorySizeId) : null
@@ -183,11 +205,10 @@ export function ProductFormDialog({
       payload = {
         id: mode.product.id,
         input: {
-          name: form.name,
-          categoryId,
           categorySizeId,
           categoryFlavorId,
           barcode: form.barcode?.trim() ? form.barcode : null,
+          name: nameTrim || null,
           basePriceLbp,
           priceLbp,
           stock,
@@ -197,11 +218,11 @@ export function ProductFormDialog({
       payload = {
         create: {
           sku: '',
-          name: form.name,
           categoryId: categoryId ?? undefined,
           categorySizeId: categorySizeId ?? undefined,
           categoryFlavorId: categoryFlavorId ?? undefined,
           barcode: form.barcode,
+          name: nameTrim || null,
           basePriceLbp,
           priceLbp,
           stock,
@@ -209,7 +230,14 @@ export function ProductFormDialog({
       }
     }
 
-    await onSave(payload)
+    console.log('[ProductForm] Final Payload:', payload)
+
+    try {
+      const result = await onSave(payload)
+      console.log('[ProductForm] onSave result:', result)
+    } catch (err) {
+      console.error('[ProductForm] onSave crashed:', err)
+    }
   }
 
   function onBackdropClick(e: React.MouseEvent) {
@@ -239,59 +267,75 @@ export function ProductFormDialog({
             {isEdit ? t('products.form.titleEdit') : t('products.form.titleCreate')}
           </h2>
           <form className="pf-form" onKeyDown={onFormKeyDown} onSubmit={handleSubmit}>
-            <div className="pf-field">
-              <label htmlFor="pf-name">{t('products.form.name')}</label>
-              <input id="pf-name" className="pf-input" name="product-name" value={form.name} onChange={(e) => set('name', e.target.value)} required autoComplete="off" autoCorrect="off" spellCheck={false} />
-            </div>
-            <div className="pf-field">
-              <label htmlFor="pf-cat">{t('products.form.category')}</label>
-              <select
-                id="pf-cat"
-                className="pf-input pf-input--select"
-                value={selectCategoryValue}
-                onChange={(e) => {
-                  const v = e.target.value
-                  const next = v === '' ? null : v
-                  setForm((f) => ({ ...f, categoryId: next, categorySizeId: null, categoryFlavorId: null }))
-                }}
-                aria-label={t('products.form.category')}
-              >
-                <option value="">{t('products.form.categoryNone')}</option>
-                {categoryOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {settings.productFormShowName && (
+                <div className="pf-field">
+                  <label htmlFor="pf-name">
+                    {t('products.form.name')}
+                    {settings.productFormNameRequired && <span className="pf-required"> *</span>}
+                  </label>
+                  <input id="pf-name" className="pf-input" name="product-name" value={form.name || ''} onChange={(e) => set('name', e.target.value)} autoComplete="off" autoCorrect="off" spellCheck={false} />
+                </div>
+              )}
+              {settings.productFormShowCategory && (
+                <div className="pf-field">
+                  <label htmlFor="pf-cat">
+                    {t('products.form.category')}
+                    {settings.productFormCategoryRequired && <span className="pf-required"> *</span>}
+                  </label>
+                  <select
+                    id="pf-cat"
+                    className="pf-input pf-input--select"
+                    value={selectCategoryValue}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      const next = v === '' ? null : v
+                      setForm((f) => ({ ...f, categoryId: next, categorySizeId: null, categoryFlavorId: null }))
+                    }}
+                    aria-label={t('products.form.category')}
+                  >
+                    <option value="">{t('products.form.categoryNone')}</option>
+                    {categoryOptions.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             <div className="pf-field">
               <label htmlFor="pf-barcode">{t('products.form.barcode')}</label>
               <input id="pf-barcode" className="pf-input" name="product-barcode" value={form.barcode} onChange={(e) => set('barcode', e.target.value)} required autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="text" />
             </div>
-            <div className="pf-row">
-              <div className="pf-field">
-                <label htmlFor="pf-size">{t('products.form.size')}</label>
-                <select id="pf-size" className="pf-input pf-input--select" value={selectSizeValue} onChange={(e) => set('categorySizeId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
-                  <option value="">{t('products.form.sizeNone')}</option>
-                  {filteredSizes.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+            {(settings.productFormShowSize || settings.productFormShowFlavor) && (
+              <div className="pf-row">
+                {settings.productFormShowSize && (
+                  <div className="pf-field">
+                    <label htmlFor="pf-size">{t('products.form.size')}</label>
+                    <select id="pf-size" className="pf-input pf-input--select" value={selectSizeValue} onChange={(e) => set('categorySizeId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
+                      <option value="">{t('products.form.sizeNone')}</option>
+                      {filteredSizes.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {settings.productFormShowFlavor && (
+                  <div className="pf-field">
+                    <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
+                    <select id="pf-flavor" className="pf-input pf-input--select" value={selectFlavorValue} onChange={(e) => set('categoryFlavorId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
+                      <option value="">{t('products.form.flavorNone')}</option>
+                      {filteredFlavors.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
-              <div className="pf-field">
-                <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
-                <select id="pf-flavor" className="pf-input pf-input--select" value={selectFlavorValue} onChange={(e) => set('categoryFlavorId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
-                  <option value="">{t('products.form.flavorNone')}</option>
-                  {filteredFlavors.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            )}
             <div className="pf-row">
               <div className="pf-field">
                 <label htmlFor="pf-base-price">{t('products.form.basePriceLbp')}</label>
@@ -373,50 +417,59 @@ export function ProductFormDialog({
           {isEdit ? t('products.form.titleEdit') : t('products.form.titleCreate')}
         </h2>
         <form className="pf-form" onKeyDown={onFormKeyDown} onSubmit={handleSubmit}>
+          {settings.productFormShowName && (
+            <div className="pf-field">
+              <label htmlFor="pf-name-modal">
+                {t('products.form.name')}
+                {settings.productFormNameRequired && <span className="pf-required"> *</span>}
+              </label>
+              <input
+                id="pf-name-modal"
+                className="pf-input"
+                name="product-name"
+                value={form.name || ''}
+                onChange={(e) => set('name', e.target.value)}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </div>
+          )}
+          {settings.productFormShowCategory && (
+            <div className="pf-field">
+              <label htmlFor="pf-cat-modal">
+                {t('products.form.category')}
+                {settings.productFormCategoryRequired && <span className="pf-required"> *</span>}
+              </label>
+              <select
+                id="pf-cat-modal"
+                className="pf-input pf-input--select"
+                value={selectCategoryValue}
+                onChange={(e) => {
+                  const v = e.target.value
+                  const next = v === '' ? null : v
+                  setForm((f) => ({
+                    ...f,
+                    categoryId: next,
+                    categorySizeId: null,
+                    categoryFlavorId: null,
+                  }))
+                }}
+                aria-label={t('products.form.category')}
+              >
+                <option value="">{t('products.form.categoryNone')}</option>
+                {categoryOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="pf-field">
-            <label htmlFor="pf-name">{t('products.form.name')}</label>
+            <label htmlFor="pf-barcode-modal">{t('products.form.barcode')}</label>
             <input
-              id="pf-name"
-              className="pf-input"
-              name="product-name"
-              value={form.name}
-              onChange={(e) => set('name', e.target.value)}
-              required
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </div>
-          <div className="pf-field">
-            <label htmlFor="pf-cat">{t('products.form.category')}</label>
-            <select
-              id="pf-cat"
-              className="pf-input pf-input--select"
-              value={selectCategoryValue}
-              onChange={(e) => {
-                const v = e.target.value
-                const next = v === '' ? null : v
-                setForm((f) => ({
-                  ...f,
-                  categoryId: next,
-                  categorySizeId: null,
-                  categoryFlavorId: null,
-                }))
-              }}
-              aria-label={t('products.form.category')}
-            >
-              <option value="">{t('products.form.categoryNone')}</option>
-              {categoryOptions.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="pf-field">
-            <label htmlFor="pf-barcode">{t('products.form.barcode')}</label>
-            <input
-              id="pf-barcode"
+              id="pf-barcode-modal"
               className="pf-input"
               name="product-barcode"
               value={form.barcode}
@@ -428,53 +481,59 @@ export function ProductFormDialog({
               inputMode="text"
             />
           </div>
+          {(settings.productFormShowSize || settings.productFormShowFlavor) && (
+            <div className="pf-row">
+              {settings.productFormShowSize && (
+                <div className="pf-field">
+                  <label htmlFor="pf-size-modal">{t('products.form.size')}</label>
+                  <select
+                    id="pf-size-modal"
+                    className="pf-input pf-input--select"
+                    value={selectSizeValue}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      set('categorySizeId', v === '' ? null : v)
+                    }}
+                    disabled={!form.categoryId}
+                  >
+                    <option value="">{t('products.form.sizeNone')}</option>
+                    {filteredSizes.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {settings.productFormShowFlavor && (
+                <div className="pf-field">
+                  <label htmlFor="pf-flavor-modal">{t('products.form.flavor')}</label>
+                  <select
+                    id="pf-flavor-modal"
+                    className="pf-input pf-input--select"
+                    value={selectFlavorValue}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      set('categoryFlavorId', v === '' ? null : v)
+                    }}
+                    disabled={!form.categoryId}
+                  >
+                    <option value="">{t('products.form.flavorNone')}</option>
+                    {filteredFlavors.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
           <div className="pf-row">
             <div className="pf-field">
-              <label htmlFor="pf-size">{t('products.form.size')}</label>
-              <select
-                id="pf-size"
-                className="pf-input pf-input--select"
-                value={selectSizeValue}
-                onChange={(e) => {
-                  const v = e.target.value
-                  set('categorySizeId', v === '' ? null : v)
-                }}
-                disabled={!form.categoryId}
-              >
-                <option value="">{t('products.form.sizeNone')}</option>
-                {filteredSizes.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="pf-field">
-              <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
-              <select
-                id="pf-flavor"
-                className="pf-input pf-input--select"
-                value={selectFlavorValue}
-                onChange={(e) => {
-                  const v = e.target.value
-                  set('categoryFlavorId', v === '' ? null : v)
-                }}
-                disabled={!form.categoryId}
-              >
-                <option value="">{t('products.form.flavorNone')}</option>
-                {filteredFlavors.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="pf-row">
-            <div className="pf-field">
-              <label htmlFor="pf-base-price">{t('products.form.basePriceLbp')}</label>
+              <label htmlFor="pf-base-price-modal">{t('products.form.basePriceLbp')}</label>
               <input
-                id="pf-base-price"
+                id="pf-base-price-modal"
                 className="pf-input"
                 type="number"
                 min={0}
@@ -487,9 +546,9 @@ export function ProductFormDialog({
               />
             </div>
             <div className="pf-field">
-              <label htmlFor="pf-price">{t('products.form.priceLbp')}</label>
+              <label htmlFor="pf-price-modal">{t('products.form.priceLbp')}</label>
               <input
-                id="pf-price"
+                id="pf-price-modal"
                 className="pf-input"
                 type="number"
                 min={0}
@@ -502,9 +561,9 @@ export function ProductFormDialog({
               />
             </div>
             <div className="pf-field">
-              <label htmlFor="pf-stock">{t('products.form.stock')}</label>
+              <label htmlFor="pf-stock-modal">{t('products.form.stock')}</label>
               <input
-                id="pf-stock"
+                id="pf-stock-modal"
                 className="pf-input"
                 type="number"
                 min={0}
