@@ -1055,3 +1055,124 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* Customer Quick History Styles */
+.pos-history-card {
+  margin-block-start: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+  border: 1px solid var(--color-border-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  animation: pos-slide-down 0.25s ease-out;
+}
+
+@keyframes pos-slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pos-history-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-block-end: var(--space-sm);
+  border-block-end: 1px solid color-mix(in srgb, var(--color-border-soft) 50%, transparent);
+}
+
+.pos-history-card__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pos-history-card__balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.pos-history-card__balance-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.pos-history-card__balance-value {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #c2410c; /* Warm orange for debt balance */
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-history-card__balance-value--zero {
+  color: var(--color-success, #15803d);
+}
+
+.pos-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.pos-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-md);
+  background: #fff;
+  border: 1px solid var(--color-border-soft);
+  transition: transform 0.15s ease;
+}
+
+.pos-history-item:hover {
+  transform: translateX(-2px);
+  border-color: var(--color-border);
+}
+
+[dir="rtl"] .pos-history-item:hover {
+  transform: translateX(2px);
+}
+
+.pos-history-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.pos-history-item__type {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--color-muted);
+}
+
+.pos-history-item__date {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pos-history-item__amount {
+  font-size: 0.85rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.pos-history-card__loading,
+.pos-history-card__empty {
+  padding: var(--space-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-align: center;
+  font-style: italic;
+}

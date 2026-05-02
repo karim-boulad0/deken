@@ -281,6 +281,15 @@
         "cancel": "Cancel",
         "confirm": "Confirm debt"
       },
+      "quickHistory": {
+        "title": "Customer Quick History",
+        "balance": "Current Balance",
+        "lastPurchases": "Last 3 Purchases (Debt)",
+        "noHistory": "No previous debt history found.",
+        "loading": "Loading history...",
+        "typeDebt": "Purchase",
+        "typePayment": "Payment"
+      },
       "errors": {
         "nameRequired": "Enter a customer name to continue.",
         "debtorRequired": "Select a debtor from the list.",

@@ -1,7 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { listCustomers } from '../../lib/api/dekenClient'
-import type { CustomerDto } from '../../../../shared/ipc/types'
+import { getCustomerLedger, listCustomerBalances } from '../../lib/api/dekenClient'
+import type { CustomerBalanceRow, CustomerLedgerLineDto } from '../../../../shared/ipc/types'
+import { formatLbp } from './formatPos'
 
 export type DebtRecordPayload = {
   mode: 'existing' | 'new'
@@ -34,7 +35,7 @@ export function DebtRecordDialog({
   lineCount,
   onConfirm,
 }: DebtRecordDialogProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const dialogRef = useRef<HTMLDialogElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
@@ -51,18 +52,42 @@ export function DebtRecordDialog({
   const [phone, setPhone] = useState('')
   const [note, setNote] = useState('')
   const [errorKey, setErrorKey] = useState<ErrorKey>(null)
-  const [customers, setCustomers] = useState<CustomerDto[]>([])
+  const [customers, setCustomers] = useState<CustomerBalanceRow[]>([])
   const [loadError, setLoadError] = useState(false)
+
+  const [history, setHistory] = useState<CustomerLedgerLineDto[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
 
   const loadCustomers = useCallback(async () => {
     setLoadError(false)
-    const r = await listCustomers()
+    const r = await listCustomerBalances()
     if (r.ok) {
       setCustomers(r.data)
     } else {
       setLoadError(true)
     }
   }, [])
+
+  const loadHistory = useCallback(async (customerId: string) => {
+    setIsLoadingHistory(true)
+    setHistory([])
+    const r = await getCustomerLedger(customerId)
+    if (r.ok) {
+      // We only want the last 3 purchases (debt_sale) or items
+      // User said "last 3 purchases", so we'll filter for debt_sale
+      const purchases = r.data.filter((line) => line.kind === 'debt_sale').slice(0, 3)
+      setHistory(purchases)
+    }
+    setIsLoadingHistory(false)
+  }, [])
+
+  useEffect(() => {
+    if (mode === 'existing' && selectedDebtorId) {
+      void loadHistory(selectedDebtorId)
+    } else {
+      setHistory([])
+    }
+  }, [mode, selectedDebtorId, loadHistory])
 
   const filteredDebtors = useMemo(() => {
     const q = pickerQuery.trim().toLowerCase()
@@ -278,6 +303,64 @@ export function DebtRecordDialog({
               <p className="pos-dialog__error" id={errorId} role="alert">
                 {t('pos.debt.errors.debtorRequired')}
               </p>
+            ) : null}
+
+            {mode === 'existing' && selectedDebtorId ? (
+              <div className="pos-history-card">
+                <header className="pos-history-card__header">
+                  <h3 className="pos-history-card__title">{t('pos.debt.quickHistory.title')}</h3>
+                  <div className="pos-history-card__balance">
+                    <span className="pos-history-card__balance-label">
+                      {t('pos.debt.quickHistory.balance')}
+                    </span>
+                    <span
+                      className={`pos-history-card__balance-value${
+                        (customers.find((c) => c.id === selectedDebtorId)?.balanceLbp ?? 0) === 0
+                          ? ' pos-history-card__balance-value--zero'
+                          : ''
+                      }`}
+                    >
+                      {formatLbp(
+                        customers.find((c) => c.id === selectedDebtorId)?.balanceLbp ?? 0,
+                        i18n.language,
+                      )}
+                    </span>
+                  </div>
+                </header>
+
+                <div className="pos-history-list">
+                  <span className="pos-field__label">
+                    {t('pos.debt.quickHistory.lastPurchases')}
+                  </span>
+                  {isLoadingHistory ? (
+                    <div className="pos-history-card__loading">
+                      {t('pos.debt.quickHistory.loading')}
+                    </div>
+                  ) : history.length === 0 ? (
+                    <div className="pos-history-card__empty">
+                      {t('pos.debt.quickHistory.noHistory')}
+                    </div>
+                  ) : (
+                    history.map((item) => (
+                      <div key={item.id} className="pos-history-item">
+                        <div className="pos-history-item__main">
+                          <span className="pos-history-item__type">
+                            {t(`pos.debt.quickHistory.typeDebt`)}
+                          </span>
+                          <span className="pos-history-item__date">
+                            {new Date(item.at).toLocaleDateString(i18n.language.startsWith('ar') ? 'ar-LB' : 'en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        <span className="pos-history-item__amount">{formatLbp(item.amountLbp, i18n.language)}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             ) : null}
           </div>
         ) : (

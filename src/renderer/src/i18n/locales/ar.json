@@ -281,6 +281,15 @@
         "cancel": "إلغاء",
         "confirm": "تأكيد الدين"
       },
+      "quickHistory": {
+        "title": "سجل الزبون السريع",
+        "balance": "الرصيد الحالي",
+        "lastPurchases": "آخر 3 مشتريات (دين)",
+        "noHistory": "لا يوجد سجل مبيعات دين مسبق.",
+        "loading": "جاري تحميل السجل...",
+        "typeDebt": "شراء",
+        "typePayment": "دفعة"
+      },
       "errors": {
         "nameRequired": "أدخل اسم الزبون للمتابعة.",
         "debtorRequired": "اختر دائناً من القائمة.",
