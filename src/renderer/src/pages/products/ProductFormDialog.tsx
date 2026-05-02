@@ -33,6 +33,8 @@ type Props = {
   barcodeResetKey?: number
 }
 
+const DRAFT_KEY_PREFIX = 'deken_pf_draft_'
+
 const empty: FormState = {
   sku: '',
   name: '',
@@ -71,6 +73,7 @@ export function ProductFormDialog({
   const lng = i18n.language
   const titleId = useId()
   const [form, setForm] = useState<FormState>(empty)
+  const [isLoaded, setIsLoaded] = useState(false)
   const open = true
   const profit = calcProfit(form.basePriceLbp, form.priceLbp)
   const pctLabel =
@@ -79,9 +82,22 @@ export function ProductFormDialog({
       : `${profit.marginPct.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US', { maximumFractionDigits: 1 })}%`
 
   useEffect(() => {
-    if (!open) {
-      return
+    setIsLoaded(false)
+    const draftKey = mode.type === 'create' ? `${DRAFT_KEY_PREFIX}create` : `${DRAFT_KEY_PREFIX}edit_${mode.product.id}`
+    const saved = localStorage.getItem(draftKey)
+    
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed && typeof parsed === 'object') {
+          setForm(parsed)
+          return
+        }
+      } catch (e) {
+        localStorage.removeItem(draftKey)
+      }
     }
+
     if (mode.type === 'edit') {
       const p = mode.product
       setForm({
@@ -98,7 +114,15 @@ export function ProductFormDialog({
     } else {
       setForm(empty)
     }
-  }, [open, mode])
+    setIsLoaded(true)
+  }, [mode])
+
+  // Save draft on every change
+  useEffect(() => {
+    if (!isLoaded) return
+    const draftKey = mode.type === 'create' ? `${DRAFT_KEY_PREFIX}create` : `${DRAFT_KEY_PREFIX}edit_${mode.product.id}`
+    localStorage.setItem(draftKey, JSON.stringify(form))
+  }, [form, mode, isLoaded])
 
   useEffect(() => {
     if (barcodeResetKey && mode.type === 'create') {
@@ -166,6 +190,8 @@ export function ProductFormDialog({
 
   function resetForm() {
     setForm(empty)
+    const draftKey = mode.type === 'create' ? `${DRAFT_KEY_PREFIX}create` : `${DRAFT_KEY_PREFIX}edit_${mode.product.id}`
+    localStorage.removeItem(draftKey)
     focusField('pf-name')
   }
 
@@ -235,6 +261,10 @@ export function ProductFormDialog({
     try {
       const result = await onSave(payload)
       console.log('[ProductForm] onSave result:', result)
+      if (result) {
+        const draftKey = mode.type === 'create' ? `${DRAFT_KEY_PREFIX}create` : `${DRAFT_KEY_PREFIX}edit_${mode.product.id}`
+        localStorage.removeItem(draftKey)
+      }
     } catch (err) {
       console.error('[ProductForm] onSave crashed:', err)
     }
