@@ -131,6 +131,9 @@ function validateCreate(input: CreateProductInput): IpcErrorShape | null {
   if (isBlank(input.name)) {
     return makeError('validation', 'name_required')
   }
+  if (isBlank(input.barcode || '')) {
+    return makeError('validation', 'barcode_required')
+  }
   if (!Number.isInteger(input.basePriceLbp) || input.basePriceLbp < 0) {
     return makeError('validation', 'base_price_invalid')
   }
@@ -161,6 +164,9 @@ function validateUpdate(v: UpdateProductInput): IpcErrorShape | null {
   }
   if (v.name !== undefined && isBlank(v.name)) {
     return makeError('validation', 'name_required')
+  }
+  if (v.barcode !== undefined && isBlank(v.barcode || '')) {
+    return makeError('validation', 'barcode_required')
   }
   if (v.basePriceLbp !== undefined) {
     if (!Number.isInteger(v.basePriceLbp) || v.basePriceLbp < 0) {

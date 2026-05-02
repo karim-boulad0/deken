@@ -684,6 +684,7 @@ export const IpcInvokes = {
   verifyActivation: 'deken:activation:verify',
   getCurrentWifiCredential: 'deken:wifi:getCurrentCredential',
   clearAllTransactions: 'deken:devTools:clearAllTransactions',
+  clearTable: 'deken:devTools:clearTable',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

@@ -1,16 +1,32 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, Trash2 } from 'lucide-react'
+import { AlertTriangle, Trash2, Database } from 'lucide-react'
 import { useToast } from '../../components/toast'
-import { setAppSettings } from '../../lib/api/dekenClient'
+import { setAppSettings, clearTable, clearAllTransactions } from '../../lib/api/dekenClient'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
 import './DevPage.css'
+
+const TABLES = [
+  'products',
+  'categories',
+  'customers',
+  'suppliers',
+  'expenses',
+  'expense_categories',
+  'sales',
+  'debt_payments',
+  'supplier_invoices',
+  'supplier_payments',
+  'product_sizes',
+  'product_flavors'
+]
 
 export function DevPage() {
   const { t } = useTranslation()
   const toast = useToast()
   const { settings, refresh } = useAppSettings()
-  const [isClearing, setIsClearing] = useState(false)
+  const [isClearingAll, setIsClearingAll] = useState(false)
+  const [clearingTable, setClearingTable] = useState<string | null>(null)
   const [isTogglingWifi, setIsTogglingWifi] = useState(false)
 
   async function handleClearTransactions() {
@@ -18,18 +34,41 @@ export function DevPage() {
       return
     }
     
-    setIsClearing(true)
+    setIsClearingAll(true)
     try {
-      const res = await window.deken.devTools.clearAllTransactions()
+      const res = await clearAllTransactions()
       if (res.ok) {
         toast.success(t('dev.successClear'))
       } else {
         toast.error(res.error.message || 'Error clearing transactions')
       }
-    } catch {
+    } catch (err) {
+      console.error('Failed to clear transactions:', err)
       toast.error('Unexpected error')
     } finally {
-      setIsClearing(false)
+      setIsClearingAll(false)
+    }
+  }
+
+  async function handleClearTable(tableName: string) {
+    const tableLabel = t(`dev.tables.${tableName}`)
+    if (!window.confirm(t('dev.confirmClearTable', { table: tableLabel }))) {
+      return
+    }
+
+    setClearingTable(tableName)
+    try {
+      const res = await clearTable(tableName)
+      if (res.ok) {
+        toast.success(t('dev.successClearTable', { table: tableLabel }))
+      } else {
+        toast.error(res.error.message || `Error clearing ${tableName}`)
+      }
+    } catch (err) {
+      console.error(`Failed to clear table ${tableName}:`, err)
+      toast.error('Unexpected error')
+    } finally {
+      setClearingTable(null)
     }
   }
 
@@ -61,14 +100,15 @@ export function DevPage() {
             <AlertTriangle className="dev-icon-danger" size={20} />
             {t('dev.dangerZone')}
             <button
-  type="button"
-  style={{ cursor: 'default' }}
-  className="dev-corner-toggle"
-  onDoubleClick={() => void handleCornerDoubleClick()}
-  aria-label={t('dev.cornerToggleAria')}
-  title={t('dev.cornerToggleTitle')}
-/>
+              type="button"
+              style={{ cursor: 'default' }}
+              className="dev-corner-toggle"
+              onDoubleClick={() => void handleCornerDoubleClick()}
+              aria-label={t('dev.cornerToggleAria')}
+              title={t('dev.cornerToggleTitle')}
+            />
           </h2>
+          
           <div className="dev-card">
             <div className="dev-card__info">
               <h3>{t('dev.clearTransactions')}</h3>
@@ -79,12 +119,36 @@ export function DevPage() {
                 type="button" 
                 className="btn btn--danger" 
                 onClick={() => void handleClearTransactions()}
-                disabled={isClearing}
+                disabled={isClearingAll}
               >
                 <Trash2 size={16} />
-                {isClearing ? '...' : t('dev.clearTransactions')}
+                {isClearingAll ? '...' : t('dev.clearTransactions')}
               </button>
             </div>
+          </div>
+
+          <div className="dev-tables-grid">
+            {TABLES.map((table) => (
+              <div key={table} className="dev-card dev-card--small">
+                <div className="dev-card__info">
+                  <h3>
+                    <Database size={14} style={{ opacity: 0.7 }} />
+                    {t(`dev.tables.${table}`)}
+                  </h3>
+                </div>
+                <div className="dev-card__actions">
+                  <button
+                    type="button"
+                    className="btn btn--danger btn--sm"
+                    onClick={() => void handleClearTable(table)}
+                    disabled={clearingTable === table}
+                  >
+                    <Trash2 size={14} />
+                    {clearingTable === table ? '...' : t('products.actions.delete')}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       </div>

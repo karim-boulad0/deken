@@ -26,9 +26,10 @@ type Props = {
   sizeOptions: CategorySizeDto[]
   flavorOptions: CategoryFlavorDto[]
   onOpenChange: (open: boolean) => void
-  onSave: (payload: SavePayload) => void
+  onSave: (payload: SavePayload) => Promise<boolean> | boolean
   busy?: boolean
   variant?: 'modal' | 'inline'
+  barcodeResetKey?: number
 }
 
 const empty: FormState = {
@@ -62,6 +63,7 @@ export function ProductFormDialog({
   onSave,
   busy,
   variant = 'modal',
+  barcodeResetKey,
 }: Props) {
   const { t, i18n } = useTranslation()
   const lng = i18n.language
@@ -95,6 +97,13 @@ export function ProductFormDialog({
       setForm(empty)
     }
   }, [open, mode])
+
+  useEffect(() => {
+    if (barcodeResetKey && mode.type === 'create') {
+      setForm((f) => ({ ...f, barcode: '' }))
+      focusField('pf-barcode')
+    }
+  }, [barcodeResetKey, mode.type])
 
   const isEdit = mode.type === 'edit'
 
@@ -153,7 +162,12 @@ export function ProductFormDialog({
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function resetForm() {
+    setForm(empty)
+    focusField('pf-name')
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const categoryId = form.categoryId && String(form.categoryId).trim() ? String(form.categoryId) : null
     const categorySizeId =
@@ -163,8 +177,10 @@ export function ProductFormDialog({
     const basePriceLbp = form.basePriceLbp ?? 0
     const priceLbp = form.priceLbp ?? 0
     const stock = form.stock ?? 0
+
+    let payload: SavePayload
     if (isEdit) {
-      onSave({
+      payload = {
         id: mode.product.id,
         input: {
           name: form.name,
@@ -176,9 +192,9 @@ export function ProductFormDialog({
           priceLbp,
           stock,
         },
-      })
+      }
     } else {
-      onSave({
+      payload = {
         create: {
           sku: '',
           name: form.name,
@@ -190,8 +206,10 @@ export function ProductFormDialog({
           priceLbp,
           stock,
         },
-      })
+      }
     }
+
+    await onSave(payload)
   }
 
   function onBackdropClick(e: React.MouseEvent) {
@@ -248,7 +266,7 @@ export function ProductFormDialog({
             </div>
             <div className="pf-field">
               <label htmlFor="pf-barcode">{t('products.form.barcode')}</label>
-              <input id="pf-barcode" className="pf-input" name="product-barcode" value={form.barcode} onChange={(e) => set('barcode', e.target.value)} autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="text" />
+              <input id="pf-barcode" className="pf-input" name="product-barcode" value={form.barcode} onChange={(e) => set('barcode', e.target.value)} required autoComplete="off" autoCorrect="off" spellCheck={false} inputMode="text" />
             </div>
             <div className="pf-row">
               <div className="pf-field">
@@ -333,7 +351,11 @@ export function ProductFormDialog({
                 <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>
                   {t('products.form.cancel')}
                 </button>
-              ) : null}
+              ) : (
+                <button type="button" className="pf-btn pf-btn--ghost" onClick={resetForm} disabled={busy}>
+                  {t('products.form.reset')}
+                </button>
+              )}
               <button type="submit" className="pf-btn pf-btn--primary" disabled={busy}>
                 {isEdit ? t('products.form.save') : t('products.form.add')}
               </button>
@@ -399,6 +421,7 @@ export function ProductFormDialog({
               name="product-barcode"
               value={form.barcode}
               onChange={(e) => set('barcode', e.target.value)}
+              required
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -502,9 +525,15 @@ export function ProductFormDialog({
             <span className="pf-profit__pct">{t('products.form.profitPct', { pct: pctLabel })}</span>
           </div>
           <div className="pf-actions">
-            <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>
-              {t('products.form.cancel')}
-            </button>
+            {isEdit ? (
+              <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose} disabled={busy}>
+                {t('products.form.cancel')}
+              </button>
+            ) : (
+              <button type="button" className="pf-btn pf-btn--ghost" onClick={resetForm} disabled={busy}>
+                {t('products.form.reset')}
+              </button>
+            )}
             <button type="submit" className="pf-btn pf-btn--primary" disabled={busy}>
               {isEdit ? t('products.form.save') : t('products.form.add')}
             </button>

@@ -64,7 +64,7 @@ import {
 } from '../data/productService'
 import { getSalesReport } from '../data/reportService'
 import { getDashboardSnapshot } from '../data/dashboardService'
-import { clearAllTransactions } from '../data/devService'
+import { clearAllTransactions, clearTable } from '../data/devService'
 import { getActivationStatus, verifyActivation } from '../data/activationService'
 import { getCurrentWifiCredential } from '../data/wifiService'
 import { applyApplicationMenu } from '../appMenu'
@@ -633,5 +633,11 @@ export function registerIpc(): void {
     const g = guard('devTools')
     if (!g.ok) return g
     return clearAllTransactions(db())
+  })
+  
+  ipcMain.handle(IpcInvokes.clearTable, (_evt, tableName: string) => {
+    const g = guard('devTools')
+    if (!g.ok) return g
+    return clearTable(db(), tableName)
   })
 }

@@ -315,5 +315,8 @@ contextBridge.exposeInMainWorld('deken', {
     clearAllTransactions: (): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.clearAllTransactions)
     },
+    clearTable: (tableName: string): Promise<IpcResult<null>> => {
+      return invoke(IpcInvokes.clearTable, tableName)
+    },
   },
 })

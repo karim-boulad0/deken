@@ -43,6 +43,7 @@ function mapIpcErrorKey(message: string): string {
   if (
     m === 'sku_required' ||
     m === 'name_required' ||
+    m === 'barcode_required' ||
     m === 'id_required' ||
     m === 'category_not_found'
   ) {
@@ -85,6 +86,7 @@ export function ProductsPage() {
   const [categoryOptions, setCategoryOptions] = useState<CategoryDto[]>([])
   const [sizeOptions, setSizeOptions] = useState<CategorySizeDto[]>([])
   const [flavorOptions, setFlavorOptions] = useState<CategoryFlavorDto[]>([])
+  const [barcodeResetKey, setBarcodeResetKey] = useState(0)
 
   const loadCategoryOptions = useCallback(async () => {
     const r = await listCategories()
@@ -160,24 +162,29 @@ export function ProductsPage() {
 
   async function onFormSave(
     payload: { create: CreateProductInput } | { id: string; input: UpdateProductInput },
-  ) {
+  ): Promise<boolean> {
     setFormError(null)
     setFormBusy(true)
     try {
       if ('create' in payload) {
         const r = await createProduct(payload.create)
         if (r.ok) {
-          setFormMode({ type: 'create' })
+          if (formMode.type === 'edit') {
+            setFormMode({ type: 'create' })
+          }
           await refresh()
           setFormError(null)
+          setBarcodeResetKey(prev => prev + 1)
           toast.success(t('products.toast.added'))
+          return true
         } else {
           const k = mapIpcErrorKey(r.error.message)
-          setFormError(
-            k === 'generic'
-              ? t('products.errors.generic', { message: r.error.message })
-              : t(`products.errors.${k}`),
-          )
+          const msg = k === 'generic'
+            ? t('products.errors.generic', { message: r.error.message })
+            : t(`products.errors.${k}`)
+          setFormError(msg)
+          toast.error(msg)
+          return false
         }
       } else {
         const r = await updateProduct(payload.id, payload.input)
@@ -186,13 +193,15 @@ export function ProductsPage() {
           await refresh()
           setFormError(null)
           toast.success(t('products.toast.updated'))
+          return true
         } else {
           const k = mapIpcErrorKey(r.error.message)
-          setFormError(
-            k === 'generic'
-              ? t('products.errors.generic', { message: r.error.message })
-              : t(`products.errors.${k}`),
-          )
+          const msg = k === 'generic'
+            ? t('products.errors.generic', { message: r.error.message })
+            : t(`products.errors.${k}`)
+          setFormError(msg)
+          toast.error(msg)
+          return false
         }
       }
     } finally {
@@ -414,10 +423,9 @@ export function ProductsPage() {
                 setFormMode({ type: 'create' })
               }
             }}
-            onSave={(p) => {
-              void onFormSave(p)
-            }}
+            onSave={onFormSave}
             busy={formBusy}
+            barcodeResetKey={barcodeResetKey}
           />
 
           <div className="prod__toolbar" role="search">

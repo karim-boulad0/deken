@@ -498,3 +498,10 @@ export async function bulkImportFlavors(
 ): Promise<IpcResult<{ imported: number }>> {
   return assertDeken().categoryFlavors.bulkImport(inputs)
 }
+export async function clearAllTransactions(): Promise<IpcResult<null>> {
+  return assertDeken().devTools.clearAllTransactions()
+}
+
+export async function clearTable(tableName: string): Promise<IpcResult<null>> {
+  return assertDeken().devTools.clearTable(tableName)
+}
