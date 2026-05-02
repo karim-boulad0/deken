@@ -450,7 +450,6 @@ export function ProductsPage() {
                 aria-label={t('products.toolbar.searchAria')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                disabled={loading}
               />
             </div>
             <div className="prod__toolbar-end">

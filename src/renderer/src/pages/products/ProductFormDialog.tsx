@@ -80,6 +80,31 @@ export function ProductFormDialog({
     profit.marginPct == null
       ? t('common.emDash')
       : `${profit.marginPct.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US', { maximumFractionDigits: 1 })}%`
+  
+  const [inputCurrency, setInputCurrency] = useState<'lbp' | 'usd'>('lbp')
+
+  const getDisplayPrice = (lbp: number | null, currency: 'lbp' | 'usd') => {
+    if (lbp == null) return ''
+    if (currency === 'lbp') return String(lbp)
+    // Avoid large precision decimals for USD
+    const usd = lbp / settings.lbpPerUsd
+    return Number.isInteger(usd) ? String(usd) : usd.toFixed(2)
+  }
+
+  const handlePriceChange = (field: 'basePriceLbp' | 'priceLbp', val: string, currency: 'lbp' | 'usd') => {
+    if (val === '') {
+      set(field, null)
+      return
+    }
+    const num = Number(val)
+    if (isNaN(num)) return
+    
+    if (currency === 'lbp') {
+      set(field, Math.max(0, Math.round(num)))
+    } else {
+      set(field, Math.max(0, Math.round(num * settings.lbpPerUsd)))
+    }
+  }
 
   useEffect(() => {
     setIsLoaded(false)
@@ -368,17 +393,27 @@ export function ProductFormDialog({
             )}
             <div className="pf-row">
               <div className="pf-field">
+                <label htmlFor="pf-currency">{t('products.form.currency')}</label>
+                <select 
+                  id="pf-currency"
+                  className="pf-input pf-input--select" 
+                  value={inputCurrency} 
+                  onChange={(e) => setInputCurrency(e.target.value as 'lbp' | 'usd')}
+                >
+                  <option value="lbp">{t('products.form.currencyLbp')}</option>
+                  <option value="usd">{t('products.form.currencyUsd')}</option>
+                </select>
+              </div>
+              <div className="pf-field">
                 <label htmlFor="pf-base-price">{t('products.form.basePriceLbp')}</label>
                 <input
                   id="pf-base-price"
                   className="pf-input"
                   type="number"
                   min={0}
-                  step={1}
-                  value={form.basePriceLbp ?? ''}
-                  onChange={(e) =>
-                    set('basePriceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                  }
+                  step={inputCurrency === 'usd' ? '0.01' : '1'}
+                  value={getDisplayPrice(form.basePriceLbp, inputCurrency)}
+                  onChange={(e) => handlePriceChange('basePriceLbp', e.target.value, inputCurrency)}
                   required
                 />
               </div>
@@ -389,11 +424,9 @@ export function ProductFormDialog({
                   className="pf-input"
                   type="number"
                   min={0}
-                  step={1}
-                  value={form.priceLbp ?? ''}
-                  onChange={(e) =>
-                    set('priceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                  }
+                  step={inputCurrency === 'usd' ? '0.01' : '1'}
+                  value={getDisplayPrice(form.priceLbp, inputCurrency)}
+                  onChange={(e) => handlePriceChange('priceLbp', e.target.value, inputCurrency)}
                   required
                 />
               </div>
@@ -559,6 +592,18 @@ export function ProductFormDialog({
               )}
             </div>
           )}
+          <div className="pf-field">
+            <label htmlFor="pf-currency-modal">{t('products.form.currency')}</label>
+            <select 
+              id="pf-currency-modal"
+              className="pf-input pf-input--select" 
+              value={inputCurrency} 
+              onChange={(e) => setInputCurrency(e.target.value as 'lbp' | 'usd')}
+            >
+              <option value="lbp">{t('products.form.currencyLbp')}</option>
+              <option value="usd">{t('products.form.currencyUsd')}</option>
+            </select>
+          </div>
           <div className="pf-row">
             <div className="pf-field">
               <label htmlFor="pf-base-price-modal">{t('products.form.basePriceLbp')}</label>
@@ -567,11 +612,9 @@ export function ProductFormDialog({
                 className="pf-input"
                 type="number"
                 min={0}
-                step={1}
-                value={form.basePriceLbp ?? ''}
-                onChange={(e) =>
-                  set('basePriceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                }
+                step={inputCurrency === 'usd' ? '0.01' : '1'}
+                value={getDisplayPrice(form.basePriceLbp, inputCurrency)}
+                onChange={(e) => handlePriceChange('basePriceLbp', e.target.value, inputCurrency)}
                 required
               />
             </div>
@@ -582,11 +625,9 @@ export function ProductFormDialog({
                 className="pf-input"
                 type="number"
                 min={0}
-                step={1}
-                value={form.priceLbp ?? ''}
-                onChange={(e) =>
-                  set('priceLbp', e.target.value === '' ? null : Math.max(0, Math.floor(Number(e.target.value) || 0)))
-                }
+                step={inputCurrency === 'usd' ? '0.01' : '1'}
+                value={getDisplayPrice(form.priceLbp, inputCurrency)}
+                onChange={(e) => handlePriceChange('priceLbp', e.target.value, inputCurrency)}
                 required
               />
             </div>
