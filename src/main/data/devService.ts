@@ -24,9 +24,10 @@ export function clearAllTransactions(db: Database): IpcResult<null> {
       db.prepare('DELETE FROM sale_lines').run()
       db.prepare('DELETE FROM sales').run()
       db.prepare('DELETE FROM expenses').run()
-      db.prepare('DELETE FROM debt_payments').run()
       db.prepare('DELETE FROM supplier_payments').run()
       db.prepare('DELETE FROM supplier_invoices').run()
+      db.prepare('DELETE FROM wallet_transactions').run()
+      db.prepare('DELETE FROM wallet_sessions').run()
     })()
     return null
   })
@@ -46,7 +47,8 @@ export function clearTable(db: Database, tableName: string): IpcResult<null> {
     'supplier_invoices',
     'supplier_payments',
     'product_sizes',
-    'product_flavors'
+    'product_flavors',
+    'wallet_sessions'
   ]
 
   if (!allowedTables.includes(tableName)) {
@@ -71,6 +73,9 @@ export function clearTable(db: Database, tableName: string): IpcResult<null> {
         // If we want to be safe, we could null them out in products first if we don't clear products.
         // But the user asked to clear the table itself.
         db.prepare('DELETE FROM categories').run()
+      } else if (tableName === 'wallet_sessions') {
+        db.prepare('DELETE FROM wallet_transactions').run()
+        db.prepare('DELETE FROM wallet_sessions').run()
       } else {
         db.prepare(`DELETE FROM ${tableName}`).run()
       }

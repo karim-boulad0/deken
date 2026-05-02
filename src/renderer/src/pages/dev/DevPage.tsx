@@ -20,7 +20,8 @@ const TABLES = [
   'supplier_invoices',
   'supplier_payments',
   'product_sizes',
-  'product_flavors'
+  'product_flavors',
+  'wallet_sessions'
 ]
 
 const DEV_PASSWORDS = ['karim12345', 'wassim12345', '1234512345', '13245']

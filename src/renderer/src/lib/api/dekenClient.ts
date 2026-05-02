@@ -61,6 +61,11 @@ import type {
   ResetUserCredentialsInput,
   UserWithPermissionsDto,
   WifiCredentialDto,
+  WalletSessionDto,
+  WalletTransactionDto,
+  OpenWalletSessionInput,
+  CloseWalletSessionInput,
+  CreateWalletTransactionInput,
 } from '../../../../shared/ipc/types'
 
 function isDeken() {
@@ -504,4 +509,34 @@ export async function clearAllTransactions(): Promise<IpcResult<null>> {
 
 export async function clearTable(tableName: string): Promise<IpcResult<null>> {
   return assertDeken().devTools.clearTable(tableName)
+}
+
+export async function getActiveWalletSession(): Promise<IpcResult<WalletSessionDto | null>> {
+  return assertDeken().wallet.getActiveSession()
+}
+
+export async function openWalletSession(
+  input: OpenWalletSessionInput,
+): Promise<IpcResult<WalletSessionDto>> {
+  return assertDeken().wallet.openSession(input)
+}
+
+export async function closeWalletSession(
+  input: CloseWalletSessionInput,
+): Promise<IpcResult<WalletSessionDto>> {
+  return assertDeken().wallet.closeSession(input)
+}
+
+export async function addWalletTransaction(
+  input: CreateWalletTransactionInput,
+): Promise<IpcResult<WalletTransactionDto>> {
+  return assertDeken().wallet.addTransaction(input)
+}
+
+export async function getWalletBalance(sessionId: string): Promise<IpcResult<number>> {
+  return assertDeken().wallet.getBalance(sessionId)
+}
+
+export async function listWalletTransactions(sessionId: string): Promise<IpcResult<WalletTransactionDto[]>> {
+  return assertDeken().wallet.listTransactions(sessionId)
 }

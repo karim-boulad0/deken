@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next'
 import type { ProductDto } from '../../../../shared/ipc/types'
 import { useToast } from '../../components/toast'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
-import { completeCashSale, completeDebtSale, findProductByCode, listProducts } from '../../lib/api/dekenClient'
+import { getActiveWalletSession, openWalletSession, completeCashSale, completeDebtSale, findProductByCode, listProducts } from '../../lib/api/dekenClient'
+import type { WalletSessionDto } from '../../../../shared/ipc/types'
 import { DebtRecordDialog, type DebtRecordPayload } from './DebtRecordDialog'
 import { formatLbp, formatUsd } from './formatPos'
 import { productMatchesLookupCode } from './posLookup'
 import './PosPage.css'
+import '../wallet/WalletPage.css' // Reuse modal styles
 
 type CartLine = {
   id: string
@@ -99,6 +101,12 @@ export function PosPage() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const receiptFrameRef = useRef<HTMLIFrameElement | null>(null)
 
+  const [walletSession, setWalletSession] = useState<WalletSessionDto | null>(null)
+  const [sessionCheckLoading, setSessionCheckLoading] = useState(true)
+  const [showSessionModal, setShowSessionModal] = useState(false)
+  const [openingBalance, setOpeningBalance] = useState('')
+  const [openingBusy, setOpeningBusy] = useState(false)
+
   useEffect(() => { cachedQuery = query }, [query])
   useEffect(() => { cachedQtyDrafts = qtyDrafts }, [qtyDrafts])
   useEffect(() => { cachedPriceDrafts = priceDrafts }, [priceDrafts])
@@ -108,6 +116,20 @@ export function PosPage() {
   useEffect(() => {
     const tmr = window.setTimeout(() => setLoading(false), 380)
     return () => window.clearTimeout(tmr)
+  }, [])
+
+  useEffect(() => {
+    void (async () => {
+      const res = await getActiveWalletSession()
+      if (res.ok) {
+        if (!res.data) {
+          setShowSessionModal(true)
+        } else {
+          setWalletSession(res.data)
+        }
+      }
+      setSessionCheckLoading(false)
+    })()
   }, [])
 
   useEffect(() => {
@@ -1243,6 +1265,74 @@ export function PosPage() {
         </div>
       ) : null}
 
+      {/* Session Gate Modal */}
+      {showSessionModal && (
+        <div className="wallet-modal-overlay">
+          <div className="wallet-modal">
+            <div className="wallet-modal__header">
+              <h3>{t('wallet.actions.startShift')}</h3>
+            </div>
+            <div className="wallet-modal__body">
+              <p style={{ marginBottom: '1.5rem', color: '#64748b' }}>{t('wallet.toast.mustStartSession')}</p>
+              <div className="wallet-field">
+                <label>{t('wallet.form.openingBalance')}</label>
+                <div className="wallet-field__input-wrapper">
+                  <Banknote size={18} />
+                  <input 
+                    type="text" 
+                    value={openingBalance}
+                    onChange={(e) => setOpeningBalance(e.target.value)}
+                    placeholder="0"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="wallet-modal__footer">
+              <button 
+                className="wallet-page__btn wallet-page__btn--primary"
+                onClick={async () => {
+                  const val = parseInt(openingBalance.replace(/[^0-9]/g, '')) || 0
+                  setOpeningBusy(true)
+                  const res = await openWalletSession({ openingBalanceLbp: val })
+                  setOpeningBusy(false)
+                  if (res.ok) {
+                    setWalletSession(res.data)
+                    setShowSessionModal(false)
+                    toast.success(t('wallet.toast.sessionStarted', { n: formatLbp(val, lng) }))
+                  } else {
+                    toast.error(res.error.message)
+                  }
+                }}
+                disabled={openingBusy}
+              >
+                {t('wallet.form.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function Banknote(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect width="20" height="12" x="2" y="6" rx="2" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M6 12h.01M18 12h.01" />
+    </svg>
   )
 }

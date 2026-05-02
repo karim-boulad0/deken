@@ -16,6 +16,7 @@
     "reports": "التقارير",
     "settings": "الإعدادات",
     "employees": "الموظفون",
+    "wallet": "صندوق المصاري",
     "devTools": "أدوات المطور"
   },
   "lang": {
@@ -955,6 +956,7 @@
       "reports": "التقارير",
       "settings": "الإعدادات",
       "employees": "الموظفون",
+      "wallet": "صندوق المصاري",
       "devTools": "أدوات المطور"
     }
   },
@@ -1062,7 +1064,8 @@
       "supplier_invoices": "فواتير الموردين",
       "supplier_payments": "دفعات الموردين",
       "product_sizes": "أحجام المنتجات",
-      "product_flavors": "طعَمات المنتجات"
+      "product_flavors": "طعَمات المنتجات",
+      "wallet_sessions": "جلسات الصندوق"
     },
     "cornerToggleAria": "مبدّل مخفي لإظهار أو إخفاء قسم الواي فاي",
     "cornerToggleTitle": "",
@@ -1071,5 +1074,74 @@
     "toggleWifiFailed": "تعذّر تبديل إظهار قسم الواي فاي.",
     "passwordPrompt": "أدخل كلمة مرور الصيانة للمتابعة:",
     "invalidPassword": "كلمة المرور غير صحيحة."
+  },
+  "wallet": {
+    "pageTitle": "صندوق المصاري",
+    "intro": "إدارة الصندوق النقدي. سجل رصيد الافتتاح، تتبع الإيداعات والسحوبات اليدوية، وقم بمطابقة الصندوق عند نهاية المناوبة.",
+    "status": {
+      "active": "الجلسة نشطة منذ {{at}}",
+      "inactive": "لا توجد جلسة نشطة",
+      "expected": "المتوقع في الصندوق: {{n}}",
+      "opening": "الافتتاح: {{n}}"
+    },
+    "actions": {
+      "startShift": "فتح صندوق",
+      "endShift": "إغلاق صندوق",
+      "addCash": "إضافة مبلغ",
+      "withdrawCash": "سحب مبلغ",
+      "history": "سجل الحركات"
+    },
+    "form": {
+      "openingBalance": "رصيد الافتتاح (ل.ل)",
+      "actualClosing": "المبلغ الفعلي في الصندوق (ل.ل)",
+      "amount": "المبلغ (ل.ل)",
+      "reason": "السبب (اختياري)",
+      "reasonPlaceholder": "مثلاً: فكة، بنزين، سحب لصاحب المحل...",
+      "type": "النوع",
+      "typeIn": "إيداع (داخلي)",
+      "typeOut": "سحب (خارجي)",
+      "cancel": "إلغاء",
+      "confirm": "تأكيد"
+    },
+    "history": {
+      "title": "التعديلات اليدوية",
+      "empty": "لا توجد تعديلات يدوية في هذه الجلسة.",
+      "colWhen": "التاريخ والوقت",
+      "colType": "النوع",
+      "colAmount": "المبلغ",
+      "colReason": "السبب",
+      "colUser": "المستخدم"
+    },
+    "summary": {
+      "title": "ملخص نهاية المناوبة",
+      "openedAt": "تاريخ الفتح",
+      "closedAt": "تاريخ الإغلاق",
+      "opening": "رصيد الافتتاح",
+      "sales": "المبيعات النقدية",
+      "debtPayments": "دفعات الديون (نقدي)",
+      "manualIn": "إيداعات يدوية",
+      "manualOut": "سحوبات يدوية",
+      "expenses": "مصاريف (من الصندوق)",
+      "supplierPayments": "دفعات موردين (نقدي)",
+      "expected": "المجموع المتوقع",
+      "actual": "المبلغ الفعلي",
+      "discrepancy": "الفرق (عجز/زيادة)",
+      "noDiscrepancy": "متطابق",
+      "short": "عجز: {{n}}",
+      "over": "زيادة: {{n}}"
+    },
+    "toast": {
+      "sessionStarted": "تم فتح الصندوق برصيد {{n}}.",
+      "sessionClosed": "تم إغلاق الصندوق. الفرق: {{n}}.",
+      "transactionAdded": "تم تسجيل الحركة.",
+      "mustStartSession": "يجب فتح الصندوق قبل البدء بالمبيعات."
+    },
+    "errors": {
+      "amount_invalid": "أدخل مبلغاً صحيحاً بالليرة اللبنانية.",
+      "reason_required": "يرجى ذكر السبب.",
+      "session_already_active": "يوجد صندوق مفتوح بالفعل.",
+      "insufficient_balance": "لا يمكن سحب أكثر من الرصيد الموجود في الصندوق.",
+      "generic": "خطأ: {{message}}"
+    }
   }
 }

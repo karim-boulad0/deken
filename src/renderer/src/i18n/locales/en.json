@@ -16,6 +16,7 @@
     "reports": "Reports",
     "settings": "Settings",
     "employees": "Employees",
+    "wallet": "Cash box",
     "devTools": "Dev Tools"
   },
   "lang": {
@@ -1051,5 +1052,73 @@
     "toggleWifiFailed": "Could not toggle Wi-Fi section visibility.",
     "passwordPrompt": "Enter maintenance password to continue:",
     "invalidPassword": "Invalid password."
+  },
+  "wallet": {
+    "pageTitle": "Cash box",
+    "intro": "Manage the cash drawer. Record the starting amount, track manual deposits or withdrawals, and reconcile the drawer at the end of the shift.",
+    "status": {
+      "active": "Session active since {{at}}",
+      "inactive": "No active session",
+      "expected": "Expected in drawer: {{n}}",
+      "opening": "Opening: {{n}}"
+    },
+    "actions": {
+      "startShift": "Start shift",
+      "endShift": "End shift",
+      "addCash": "Add cash",
+      "withdrawCash": "Withdraw cash",
+      "history": "Transaction history"
+    },
+    "form": {
+      "openingBalance": "Opening balance (LBP)",
+      "actualClosing": "Counted cash (LBP)",
+      "amount": "Amount (LBP)",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "e.g. Change, fuel, owner withdrawal...",
+      "type": "Type",
+      "typeIn": "Deposit (IN)",
+      "typeOut": "Withdrawal (OUT)",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "history": {
+      "title": "Manual adjustments",
+      "empty": "No manual adjustments in this session.",
+      "colWhen": "Date & time",
+      "colType": "Type",
+      "colAmount": "Amount",
+      "colReason": "Reason",
+      "colUser": "User"
+    },
+    "summary": {
+      "title": "End of shift summary",
+      "openedAt": "Opened at",
+      "closedAt": "Closed at",
+      "opening": "Opening balance",
+      "sales": "Cash sales",
+      "debtPayments": "Debt payments (cash)",
+      "manualIn": "Manual deposits",
+      "manualOut": "Manual withdrawals",
+      "expenses": "Expenses (from cash)",
+      "supplierPayments": "Supplier payments (cash)",
+      "expected": "Expected total",
+      "actual": "Actual counted",
+      "discrepancy": "Discrepancy (short/over)",
+      "noDiscrepancy": "Balanced",
+      "short": "Short: {{n}}",
+      "over": "Over: {{n}}"
+    },
+    "toast": {
+      "sessionStarted": "Shift started with {{n}}.",
+      "sessionClosed": "Shift closed. Discrepancy: {{n}}.",
+      "transactionAdded": "Transaction recorded.",
+      "mustStartSession": "You must start a shift before using the POS."
+    },
+    "errors": {
+      "amount_invalid": "Enter a valid whole amount in LBP.",
+      "reason_required": "Please provide a reason.",
+      "session_already_active": "A shift is already active.",
+      "generic": "Error: {{message}}"
+    }
   }
 }

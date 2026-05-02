@@ -18,6 +18,7 @@ export const PermissionModules = [
   'reports',
   'settings',
   'employees',
+  'wallet',
   'devTools',
 ] as const
 
@@ -307,7 +308,6 @@ export type SalesReportDay = {
 
 export type AppNavLayout = 'sidebar' | 'top'
 export type ReceiptPaper = 'a4' | '80'
-
 export type AppSettingsDto = {
   /** Display name in shell / receipts (optional). */
   shopName: string
@@ -635,6 +635,42 @@ export type VerifyActivationInput = {
   code: string
 }
 
+export type WalletSessionDto = {
+  id: string
+  openedAt: string
+  closedAt: string | null
+  openingBalanceLbp: number
+  actualClosingBalanceLbp: number | null
+  expectedClosingBalanceLbp: number | null
+  createdByUserId: string
+}
+
+export type WalletTransactionDto = {
+  id: string
+  sessionId: string
+  amountLbp: number
+  type: 'IN' | 'OUT'
+  reason: string | null
+  createdAt: string
+  createdByUserId: string
+}
+
+export type OpenWalletSessionInput = {
+  openingBalanceLbp: number
+}
+
+export type CloseWalletSessionInput = {
+  sessionId: string
+  actualClosingBalanceLbp: number
+}
+
+export type CreateWalletTransactionInput = {
+  sessionId: string
+  amountLbp: number
+  type: 'IN' | 'OUT'
+  reason?: string
+}
+
 export const IpcInvokes = {
   getAppVersion: 'deken:getAppVersion',
   authGetSession: 'deken:auth:getSession',
@@ -704,6 +740,12 @@ export const IpcInvokes = {
   getCurrentWifiCredential: 'deken:wifi:getCurrentCredential',
   clearAllTransactions: 'deken:devTools:clearAllTransactions',
   clearTable: 'deken:devTools:clearTable',
+  walletGetActiveSession: 'deken:wallet:getActiveSession',
+  walletOpenSession: 'deken:wallet:openSession',
+  walletCloseSession: 'deken:wallet:closeSession',
+  walletAddTransaction: 'deken:wallet:addTransaction',
+  walletGetBalance: 'deken:wallet:getBalance',
+  walletListTransactions: 'deken:wallet:listTransactions',
 } as const
 
 export type IpcChannel = (typeof IpcInvokes)[keyof typeof IpcInvokes]

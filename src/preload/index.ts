@@ -55,9 +55,13 @@ import type {
   UpdateSupplierInput,
   UpdateUserInput,
   VerifyActivationInput,
-  ResetUserCredentialsInput,
   UserWithPermissionsDto,
   WifiCredentialDto,
+  WalletSessionDto,
+  WalletTransactionDto,
+  OpenWalletSessionInput,
+  CloseWalletSessionInput,
+  CreateWalletTransactionInput,
 } from '../shared/ipc/types'
 
 function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
@@ -317,6 +321,26 @@ contextBridge.exposeInMainWorld('deken', {
     },
     clearTable: (tableName: string): Promise<IpcResult<null>> => {
       return invoke(IpcInvokes.clearTable, tableName)
+    },
+  },
+  wallet: {
+    getActiveSession: (): Promise<IpcResult<WalletSessionDto | null>> => {
+      return invoke(IpcInvokes.walletGetActiveSession)
+    },
+    openSession: (input: OpenWalletSessionInput): Promise<IpcResult<WalletSessionDto>> => {
+      return invoke(IpcInvokes.walletOpenSession, input)
+    },
+    closeSession: (input: CloseWalletSessionInput): Promise<IpcResult<WalletSessionDto>> => {
+      return invoke(IpcInvokes.walletCloseSession, input)
+    },
+    addTransaction: (input: CreateWalletTransactionInput): Promise<IpcResult<WalletTransactionDto>> => {
+      return invoke(IpcInvokes.walletAddTransaction, input)
+    },
+    getBalance: (sessionId: string): Promise<IpcResult<number>> => {
+      return invoke(IpcInvokes.walletGetBalance, sessionId)
+    },
+    listTransactions: (sessionId: string): Promise<IpcResult<WalletTransactionDto[]>> => {
+      return invoke(IpcInvokes.walletListTransactions, sessionId)
     },
   },
 })

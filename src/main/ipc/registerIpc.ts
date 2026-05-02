@@ -78,6 +78,14 @@ import {
   setUserPermissions,
   updateUser,
 } from '../data/userService'
+import {
+  addWalletTransaction,
+  closeWalletSession,
+  getActiveWalletSession,
+  getWalletBalance,
+  listWalletTransactions,
+  openWalletSession,
+} from '../data/walletService'
 import { getDatabase } from '../db/connection'
 import { IpcInvokes } from '../../shared/ipc/types'
 import type {
@@ -115,6 +123,9 @@ import type {
   SetUserPermissionsInput,
   ResetUserCredentialsInput,
   PermissionModule,
+  OpenWalletSessionInput,
+  CloseWalletSessionInput,
+  CreateWalletTransactionInput,
 } from '../../shared/ipc/types'
 
 /**
@@ -640,4 +651,41 @@ export function registerIpc(): void {
     if (!g.ok) return g
     return clearTable(db(), tableName)
   })
+  
+  ipcMain.handle(IpcInvokes.walletGetActiveSession, () => {
+    return getActiveWalletSession(db())
+  })
+
+  ipcMain.handle(IpcInvokes.walletOpenSession, (_evt, input: OpenWalletSessionInput) => {
+    const g = guardSession('pos')
+    if (!g.ok) return g
+    return openWalletSession(db(), input.openingBalanceLbp, g.data.user.id)
+  })
+
+  ipcMain.handle(IpcInvokes.walletCloseSession, (_evt, input: CloseWalletSessionInput) => {
+    const g = guardSession('pos')
+    if (!g.ok) return g
+    return closeWalletSession(db(), input.sessionId, input.actualClosingBalanceLbp)
+  })
+
+  ipcMain.handle(IpcInvokes.walletAddTransaction, (_evt, input: CreateWalletTransactionInput) => {
+    const g = guardSession('pos')
+    if (!g.ok) return g
+    return addWalletTransaction(db(), input, g.data.user.id)
+  })
+
+  ipcMain.handle(IpcInvokes.walletGetBalance, (_evt, sessionId: string) => {
+    const g = guard('pos')
+    if (!g.ok) return g
+    return getWalletBalance(db(), sessionId)
+  })
+
+  ipcMain.handle(
+    IpcInvokes.walletListTransactions,
+    (_e, sessionId: string) => {
+      const g = guard('pos')
+      if (!g.ok) return g
+      return listWalletTransactions(db(), sessionId)
+    },
+  )
 }
