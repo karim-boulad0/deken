@@ -137,14 +137,11 @@
 
 /* Authentication Screen & Modal */
 .dev-auth-screen {
-  position: fixed;
-  inset: 0;
-  z-index: 9998;
-  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-xl);
+  min-height: calc(100vh - 8rem);
 }
 
 .dev-modal-overlay {
