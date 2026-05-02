@@ -399,6 +399,8 @@
       "stock": "كمية المخزون",
       "profit": "الربح",
       "profitPct": "هامش الربح: {{pct}}",
+      "searchPlaceholder": "بحث...",
+      "noResults": "لا توجد نتائج",
       "cancel": "إلغاء",
       "reset": "إعادة تعيين",
       "save": "حفظ",

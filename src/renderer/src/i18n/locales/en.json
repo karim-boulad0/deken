@@ -399,6 +399,8 @@
       "profit": "Profit",
       "profitPct": "Margin: {{pct}}",
       "stock": "Stock quantity",
+      "searchPlaceholder": "Search...",
+      "noResults": "No results found",
       "cancel": "Cancel",
       "reset": "Reset",
       "save": "Save",

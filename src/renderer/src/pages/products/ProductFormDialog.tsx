@@ -10,6 +10,7 @@ import type {
 } from '../../../../shared/ipc/types'
 import { formatLbp } from '../pos/formatPos'
 import { useAppSettings } from '../../contexts/AppSettingsContext'
+import { SearchableSelect } from '../../components/SearchableSelect'
 import './ProductFormDialog.css'
 
 type Mode = { type: 'create' } | { type: 'edit'; product: ProductDto }
@@ -337,24 +338,17 @@ export function ProductFormDialog({
                     {t('products.form.category')}
                     {settings.productFormCategoryRequired && <span className="pf-required"> *</span>}
                   </label>
-                  <select
+                  <SearchableSelect
                     id="pf-cat"
-                    className="pf-input pf-input--select"
+                    options={categoryOptions}
                     value={selectCategoryValue}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      const next = v === '' ? null : v
-                      setForm((f) => ({ ...f, categoryId: next, categorySizeId: null, categoryFlavorId: null }))
+                    onChange={(v) => {
+                      setForm((f) => ({ ...f, categoryId: v, categorySizeId: null, categoryFlavorId: null }))
                     }}
-                    aria-label={t('products.form.category')}
-                  >
-                    <option value="">{t('products.form.categoryNone')}</option>
-                    {categoryOptions.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder={t('products.form.categoryNone')}
+                    searchPlaceholder={t('products.form.searchPlaceholder')}
+                    noResultsText={t('products.form.noResults')}
+                  />
                 </div>
               )}
             <div className="pf-field">
@@ -366,27 +360,31 @@ export function ProductFormDialog({
                 {settings.productFormShowSize && (
                   <div className="pf-field">
                     <label htmlFor="pf-size">{t('products.form.size')}</label>
-                    <select id="pf-size" className="pf-input pf-input--select" value={selectSizeValue} onChange={(e) => set('categorySizeId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
-                      <option value="">{t('products.form.sizeNone')}</option>
-                      {filteredSizes.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      id="pf-size"
+                      options={filteredSizes}
+                      value={selectSizeValue}
+                      onChange={(v) => set('categorySizeId', v)}
+                      disabled={!form.categoryId}
+                      placeholder={t('products.form.sizeNone')}
+                      searchPlaceholder={t('products.form.searchPlaceholder')}
+                      noResultsText={t('products.form.noResults')}
+                    />
                   </div>
                 )}
                 {settings.productFormShowFlavor && (
                   <div className="pf-field">
                     <label htmlFor="pf-flavor">{t('products.form.flavor')}</label>
-                    <select id="pf-flavor" className="pf-input pf-input--select" value={selectFlavorValue} onChange={(e) => set('categoryFlavorId', e.target.value === '' ? null : e.target.value)} disabled={!form.categoryId}>
-                      <option value="">{t('products.form.flavorNone')}</option>
-                      {filteredFlavors.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      id="pf-flavor"
+                      options={filteredFlavors}
+                      value={selectFlavorValue}
+                      onChange={(v) => set('categoryFlavorId', v)}
+                      disabled={!form.categoryId}
+                      placeholder={t('products.form.flavorNone')}
+                      searchPlaceholder={t('products.form.searchPlaceholder')}
+                      noResultsText={t('products.form.noResults')}
+                    />
                   </div>
                 )}
               </div>
@@ -504,29 +502,22 @@ export function ProductFormDialog({
                 {t('products.form.category')}
                 {settings.productFormCategoryRequired && <span className="pf-required"> *</span>}
               </label>
-              <select
+              <SearchableSelect
                 id="pf-cat-modal"
-                className="pf-input pf-input--select"
+                options={categoryOptions}
                 value={selectCategoryValue}
-                onChange={(e) => {
-                  const v = e.target.value
-                  const next = v === '' ? null : v
+                onChange={(v) => {
                   setForm((f) => ({
                     ...f,
-                    categoryId: next,
+                    categoryId: v,
                     categorySizeId: null,
                     categoryFlavorId: null,
                   }))
                 }}
-                aria-label={t('products.form.category')}
-              >
-                <option value="">{t('products.form.categoryNone')}</option>
-                {categoryOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                placeholder={t('products.form.categoryNone')}
+                searchPlaceholder={t('products.form.searchPlaceholder')}
+                noResultsText={t('products.form.noResults')}
+              />
             </div>
           )}
           <div className="pf-field">
@@ -549,45 +540,31 @@ export function ProductFormDialog({
               {settings.productFormShowSize && (
                 <div className="pf-field">
                   <label htmlFor="pf-size-modal">{t('products.form.size')}</label>
-                  <select
+                  <SearchableSelect
                     id="pf-size-modal"
-                    className="pf-input pf-input--select"
+                    options={filteredSizes}
                     value={selectSizeValue}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      set('categorySizeId', v === '' ? null : v)
-                    }}
+                    onChange={(v) => set('categorySizeId', v)}
                     disabled={!form.categoryId}
-                  >
-                    <option value="">{t('products.form.sizeNone')}</option>
-                    {filteredSizes.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder={t('products.form.sizeNone')}
+                    searchPlaceholder={t('products.form.searchPlaceholder')}
+                    noResultsText={t('products.form.noResults')}
+                  />
                 </div>
               )}
               {settings.productFormShowFlavor && (
                 <div className="pf-field">
                   <label htmlFor="pf-flavor-modal">{t('products.form.flavor')}</label>
-                  <select
+                  <SearchableSelect
                     id="pf-flavor-modal"
-                    className="pf-input pf-input--select"
+                    options={filteredFlavors}
                     value={selectFlavorValue}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      set('categoryFlavorId', v === '' ? null : v)
-                    }}
+                    onChange={(v) => set('categoryFlavorId', v)}
                     disabled={!form.categoryId}
-                  >
-                    <option value="">{t('products.form.flavorNone')}</option>
-                    {filteredFlavors.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder={t('products.form.flavorNone')}
+                    searchPlaceholder={t('products.form.searchPlaceholder')}
+                    noResultsText={t('products.form.noResults')}
+                  />
                 </div>
               )}
             </div>
