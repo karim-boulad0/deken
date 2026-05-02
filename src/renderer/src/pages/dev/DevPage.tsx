@@ -120,31 +120,33 @@ export function DevPage() {
   // Page Entry Gate
   if (!isAuthorized && pendingAction?.type === 'page') {
     return (
-      <div className="dev-auth-screen fade-in">
-        <div className="dev-auth-card">
-          <div className="dev-auth-icon">
-            <Lock size={48} />
-          </div>
-          <h2>{t('dev.title')}</h2>
-          <p>{t('dev.passwordPrompt')}</p>
-          <form onSubmit={handleAuthSubmit}>
-            <input
-              type="password"
-              className="dev-auth-input"
-              value={authInput}
-              onChange={(e) => setAuthInput(e.target.value)}
-              autoFocus
-              placeholder="••••••"
-            />
-            <div className="dev-auth-actions">
-              <button type="button" className="btn btn--ghost" onClick={() => navigate('/dashboard')}>
-                {t('common.cancel') || 'Cancel'}
-              </button>
-              <button type="submit" className="btn btn--primary">
-                {t('auth.login.submit') || 'Verify'}
-              </button>
+      <div className="dev-page fade-in">
+        <div className="dev-auth-screen">
+          <div className="dev-auth-card">
+            <div className="dev-auth-icon">
+              <Lock size={48} />
             </div>
-          </form>
+            <h2>{t('dev.title')}</h2>
+            <p>{t('dev.passwordPrompt')}</p>
+            <form onSubmit={handleAuthSubmit}>
+              <input
+                type="password"
+                className="dev-auth-input"
+                value={authInput}
+                onChange={(e) => setAuthInput(e.target.value)}
+                autoFocus
+                placeholder="••••••"
+              />
+              <div className="dev-auth-actions">
+                <button type="button" className="btn btn--ghost" onClick={() => navigate('/dashboard')}>
+                  {t('common.cancel') || 'Cancel'}
+                </button>
+                <button type="submit" className="btn btn--primary">
+                  {t('auth.login.submit') || 'Verify'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     )
