@@ -26,6 +26,9 @@ type CartLine = {
   nameParams?: Record<string, string>
   /** When set, shows catalog name (not an i18n key). */
   displayName?: string
+  categoryName?: string | null
+  sizeName?: string | null
+  flavorName?: string | null
   qty: number
   unitPriceLbp: number
 }
@@ -311,6 +314,9 @@ export function PosPage() {
             maxStock: p.stock,
             productId: p.id,
             productBarcode: p.barcode ?? null,
+            categoryName: p.category?.name ?? null,
+            sizeName: p.size?.name ?? null,
+            flavorName: p.flavor?.name ?? null,
             unitPriceLbp: p.priceLbp,
           }
           return next
@@ -326,6 +332,9 @@ export function PosPage() {
             productBarcode: p.barcode ?? null,
             nameKey: 'app.name',
             displayName: p.name,
+            categoryName: p.category?.name ?? null,
+            sizeName: p.size?.name ?? null,
+            flavorName: p.flavor?.name ?? null,
             qty: 1,
             unitPriceLbp: p.priceLbp,
           },
@@ -1060,9 +1069,16 @@ export function PosPage() {
                         return (
                           <tr key={line.id}>
                             <td className="pos-table__cell-truncate">
-                              <span className="pos-table__ellipsis" title={label}>
+                              <span className="pos-table__product-main" title={label}>
                                 {label}
                               </span>
+                              {(line.categoryName || line.sizeName || line.flavorName) && (
+                                <span className="pos-table__product-meta">
+                                  {[line.categoryName, line.sizeName, line.flavorName]
+                                    .filter(Boolean)
+                                    .join(' • ')}
+                                </span>
+                              )}
                             </td>
                             <td className="pos-table__cell-sku">
                               <code className="pos-code" title={codeLineTooltip(line)}>

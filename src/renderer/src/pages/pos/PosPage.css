@@ -355,8 +355,23 @@
   max-width: 0;
 }
 
-.pos-table__ellipsis {
+.pos-table__product-main {
   display: block;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-table__product-meta {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-top: 0.1rem;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

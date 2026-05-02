@@ -72,7 +72,8 @@
     "importToast": "تم استيراد {{count}} سجل بنجاح",
     "importInvalidFormat": "تنسيق الملف غير صالح أو فارغ",
     "importError": "حدث خطأ أثناء الاستيراد: {{message}}",
-    "byUser": "بواسطة"
+    "byUser": "بواسطة",
+    "cancel": "إلغاء"
   },
   "dashboard": {
     "pageTitle": "لوحة التحكم",
@@ -889,16 +890,20 @@
     },
     "create": {
       "title": "إضافة موظف",
+      "titleEdit": "تعديل موظف",
       "username": "اسم المستخدم",
       "fullName": "الاسم الكامل",
       "password": "كلمة المرور (اختياري إذا يوجد PIN)",
       "pin": "PIN (اختياري إذا توجد كلمة مرور)",
-      "submit": "إنشاء مستخدم"
+      "submit": "إنشاء مستخدم",
+      "submitEdit": "حفظ التغييرات",
+      "cancel": "إلغاء التعديل"
     },
     "list": {
       "title": "المستخدمون"
     },
     "actions": {
+      "edit": "تعديل",
       "disable": "تعطيل",
       "enable": "تفعيل",
       "resetPassword": "إعادة تعيين بيانات الدخول",
@@ -907,6 +912,7 @@
     },
     "toast": {
       "created": "تم إنشاء الموظف.",
+      "updated": "تم تحديث بيانات الموظف.",
       "credentialsReset": "تمت إعادة تعيين بيانات الدخول."
     },
     "errors": {
@@ -1048,6 +1054,8 @@
     "cornerToggleTitle": "",
     "wifiEnabled": "تم .",
     "wifiDisabled": "تم .",
-    "toggleWifiFailed": "تعذّر تبديل إظهار قسم الواي فاي."
+    "toggleWifiFailed": "تعذّر تبديل إظهار قسم الواي فاي.",
+    "passwordPrompt": "أدخل كلمة مرور الصيانة للمتابعة:",
+    "invalidPassword": "كلمة المرور غير صحيحة."
   }
 }

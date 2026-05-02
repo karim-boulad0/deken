@@ -72,7 +72,8 @@
     "importToast": "Successfully imported {{count}} records",
     "importInvalidFormat": "Invalid file format or empty file",
     "importError": "Error during import: {{message}}",
-    "byUser": "By"
+    "byUser": "By",
+    "cancel": "Cancel"
   },
   "dashboard": {
     "pageTitle": "Dashboard",
@@ -888,16 +889,20 @@
     },
     "create": {
       "title": "Add employee",
+      "titleEdit": "Edit employee",
       "username": "Username",
       "fullName": "Full name",
       "password": "Password (optional if PIN exists)",
       "pin": "PIN (optional if password exists)",
-      "submit": "Create user"
+      "submit": "Create user",
+      "submitEdit": "Save changes",
+      "cancel": "Cancel edit"
     },
     "list": {
       "title": "Users"
     },
     "actions": {
+      "edit": "Edit",
       "disable": "Disable",
       "enable": "Enable",
       "resetPassword": "Reset credentials",
@@ -906,6 +911,7 @@
     },
     "toast": {
       "created": "Employee created.",
+      "updated": "Employee details updated.",
       "credentialsReset": "Credentials reset."
     },
     "errors": {
@@ -1028,6 +1034,8 @@
     "cornerToggleTitle": "Double-click to toggle Wi-Fi section in Settings",
     "wifiEnabled": "Wi-Fi section is now visible in Settings.",
     "wifiDisabled": "Wi-Fi section is now hidden in Settings.",
-    "toggleWifiFailed": "Could not toggle Wi-Fi section visibility."
+    "toggleWifiFailed": "Could not toggle Wi-Fi section visibility.",
+    "passwordPrompt": "Enter maintenance password to continue:",
+    "invalidPassword": "Invalid password."
   }
 }

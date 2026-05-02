@@ -39,6 +39,7 @@ export function EmployeesPage() {
   const [password, setPassword] = useState('')
   const [pin, setPin] = useState('')
   const [selectedPermissions, setSelectedPermissions] = useState<PermissionModule[]>(['dashboard', 'pos'])
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
 
   const canAccess = hasPermission('employees')
 
@@ -65,6 +66,27 @@ export function EmployeesPage() {
     return <p>{t('auth.permissionDenied')}</p>
   }
 
+  const handleEditClick = (row: UserWithPermissionsDto) => {
+    setEditingUserId(row.user.id)
+    setUsername(row.user.username)
+    setFullName(row.user.fullName)
+    setRole(row.user.role)
+    setSelectedPermissions(row.permissions)
+    setPassword('')
+    setPin('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingUserId(null)
+    setUsername('')
+    setFullName('')
+    setRole('employee')
+    setSelectedPermissions(['dashboard', 'pos'])
+    setPassword('')
+    setPin('')
+  }
+
   return (
     <div className="emp">
       <header className="emp__header">
@@ -79,7 +101,7 @@ export function EmployeesPage() {
       ) : null}
 
       <section className="emp__create">
-        <h2>{t('employees.create.title')}</h2>
+        <h2>{editingUserId ? t('employees.create.titleEdit') : t('employees.create.title')}</h2>
         <div className="emp__grid">
           <input
             placeholder={t('employees.create.username')}
@@ -123,120 +145,174 @@ export function EmployeesPage() {
             </label>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            void (async () => {
-              const r = await createUser({
-                username,
-                fullName,
-                role,
-                password: password || undefined,
-                pin: pin || undefined,
-                permissions: selectedPermissions,
-              })
-              if (!r.ok) {
-                toast.error(t(`employees.errors.${r.error.message}`))
-                return
-              }
-              toast.success(t('employees.toast.created'))
-              setUsername('')
-              setFullName('')
-              setPassword('')
-              setPin('')
-              await refresh()
-            })()
-          }
-        >
-          {t('employees.create.submit')}
-        </button>
+        <div className="emp__actions">
+          <button
+            type="button"
+            className="emp__submit"
+            onClick={() =>
+              void (async () => {
+                if (editingUserId) {
+                  // Update existing user
+                  const r = await updateUser(editingUserId, {
+                    username,
+                    fullName,
+                    role,
+                  })
+                  if (!r.ok) {
+                    toast.error(t(`employees.errors.${r.error.message}`))
+                    return
+                  }
+
+                  // Update permissions
+                  const rp = await setUserPermissions(editingUserId, {
+                    permissions: selectedPermissions,
+                  })
+                  if (!rp.ok) {
+                    toast.error(t(`employees.errors.${rp.error.message}`))
+                    return
+                  }
+
+                  // Update credentials if provided
+                  if (password || pin) {
+                    const rc = await resetUserCredentials(editingUserId, {
+                      password: password || undefined,
+                      pin: pin || undefined,
+                    })
+                    if (!rc.ok) {
+                      toast.error(t(`employees.errors.${rc.error.message}`))
+                      return
+                    }
+                  }
+
+                  toast.success(t('employees.toast.updated'))
+                  handleCancelEdit()
+                } else {
+                  // Create new user
+                  const r = await createUser({
+                    username,
+                    fullName,
+                    role,
+                    password: password || undefined,
+                    pin: pin || undefined,
+                    permissions: selectedPermissions,
+                  })
+                  if (!r.ok) {
+                    toast.error(t(`employees.errors.${r.error.message}`))
+                    return
+                  }
+                  toast.success(t('employees.toast.created'))
+                  setUsername('')
+                  setFullName('')
+                  setPassword('')
+                  setPin('')
+                  setSelectedPermissions(['dashboard', 'pos'])
+                }
+                await refresh()
+              })()
+            }
+          >
+            {editingUserId ? t('employees.create.submitEdit') : t('employees.create.submit')}
+          </button>
+          {editingUserId && (
+            <button type="button" onClick={handleCancelEdit}>
+              {t('employees.create.cancel')}
+            </button>
+          )}
+        </div>
       </section>
 
       <section className="emp__list">
         <h2>{t('employees.list.title')}</h2>
         {loading ? <p>{t('employees.loading')}</p> : null}
         <div className="emp__table">
-          {rows.map(({ user, permissions }) => (
-            <article key={user.id} className="emp__row">
-              <div>
-                <strong>{user.username}</strong> - {user.fullName}
-              </div>
-              <div className="emp__badges">
-                <span>{user.role}</span>
-                <span>{user.isActive ? t('employees.active') : t('employees.inactive')}</span>
-                {user.isSystemAdmin ? <span>{t('employees.systemAdmin')}</span> : null}
-              </div>
-              <p>{permissions.map((p) => t(`employees.modules.${p}`)).join(' , ')}</p>
-              {!user.isSystemAdmin ? (
-                <div className="emp__actions">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void (async () => {
-                        const r = await updateUser(user.id, { isActive: !user.isActive })
-                        if (!r.ok) {
-                          toast.error(t(`employees.errors.${r.error.message}`))
-                          return
-                        }
-                        await refresh()
-                      })()
-                    }
-                  >
-                    {user.isActive ? t('employees.actions.disable') : t('employees.actions.enable')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void (async () => {
-                        const r = await setUserPermissions(user.id, {
-                          permissions: user.role === 'admin' ? MODULES : ['dashboard', 'pos'],
-                        })
-                        if (!r.ok) {
-                          toast.error(t(`employees.errors.${r.error.message}`))
-                          return
-                        }
-                        await refresh()
-                      })()
-                    }
-                  >
-                    {t('employees.actions.applyDefaultPermissions')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void (async () => {
-                        const r = await resetUserCredentials(user.id, { password: '123456' })
-                        if (!r.ok) {
-                          toast.error(t(`employees.errors.${r.error.message}`))
-                          return
-                        }
-                        toast.success(t('employees.toast.credentialsReset'))
-                      })()
-                    }
-                  >
-                    {t('employees.actions.resetPassword')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void (async () => {
-                        const r = await deleteUser(user.id)
-                        if (!r.ok) {
-                          toast.error(t(`employees.errors.${r.error.message}`))
-                          return
-                        }
-                        await refresh()
-                      })()
-                    }
-                  >
-                    {t('employees.actions.delete')}
-                  </button>
+          {rows.map((row) => {
+            const { user, permissions } = row
+            return (
+              <article key={user.id} className="emp__row">
+                <div>
+                  <strong>{user.username}</strong> - {user.fullName}
                 </div>
-              ) : null}
-            </article>
-          ))}
+                <div className="emp__badges">
+                  <span>{user.role}</span>
+                  <span>{user.isActive ? t('employees.active') : t('employees.inactive')}</span>
+                  {user.isSystemAdmin ? <span>{t('employees.systemAdmin')}</span> : null}
+                </div>
+                <p>{permissions.map((p) => t(`employees.modules.${p}`)).join(' , ')}</p>
+                {!user.isSystemAdmin ? (
+                  <div className="emp__actions">
+                    <button type="button" onClick={() => handleEditClick(row)}>
+                      {t('employees.actions.edit')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void (async () => {
+                          const r = await updateUser(user.id, { isActive: !user.isActive })
+                          if (!r.ok) {
+                            toast.error(t(`employees.errors.${r.error.message}`))
+                            return
+                          }
+                          await refresh()
+                        })()
+                      }
+                    >
+                      {user.isActive ? t('employees.actions.disable') : t('employees.actions.enable')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void (async () => {
+                          const r = await setUserPermissions(user.id, {
+                            permissions: user.role === 'admin' ? MODULES : ['dashboard', 'pos'],
+                          })
+                          if (!r.ok) {
+                            toast.error(t(`employees.errors.${r.error.message}`))
+                            return
+                          }
+                          await refresh()
+                        })()
+                      }
+                    >
+                      {t('employees.actions.applyDefaultPermissions')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void (async () => {
+                          const r = await resetUserCredentials(user.id, { password: '123456' })
+                          if (!r.ok) {
+                            toast.error(t(`employees.errors.${r.error.message}`))
+                            return
+                          }
+                          toast.success(t('employees.toast.credentialsReset'))
+                        })()
+                      }
+                    >
+                      {t('employees.actions.resetPassword')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void (async () => {
+                          const r = await deleteUser(user.id)
+                          if (!r.ok) {
+                            toast.error(t(`employees.errors.${r.error.message}`))
+                            return
+                          }
+                          await refresh()
+                        })()
+                      }
+                    >
+                      {t('employees.actions.delete')}
+                    </button>
+                  </div>
+                ) : null}
+              </article>
+            )
+          })}
         </div>
       </section>
     </div>
   )
 }
+
