@@ -61,7 +61,10 @@ function mapIpcErrorKey(message: string): string {
   return 'generic'
 }
 
-function calcProfit(basePriceLbp: number, priceLbp: number): { amountLbp: number; marginPct: number | null } {
+function calcProfit(
+  basePriceLbp: number,
+  priceLbp: number,
+): { amountLbp: number; marginPct: number | null } {
   const amountLbp = priceLbp - basePriceLbp
   if (priceLbp <= 0) {
     return { amountLbp, marginPct: null }
@@ -82,6 +85,7 @@ export function ProductsPage() {
   const [rows, setRows] = useState<ProductDto[]>([])
   const [loading, setLoading] = useState(true)
   const [formBusy, setFormBusy] = useState(false)
+  const [page, setPage] = useState(1)
   const [formMode, setFormMode] = useState<FormMode>({ type: 'create' })
   const [loadError, setLoadError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -154,6 +158,19 @@ export function ProductsPage() {
   )
   const filtered = useMemo(() => rows, [rows])
 
+  useEffect(() => {
+    setPage(1)
+  }, [query, filterCategory, section])
+
+  const ITEMS_PER_PAGE = 15
+
+  const paginated = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE
+    return filtered.slice(start, start + ITEMS_PER_PAGE)
+  }, [filtered, page])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+
   const showEmpty = section === 'catalog' && hasRefinement && !loading && filtered.length === 0
   const showCatalogEmpty =
     section === 'catalog' && !hasRefinement && !loading && filtered.length === 0
@@ -181,14 +198,15 @@ export function ProductsPage() {
           }
           await refresh()
           setFormError(null)
-          setBarcodeResetKey(prev => prev + 1)
+          setBarcodeResetKey((prev) => prev + 1)
           toast.success(t('products.toast.added'))
           return true
         } else {
           const k = mapIpcErrorKey(r.error.message)
-          const msg = k === 'generic'
-            ? t('products.errors.generic', { message: r.error.message })
-            : t(`products.errors.${k}`)
+          const msg =
+            k === 'generic'
+              ? t('products.errors.generic', { message: r.error.message })
+              : t(`products.errors.${k}`)
           setFormError(msg)
           toast.error(msg)
           return false
@@ -205,9 +223,10 @@ export function ProductsPage() {
           return true
         } else {
           const k = mapIpcErrorKey(r.error.message)
-          const msg = k === 'generic'
-            ? t('products.errors.generic', { message: r.error.message })
-            : t(`products.errors.${k}`)
+          const msg =
+            k === 'generic'
+              ? t('products.errors.generic', { message: r.error.message })
+              : t(`products.errors.${k}`)
           setFormError(msg)
           toast.error(msg)
           return false
@@ -518,7 +537,11 @@ export function ProductsPage() {
                 <p className="prod-empty__body">{t('products.empty.noResultsBody')}</p>
                 <div className="prod-empty__actions">
                   {query.trim() !== '' ? (
-                    <button type="button" className="prod-btn prod-btn--ghost" onClick={() => setQuery('')}>
+                    <button
+                      type="button"
+                      className="prod-btn prod-btn--ghost"
+                      onClick={() => setQuery('')}
+                    >
                       {t('products.empty.clearSearch')}
                     </button>
                   ) : null}
@@ -570,10 +593,18 @@ export function ProductsPage() {
                   <thead>
                     <tr>
                       <th scope="col">{t('products.table.idColumn')}</th>
-                      {settings.productFormShowName && <th scope="col">{t('products.table.name')}</th>}
-                      {settings.productFormShowCategory && <th scope="col">{t('products.table.category')}</th>}
-                      {settings.productFormShowSize && <th scope="col">{t('products.table.size')}</th>}
-                      {settings.productFormShowFlavor && <th scope="col">{t('products.table.flavor')}</th>}
+                      {settings.productFormShowName && (
+                        <th scope="col">{t('products.table.name')}</th>
+                      )}
+                      {settings.productFormShowCategory && (
+                        <th scope="col">{t('products.table.category')}</th>
+                      )}
+                      {settings.productFormShowSize && (
+                        <th scope="col">{t('products.table.size')}</th>
+                      )}
+                      {settings.productFormShowFlavor && (
+                        <th scope="col">{t('products.table.flavor')}</th>
+                      )}
                       <th scope="col" className="prod-table__num">
                         {t('products.table.stock')}
                       </th>
@@ -594,124 +625,164 @@ export function ProductsPage() {
                   <tbody>
                     {loading ? (
                       <tr>
-                        <td colSpan={6 + (settings.productFormShowName ? 1 : 0) + (settings.productFormShowCategory ? 1 : 0) + (settings.productFormShowSize ? 1 : 0) + (settings.productFormShowFlavor ? 1 : 0)} className="prod-table__cell-muted">
+                        <td
+                          colSpan={
+                            6 +
+                            (settings.productFormShowName ? 1 : 0) +
+                            (settings.productFormShowCategory ? 1 : 0) +
+                            (settings.productFormShowSize ? 1 : 0) +
+                            (settings.productFormShowFlavor ? 1 : 0)
+                          }
+                          className="prod-table__cell-muted"
+                        >
                           {t('products.table.loadingRow')}
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((row, idx) => {
+                      paginated.map((row, pIdx) => {
+                        const idx = (page - 1) * ITEMS_PER_PAGE + pIdx
                         const profit = calcProfit(row.basePriceLbp, row.priceLbp)
                         const pctLabel =
                           profit.marginPct == null
                             ? t('common.emDash')
-                            : `${profit.marginPct.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US', {
-                                maximumFractionDigits: 1,
-                              })}%`
-                        return (
-                        <tr key={row.id}>
-                          <td>
-                            <code className="prod-code">{idx + 1}</code>
-                          </td>
-                          {settings.productFormShowName && (
-                            <td className="prod-table__cell-truncate">
-                              <span className="prod-table__ellipsis" title={row.name}>
-                                {row.name}
-                              </span>
-                            </td>
-                          )}
-                          {settings.productFormShowCategory && (
-                            <td className="prod-table__cell-muted prod-table__cell-truncate">
-                              <span
-                                className="prod-table__ellipsis"
-                                title={row.category?.name}
-                              >
-                                {row.category?.name
-                                  ? row.category.name
-                                  : t('common.emDash')}
-                              </span>
-                            </td>
-                          )}
-                          {settings.productFormShowSize && (
-                            <td className="prod-table__cell-muted prod-table__cell-truncate">
-                              <span className="prod-table__ellipsis" title={row.size?.name}>
-                                {row.size?.name ? row.size.name : t('common.emDash')}
-                              </span>
-                            </td>
-                          )}
-                          {settings.productFormShowFlavor && (
-                            <td className="prod-table__cell-muted prod-table__cell-truncate">
-                              <span className="prod-table__ellipsis" title={row.flavor?.name}>
-                                {row.flavor?.name ? row.flavor.name : t('common.emDash')}
-                              </span>
-                            </td>
-                          )}
-                          <td className="prod-table__num">
-                            <span
-                              className={
-                                row.stock === 0 ? 'prod-stock prod-stock--out' : 'prod-stock'
-                              }
-                            >
-                              {row.stock.toLocaleString(
+                            : `${profit.marginPct.toLocaleString(
                                 lng.startsWith('ar') ? 'ar-LB' : 'en-US',
-                              )}
-                            </span>
-                          </td>
-                          <td className="prod-table__num prod-table__strong">
-                            {formatLbp(row.basePriceLbp, lng)}
-                          </td>
-                          <td className="prod-table__num prod-table__strong">
-                            {formatLbp(row.priceLbp, lng)}
-                          </td>
-                          <td className="prod-table__num prod-table__strong">
-                            <div className="prod-profit">
+                                {
+                                  maximumFractionDigits: 1,
+                                },
+                              )}%`
+                        return (
+                          <tr key={row.id}>
+                            <td>
+                              <code className="prod-code">{idx + 1}</code>
+                            </td>
+                            {settings.productFormShowName && (
+                              <td className="prod-table__cell-truncate">
+                                <span className="prod-table__ellipsis" title={row.name}>
+                                  {row.name}
+                                </span>
+                              </td>
+                            )}
+                            {settings.productFormShowCategory && (
+                              <td className="prod-table__cell-muted prod-table__cell-truncate">
+                                <span className="prod-table__ellipsis" title={row.category?.name}>
+                                  {row.category?.name ? row.category.name : t('common.emDash')}
+                                </span>
+                              </td>
+                            )}
+                            {settings.productFormShowSize && (
+                              <td className="prod-table__cell-muted prod-table__cell-truncate">
+                                <span className="prod-table__ellipsis" title={row.size?.name}>
+                                  {row.size?.name ? row.size.name : t('common.emDash')}
+                                </span>
+                              </td>
+                            )}
+                            {settings.productFormShowFlavor && (
+                              <td className="prod-table__cell-muted prod-table__cell-truncate">
+                                <span className="prod-table__ellipsis" title={row.flavor?.name}>
+                                  {row.flavor?.name ? row.flavor.name : t('common.emDash')}
+                                </span>
+                              </td>
+                            )}
+                            <td className="prod-table__num">
                               <span
                                 className={
-                                  profit.amountLbp < 0
-                                    ? 'prod-profit__amount prod-profit__amount--loss'
-                                    : 'prod-profit__amount'
+                                  row.stock === 0 ? 'prod-stock prod-stock--out' : 'prod-stock'
                                 }
                               >
-                                {formatLbp(profit.amountLbp, lng)}
+                                {row.stock.toLocaleString(lng.startsWith('ar') ? 'ar-LB' : 'en-US')}
                               </span>
-                              <span className="prod-profit__pct">{pctLabel}</span>
-                            </div>
-                          </td>
-                          <td className="prod-table__actions">
-                            <div className="prod-table__action-btns">
-                              <button
-                                type="button"
-                                className="prod-iconbtn"
-                                title={t('products.actions.edit')}
-                                aria-label={t('products.actions.edit')}
-                                disabled={deletingId != null}
-                                onClick={() => {
-                                  setFormError(null)
-                                  setFormMode({ type: 'edit', product: row })
-                                }}
-                              >
-                                <Pencil size={17} strokeWidth={2} aria-hidden />
-                              </button>
-                              <button
-                                type="button"
-                                className="prod-iconbtn prod-iconbtn--danger"
-                                title={t('products.actions.delete')}
-                                aria-label={t('products.actions.delete')}
-                                disabled={deletingId != null}
-                                onClick={() => {
-                                  setFormError(null)
-                                  setDeleteTarget(row)
-                                }}
-                              >
-                                <Trash2 size={17} strokeWidth={2} aria-hidden />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                            </td>
+                            <td className="prod-table__num prod-table__strong">
+                              {formatLbp(row.basePriceLbp, lng)}
+                            </td>
+                            <td className="prod-table__num prod-table__strong">
+                              {formatLbp(row.priceLbp, lng)}
+                            </td>
+                            <td className="prod-table__num prod-table__strong">
+                              <div className="prod-profit">
+                                <span
+                                  className={
+                                    profit.amountLbp < 0
+                                      ? 'prod-profit__amount prod-profit__amount--loss'
+                                      : 'prod-profit__amount'
+                                  }
+                                >
+                                  {formatLbp(profit.amountLbp, lng)}
+                                </span>
+                                <span className="prod-profit__pct">{pctLabel}</span>
+                              </div>
+                            </td>
+                            <td className="prod-table__actions">
+                              <div className="prod-table__action-btns">
+                                <button
+                                  type="button"
+                                  className="prod-iconbtn"
+                                  title={t('products.actions.edit')}
+                                  aria-label={t('products.actions.edit')}
+                                  disabled={deletingId != null}
+                                  onClick={() => {
+                                    setFormError(null)
+                                    setFormMode({ type: 'edit', product: row })
+                                  }}
+                                >
+                                  <Pencil size={17} strokeWidth={2} aria-hidden />
+                                </button>
+                                <button
+                                  type="button"
+                                  className="prod-iconbtn prod-iconbtn--danger"
+                                  title={t('products.actions.delete')}
+                                  aria-label={t('products.actions.delete')}
+                                  disabled={deletingId != null}
+                                  onClick={() => {
+                                    setFormError(null)
+                                    setDeleteTarget(row)
+                                  }}
+                                >
+                                  <Trash2 size={17} strokeWidth={2} aria-hidden />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
                         )
                       })
                     )}
                   </tbody>
                 </table>
+              </div>
+            ) : null}
+
+            {!showEmpty && !showCatalogEmpty && totalPages > 1 ? (
+              <div
+                className="prod-pagination"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem 0',
+                  borderTop: '1px solid var(--border-color)',
+                }}
+              >
+                <button
+                  type="button"
+                  className="prod-btn prod-btn--ghost"
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  {t('common.prevPage', 'Previous')}
+                </button>
+                <span className="prod-table__cell-muted" style={{ fontSize: '0.875rem' }}>
+                  {t('common.page', 'Page')} {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="prod-btn prod-btn--ghost"
+                  disabled={page >= totalPages || loading}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  {t('common.nextPage', 'Next')}
+                </button>
               </div>
             ) : null}
           </section>

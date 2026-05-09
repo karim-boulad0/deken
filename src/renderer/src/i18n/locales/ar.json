@@ -74,7 +74,10 @@
     "importInvalidFormat": "تنسيق الملف غير صالح أو فارغ",
     "importError": "حدث خطأ أثناء الاستيراد: {{message}}",
     "byUser": "بواسطة",
-    "cancel": "إلغاء"
+    "cancel": "إلغاء",
+    "page": "صفحة",
+    "prevPage": "السابق",
+    "nextPage": "التالي"
   },
   "dashboard": {
     "pageTitle": "لوحة التحكم",

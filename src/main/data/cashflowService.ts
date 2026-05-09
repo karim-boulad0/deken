@@ -55,8 +55,10 @@ export function listRecentCashflow(
 ): IpcResult<CashflowLineDto[]> {
   return asResult(() => {
     const rawLim = Math.floor(Number(input.limit))
-    const lim = Number.isFinite(rawLim) ? Math.min(20, Math.max(5, rawLim)) : 10
-    const fetchCap = lim
+    const lim = Number.isFinite(rawLim) ? Math.min(100, Math.max(1, rawLim)) : 10
+    const rawOffset = Math.floor(Number(input.offset))
+    const offset = Number.isFinite(rawOffset) ? Math.max(0, rawOffset) : 0
+    const fetchCap = lim + offset
     const fromD = (input.fromDate ?? '').trim()
     const toD = (input.toDate ?? '').trim()
     const hasFrom = fromD.length > 0
@@ -273,10 +275,8 @@ export function listRecentCashflow(
     merged.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
 
     const out: CashflowLineDto[] = []
-    for (const r of merged) {
-      if (out.length >= lim) {
-        break
-      }
+    for (let i = offset; i < merged.length && out.length < lim; i++) {
+      const r = merged[i]
       const saleYmd = r.saleId ? localYmdFromIso(r.at) : ''
       const canVoid =
         r.kind === 'cash_sale' &&

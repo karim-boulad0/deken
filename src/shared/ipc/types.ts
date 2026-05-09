@@ -615,6 +615,7 @@ export type CashflowLineDto = {
 
 export type ListRecentCashflowInput = {
   limit: number
+  offset?: number
   /** Optional inclusive local date range start (`YYYY-MM-DD`). */
   fromDate?: string
   /** Optional inclusive local date range end (`YYYY-MM-DD`). */

@@ -596,6 +596,7 @@ export function registerIpc(): void {
     const lim = Number(req.limit)
     return listRecentCashflow(db(), {
       limit: lim,
+      offset: Number(req.offset) || 0,
       fromDate: typeof req.fromDate === 'string' ? req.fromDate : undefined,
       toDate: typeof req.toDate === 'string' ? req.toDate : undefined,
     })

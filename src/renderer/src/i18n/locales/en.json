@@ -74,7 +74,10 @@
     "importInvalidFormat": "Invalid file format or empty file",
     "importError": "Error during import: {{message}}",
     "byUser": "By",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "page": "Page",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   },
   "dashboard": {
     "pageTitle": "Dashboard",

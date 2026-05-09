@@ -35,7 +35,8 @@ export function CashflowPage() {
   const loc = lng.startsWith('ar') ? 'ar-LB' : 'en-US'
   const [fromDate, setFromDate] = useState(() => todayYmd())
   const [toDate, setToDate] = useState(() => todayYmd())
-  const [limit, setLimit] = useState(10)
+  const [limit, setLimit] = useState(1)
+  const [page, setPage] = useState(1)
   const [rows, setRows] = useState<CashflowLineDto[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -45,7 +46,8 @@ export function CashflowPage() {
   const load = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
-    const r = await listRecentCashflow({ limit, fromDate, toDate })
+    const offset = (page - 1) * limit
+    const r = await listRecentCashflow({ limit, offset, fromDate, toDate })
     setLoading(false)
     if (r.ok) {
       setRows(r.data)
@@ -53,7 +55,7 @@ export function CashflowPage() {
       setRows([])
       setLoadError(r.error.message)
     }
-  }, [fromDate, limit, toDate])
+  }, [fromDate, limit, toDate, page])
 
   useEffect(() => {
     void load()
@@ -73,7 +75,9 @@ export function CashflowPage() {
     } else {
       const k = mapVoidErr(r.error.message)
       toast.error(
-        k === 'generic' ? t('cashflow.errors.generic', { message: r.error.message }) : t(`cashflow.errors.${k}`),
+        k === 'generic'
+          ? t('cashflow.errors.generic', { message: r.error.message })
+          : t(`cashflow.errors.${k}`),
       )
     }
   }
@@ -95,6 +99,7 @@ export function CashflowPage() {
       toast.error(t('cashflow.errors.invalid_input'))
       return
     }
+    setPage(1)
     void load()
   }
 
@@ -131,9 +136,13 @@ export function CashflowPage() {
           <select
             className="cf-field__select"
             value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            onChange={(e) => {
+              setLimit(Number(e.target.value))
+              setPage(1)
+            }}
             aria-label={t('cashflow.limitLabel')}
           >
+            <option value={1}>1</option>
             <option value={5}>5</option>
             <option value={10}>10</option>
             <option value={15}>15</option>
@@ -180,7 +189,9 @@ export function CashflowPage() {
                       <td>{kindLabel(row.kind)}</td>
                       <td>
                         <div>{primaryCell(row)}</div>
-                        {row.secondaryLabel ? <div className="cf-muted">{row.secondaryLabel}</div> : null}
+                        {row.secondaryLabel ? (
+                          <div className="cf-muted">{row.secondaryLabel}</div>
+                        ) : null}
                         {row.actor?.fullName ? (
                           <div className="cf-muted">
                             {t('common.byUser')}: {row.actor.fullName}
@@ -212,9 +223,40 @@ export function CashflowPage() {
             </tbody>
           </table>
         </div>
-        <p className="cf-muted" style={{ marginTop: 'var(--space-md)', marginBottom: 0 }}>
-          {t('cashflow.hintVoid')}
-        </p>
+        <div
+          className="cf-pagination"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginTop: 'var(--space-md)',
+          }}
+        >
+          <p className="cf-muted" style={{ margin: 0 }}>
+            {t('cashflow.hintVoid')}
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="cf-btn cf-btn--ghost"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              {t('common.prevPage', 'Previous')}
+            </button>
+            <span className="cf-muted" style={{ alignSelf: 'center' }}>
+              {t('common.page', 'Page')} {page}
+            </span>
+            <button
+              type="button"
+              className="cf-btn cf-btn--ghost"
+              disabled={rows.length < limit || loading}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              {t('common.nextPage', 'Next')}
+            </button>
+          </div>
+        </div>
       </section>
 
       {voidTarget != null ? (
@@ -227,14 +269,29 @@ export function CashflowPage() {
             }
           }}
         >
-          <div className="cf-dialog" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="cf-dialog"
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="cf-dialog__title">{t('cashflow.voidDialog.title')}</h2>
             <p>{t('cashflow.voidDialog.body')}</p>
             <div className="cf-dialog__actions">
-              <button type="button" className="cf-btn" onClick={() => setVoidTarget(null)} disabled={voidBusy}>
+              <button
+                type="button"
+                className="cf-btn"
+                onClick={() => setVoidTarget(null)}
+                disabled={voidBusy}
+              >
                 {t('cashflow.voidDialog.cancel')}
               </button>
-              <button type="button" className="cf-btn cf-btn--danger" onClick={() => void confirmVoid()} disabled={voidBusy}>
+              <button
+                type="button"
+                className="cf-btn cf-btn--danger"
+                onClick={() => void confirmVoid()}
+                disabled={voidBusy}
+              >
                 {voidBusy ? t('cashflow.voidDialog.working') : t('cashflow.voidDialog.confirm')}
               </button>
             </div>
