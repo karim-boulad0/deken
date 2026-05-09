@@ -42,6 +42,7 @@ export function CashflowPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [voidTarget, setVoidTarget] = useState<CashflowLineDto | null>(null)
   const [voidBusy, setVoidBusy] = useState(false)
+  const [hasNext, setHasNext] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -50,8 +51,15 @@ export function CashflowPage() {
     const r = await listRecentCashflow({ limit, offset, fromDate, toDate })
     setLoading(false)
     if (r.ok) {
-      setRows(r.data)
+      if (r.data.length > limit) {
+        setHasNext(true)
+        setRows(r.data.slice(0, limit))
+      } else {
+        setHasNext(false)
+        setRows(r.data)
+      }
     } else {
+      setHasNext(false)
       setRows([])
       setLoadError(r.error.message)
     }
@@ -250,7 +258,7 @@ export function CashflowPage() {
             <button
               type="button"
               className="cf-btn cf-btn--ghost"
-              disabled={rows.length < limit || loading}
+              disabled={!hasNext || loading}
               onClick={() => setPage((p) => p + 1)}
             >
               {t('common.nextPage', 'Next')}
